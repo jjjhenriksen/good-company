@@ -11,6 +11,7 @@ services:
       - "127.0.0.1:3007:3001"
     volumes:
       - state:/var/lib/plow
+      - coordination:/var/lib/good-company
     stop_grace_period: 35s
   dev-dashboard:
     image: caddy:2@sha256:14a9c00d4e833ebc2b65d36515b37bde3b73f0b323a2663aaafc88953d8c4e3f
@@ -19,4 +20,5 @@ services:
     volumes:
       - ./dev/Caddyfile:/etc/caddy/Caddyfile:ro
 volumes:
+  coordination:
   state:

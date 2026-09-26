@@ -75,7 +75,9 @@ docker compose ps
 docker compose logs --tail 100 agent
 ```
 
-Compose builds Linux/amd64 and stores data in a named volume. The dashboard is
+Compose builds Linux/amd64 and uses separate named volumes for OpenClaw runtime
+state and Good Company coordination data. This keeps the app database outside
+OpenClaw's protected managed-state directory while preserving it across restarts. The dashboard is
 [localhost:3007](http://localhost:3007). It is loopback-only and grants local
 operator access. Do not expose that port to other machines.
 
@@ -144,3 +146,15 @@ history and reporting install identity. Back up the named volume privately.
 
 For organization-specific terminology, use cases and upgrading the renamed skills,
 see [the adaptation guide](docs/ADAPTING.md).
+
+
+### Migrating an existing coordination database
+
+Stop the gateway and scheduler before changing volumes. Earlier previews stored
+`good-company/state.sqlite` inside the Plow state volume. Back up that entire
+volume privately, then use SQLite's backup API to copy the stopped coordination
+database into the new coordination volume as `state.sqlite`, owned by uid/gid 1000
+with mode 0600. Keep the old database and backup until the migrated policy and
+receipts are verified. Never initialize a replacement empty ledger for an existing
+installation: it would lose deduplication history. Back up both volumes together
+while stopped; the runtime volume retains the reporter install identity.

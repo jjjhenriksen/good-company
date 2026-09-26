@@ -3,11 +3,11 @@ USER root
 COPY good_company/ /opt/good-company/good_company/
 COPY scripts/runtime_preflight.py /opt/good-company/runtime_preflight.py
 COPY scripts/good-company /usr/local/bin/good-company
-RUN chmod 0755 /usr/local/bin/good-company
+RUN chmod 0755 /usr/local/bin/good-company && mkdir -p /var/lib/good-company && chown node:node /var/lib/good-company
 COPY prompt/AGENTS.md /opt/plow/prompt/AGENTS.md
 COPY skills/ /opt/plow/skills/
 COPY examples/ /opt/good-company/examples/
-ENV PYTHONPATH=/opt/good-company GOOD_COMPANY_DB=/var/lib/plow/good-company/state.sqlite
+ENV PYTHONPATH=/opt/good-company GOOD_COMPANY_DB=/var/lib/good-company/state.sqlite
 ENV AGENT_ID=good-company AGENT_NAME="Good Company"
 ENV AGENT_BLURB="An executive assistant for busy community leaders: knows the supplied rules, coordinates volunteers, and handles routine reminders."
 LABEL org.opencontainers.image.title="Good Company" org.opencontainers.image.licenses="MIT"

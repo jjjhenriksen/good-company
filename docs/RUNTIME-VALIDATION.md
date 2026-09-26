@@ -51,3 +51,10 @@ was delivered. Latch instructions remained unavailable, so this does not establi
 calendar/mail acceptance, Agent Index registration, public release or unattended
 scheduler delivery. The image ID identifies a local built artifact, not a public
 registry manifest. Provider and publication work remains separate.
+
+
+The post-restart model used local exec/read tools. It also encountered OpenClaw's
+restriction on direct sqlite3 access beneath its managed state directory. The
+preview now gives coordination its own `/var/lib/good-company` persistent volume;
+existing installs must migrate the stopped database rather than start an empty
+ledger. Revalidation of this final layout is recorded below when complete.
