@@ -44,6 +44,18 @@ class WorkCoordinator(Coordinator):
         for interval in v['availability']:
             if stamp(interval['start']) >= stamp(interval['end']):
                 raise ValueError('Availability end must follow start.')
+        credentials = v.get('credentials', [])
+        if not isinstance(credentials, list):
+            raise ValueError('credentials must be a list of verified evidence records.')
+        for credential in credentials:
+            if not isinstance(credential, dict):
+                raise ValueError('Each credential must be an object.')
+            for key in ('name', 'evidence', 'issuer'):
+                required(credential.get(key), 'credential ' + key)
+            if not stamp(credential['valid_from']) < stamp(credential['valid_until']):
+                raise ValueError('Credential validity must have a positive interval.')
+            if not isinstance(credential.get('categories'), list) or not credential['categories'] or any(not isinstance(c, str) or not c.strip() or c == '*' for c in credential['categories']):
+                raise ValueError('Credential categories must be explicit task categories.')
         with self.db:
             self.db.execute('INSERT OR REPLACE INTO volunteers VALUES(?,?)', (v['id'], json.dumps(v)))
             self.log('volunteer_update', v['id'], {'authority': authority}, stamp(now))
@@ -66,6 +78,9 @@ class WorkCoordinator(Coordinator):
             raise ValueError('required_skills must map skills to minimum proficiency 1–3.')
         if not isinstance(t.get('preferred_skills'), list):
             raise ValueError('preferred_skills must be a list.')
+        credentials = t.get('required_credentials', [])
+        if not isinstance(credentials, list) or any(not isinstance(c, str) or not c.strip() for c in credentials):
+            raise ValueError('required_credentials must be a list of named qualifications.')
         with self.db:
             self.db.execute('BEGIN IMMEDIATE')
             old = self.db.execute('SELECT payload FROM tasks WHERE id=?', (t['id'],)).fetchone()
@@ -80,9 +95,16 @@ class WorkCoordinator(Coordinator):
           JOIN assignments a ON a.task_id=t.id WHERE a.volunteer_id=? AND a.status='assigned'
           AND t.status='open' AND t.id<>?''', (volunteer_id, excluding or ''))]
 
+    def _credential_gaps(self, v, t):
+        return [name for name in t.get('required_credentials', [])
+                if not any(c['name'] == name and t['category'] in c['categories']
+                           and stamp(c['valid_from']) <= stamp(t['start'])
+                           and stamp(c['valid_until']) >= stamp(t['end'])
+                           for c in v.get('credentials', []))]
+
     def _eligible(self, v, t, policy):
         workload = self._workload(v['id'], t['id'])
-        if not self.contact_allowed(v['email']):
+        if not self.contact_allowed(v['email']) or self._credential_gaps(v, t):
             return False
         if not v['accepts_delegation'] or v['email'] not in policy['allowed_recipients']:
             return False
@@ -110,6 +132,10 @@ class WorkCoordinator(Coordinator):
           WHERE task_notices.status IN ('pending','cancelled')""",
                         (aid, assignment_id, kind, iso(due), json.dumps(message)))
 
+    def _retire_pending(self, task_id):
+        self.db.execute("""UPDATE task_notices SET status='cancelled' WHERE status='pending'
+          AND assignment_id IN (SELECT id FROM assignments WHERE task_id=?)""", (task_id,))
+
     def delegate(self, now=None):
         now = stamp(now)
         made, exceptions = [], []
@@ -127,24 +153,32 @@ class WorkCoordinator(Coordinator):
             tasks = sorted([json.loads(r[0]) for r in self.db.execute("SELECT payload FROM tasks WHERE status='open'")], key=lambda t: (stamp(t['start']), t['id']))
             for t in tasks:
                 if stamp(t['start']) <= now:
+                    self._retire_pending(t['id'])
                     continue
                 if t['category'] not in policy['allowed_task_categories']:
+                    self._retire_pending(t['id'])
                     exceptions.append({'task_id': t['id'], 'reason': 'Task category is outside standing instructions.'})
                     continue
                 existing = self.db.execute("SELECT * FROM assignments WHERE task_id=? AND status='assigned'", (t['id'],)).fetchone()
                 if existing:
                     v = next((v for v in volunteers if v['id'] == existing['volunteer_id']), None)
                     if not v or not self._eligible(v, t, policy):
+                        self._retire_pending(t['id'])
                         exceptions.append({'task_id': t['id'], 'reason': 'An existing assignment needs reconciliation after availability or role changed.'})
                         continue
                     assignment_id = existing['id']
                     self.db.execute('UPDATE assignments SET policy_hash=? WHERE id=?', (digest(policy), assignment_id))
                     self._notice(assignment_id, t, v, 'assignment', now, policy)
+                    # Include overdue notices that fall outside the cadence creation
+                    # window. Only never-attempted rows may get new routing.
+                    for pending in self.db.execute("SELECT kind,due FROM task_notices WHERE assignment_id=? AND status='pending'", (assignment_id,)).fetchall():
+                        if pending['kind'] in allowed_kinds:
+                            self._notice(assignment_id, t, v, pending['kind'], pending['due'], policy)
                 else:
                     declined = {r[0] for r in self.db.execute("SELECT volunteer_id FROM assignments WHERE task_id=? AND status='declined'", (t['id'],))}
                     candidates = [v for v in volunteers if v['id'] not in declined and self._eligible(v, t, policy)]
                     if not candidates:
-                        exceptions.append({'task_id': t['id'], 'reason': 'No eligible, available volunteer has capacity.'})
+                        exceptions.append({'task_id': t['id'], 'reason': ('Required credential evidence is missing, expired or inapplicable.' if t.get('required_credentials') and all(self._credential_gaps(v, t) for v in volunteers) else 'No eligible, available volunteer has capacity.')})
                         continue
                     def rank(v):
                         matches = sum(v['skills'].get(s, 0) for s in t['preferred_skills'])
