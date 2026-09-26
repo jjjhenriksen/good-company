@@ -50,6 +50,7 @@ class Coordinator:
         self.db.executescript('''
         PRAGMA foreign_keys=ON;
         CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS retired_sources(source TEXT PRIMARY KEY, authority TEXT NOT NULL, retired_at TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS contact_preferences(address TEXT PRIMARY KEY, payload TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS communication_claims(
           kind TEXT NOT NULL, notice_id TEXT NOT NULL, address TEXT NOT NULL, at TEXT NOT NULL,
@@ -274,9 +275,27 @@ class Coordinator:
                     and kind.split(':', 1)[0] in [f'{n}d' for n in policy['cadence_days']]
                     and self._event_recipients(policy, event))
 
+    def withdraw_source(self, source, authority, now=None):
+        required(source, 'source'); required(authority, 'source withdrawal authority')
+        now = stamp(now)
+        with self.db:
+            self.db.execute('BEGIN IMMEDIATE')
+            self.db.execute('INSERT OR REPLACE INTO retired_sources VALUES(?,?,?)', (source, authority, iso(now)))
+            affected = [r['id'] for r in self.db.execute("SELECT id FROM reminders WHERE status IN ('draft','approved')")]
+            for row in self.db.execute('SELECT id FROM events').fetchall():
+                self._invalidate(row['id'])
+            self.log('source_withdrawn', source, {'authority': authority, 'pending_reassessment': affected}, now)
+        return {'source': source, 'retired': True, 'pending_reassessment': affected,
+                'next': 'Review derived event details and source citations before authorizing replacements.'}
+
+    def _source_retired(self, source):
+        return self.db.execute('SELECT 1 FROM retired_sources WHERE source=?', (source,)).fetchone() is not None
+
     def ingest(self, text, source, title, updated, audience='volunteer'):
         """Replace one document atomically; preserve headings and line citations."""
         required(source, 'source'); required(title, 'title'); stamp(updated)
+        if self._source_retired(source):
+            raise ValueError('This source is retired. Import a reviewed replacement with a new source ID.')
         if audience not in ('volunteer', 'coordinator'):
             raise ValueError('audience must be volunteer or coordinator.')
         if len(text) > 1_000_000:
@@ -308,11 +327,13 @@ class Coordinator:
             return {'evidence': [], 'instruction': 'Ask a more specific question.'}
         query = ' OR '.join('"' + w + '"' for w in words)
         rows = self.db.execute('''SELECT source,title,section,content,updated,audience,bm25(knowledge) AS rank
-          FROM knowledge WHERE knowledge MATCH ? AND (audience='volunteer' OR audience=?)
+          FROM knowledge WHERE knowledge MATCH ? AND source NOT IN (SELECT source FROM retired_sources) AND (audience='volunteer' OR audience=?)
           ORDER BY rank LIMIT 5''', (query, audience)).fetchall()
         evidence = []
         for row in rows:
             item = dict(row)
+            if self._source_retired(item['source']):
+                continue
             item['stale'] = (stamp(now) - stamp(item['updated'])).days > 180
             evidence.append(item)
         return {'evidence': evidence, 'instruction':
@@ -393,6 +414,8 @@ class Coordinator:
         matches = []
         for row in self.db.execute('SELECT payload FROM dress_rules ORDER BY source,id'):
             rule = json.loads(row['payload'])
+            if self._source_retired(rule['source']):
+                continue
             if rule['audience'] == 'coordinator' and audience != 'coordinator':
                 continue
             if rule['event_type'] not in (event_type, '*') or rule['role'] not in (role, '*'):
@@ -615,6 +638,8 @@ class Coordinator:
         else:
             missing.append('location or online meeting link')
         sources = [event['source']] + event.get('detail_sources', [])
+        if any(self._source_retired(source) for source in sources):
+            missing.append('Retired source: review and replace derived event details')
         event = dict(event)
         if event.get('dress_applicability') == 'not_applicable':
             event.pop('attire', None)
