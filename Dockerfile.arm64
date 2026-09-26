@@ -12,6 +12,7 @@ RUN curl -fsSL --max-time 120 -o /tmp/agentsview.tgz \
  && echo '6f3c76ebe119826a2def1ae226c3573b214d396a3ed7c477ef282b1063345b87  /tmp/agentsview.tgz' | sha256sum -c - \
  && tar -xzf /tmp/agentsview.tgz -C /usr/local/bin agentsview && rm /tmp/agentsview.tgz
 COPY good_company/ /opt/good-company/good_company/
+COPY scripts/start_runtime.py /opt/good-company/start_runtime.py
 COPY scripts/runtime_preflight.py /opt/good-company/runtime_preflight.py
 COPY scripts/good-company /usr/local/bin/good-company
 RUN chmod 0755 /usr/local/bin/good-company && mkdir -p /var/lib/good-company && chown node:node /var/lib/good-company
@@ -25,4 +26,4 @@ ENV AGENT_BLURB="An executive assistant for busy community leaders: knows the su
 LABEL org.opencontainers.image.title="Good Company native ARM64 preview" org.opencontainers.image.licenses="MIT"
 HEALTHCHECK NONE
 USER node
-CMD ["node", "/opt/plow/boot/main.js"]
+CMD ["python3", "/opt/good-company/start_runtime.py"]
