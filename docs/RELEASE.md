@@ -6,7 +6,10 @@ Working identity:
 - Blurb: An executive assistant for busy community leaders: knows the supplied rules, coordinates volunteers, and handles routine reminders.
 - Runtime: OpenClaw on the Plow base
 
-## Completed locally
+Repository: [jjjhenriksen/good-company](https://github.com/jjjhenriksen/good-company)
+(currently private). [Audit and fixes](AUDIT.md); [remaining work](ROADMAP.md).
+
+## Verified development checks
 
 - Original coordinator persona, workflow skill, persistence tools, and MIT license.
 - Fictional example knowledge and a credential-free demonstration.
@@ -17,7 +20,8 @@ Working identity:
 
 ## Required before publication
 
-- [ ] Build Linux/amd64 image, boot on a selected free Plow line, and receive a real text reply.
+- [x] Build the combined audit image and smoke-test its packaged CLI/database remotely (integration commit `3254ee9`; see AUDIT.md).
+- [ ] Boot the full runtime on a selected free Plow line and receive a real text reply.
 - [ ] Verify inherited Latch capabilities with the intended calendar/mail accounts.
 - [ ] Verify one complete scoped calendar import and a changed/cancelled occurrence.
 - [ ] Configure standing instructions for a test audience; verify an automatic reminder and receipt without per-message review.
@@ -25,7 +29,8 @@ Working identity:
 - [ ] Verify skill-based assignment, notices, verified declines and reassignment.
 - [ ] Verify one scheduler run and no duplicate delivery on the next run.
 - [ ] Claim the Index slug and verify reporting after genuine model activity.
-- [ ] Create the public source repository with MIT LICENSE; record the exact commit.
+- [x] Create the source repository with MIT LICENSE and conventional feature commits.
+- [ ] Review the audit PRs and publish the currently private repository; record the exact release commit.
 - [ ] Record a demo video using fictional data and no credentials or private membership content.
 - [ ] Capture at least one image of the working agent; choose an optional logo.
 - [ ] Publish the image and make it publicly pullable.

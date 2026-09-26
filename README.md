@@ -5,7 +5,8 @@
 Good Company is an OpenClaw agent that helps a community leader stop carrying
 all the remembering, explaining, assigning and following up. The Guardian sets
 its remit once: trusted documents, calendar scope, volunteer team, sending account
-and communication cadence. Routine work then runs without per-message approval.
+and communication cadence. The intended connected workflow runs routine work
+without per-message approval; that end-to-end integration is not yet verified.
 The same model can adapt to other small volunteer-led organizations.
 
 A member asks “What do I wear?” The agent checks the event, the person's role,
@@ -38,10 +39,15 @@ reminders, and finds a replacement after a verified decline.
 - **Deployment package:** digest-pinned Plow base, agent persona, three skills,
   MIT license, install guide and optional remote image build workflow.
 
-**51 behavior tests pass locally.** The Docker image has not been built or booted
-here: low local disk space blocked the base-image download. Plow login succeeded,
-but no line was claimed, listing published, scheduler enabled, live calendar
-synchronized or email sent. The integrated model/tool behavior remains unverified.
+**The initial snapshot passed 51 behavior tests locally.**
+[The engineering audit](docs/AUDIT.md) records coverage, fix PRs and remaining
+acceptance gaps. Run the suite for the current checkout rather than treating
+this baseline count as its latest result. The combined audit changes passed 70 tests on Python 3.11–3.13 in
+[GitHub CI](https://github.com/jjjhenriksen/good-company/actions/runs/36217186171).
+The [remote image build and packaged-engine smoke test](https://github.com/jjjhenriksen/good-company/actions/runs/36217167986)
+also passed at integration commit `3254ee9`. Those changes are proposed in open
+PRs. The full Plow runtime has not been booted or texted, no operational scheduler
+has been enabled, and no live calendar sync or email send has been verified.
 
 ## Try it without credentials
 
@@ -90,6 +96,7 @@ persistent path. Do not put real member information in this repository.
 [INSTALL.md](INSTALL.md) covers local setup and verification.
 [Release checklist](docs/RELEASE.md) tracks publication.
 [Conversational acceptance checks](docs/ACCEPTANCE.md) define the live tests.
+[Implementation roadmap](docs/ROADMAP.md) defines the remaining integration and release work.
 
 The base supplies texting and Google services through Latch on the owner's Mac.
 A personal Apple/iCloud calendar needs an available Apple Calendar capability or

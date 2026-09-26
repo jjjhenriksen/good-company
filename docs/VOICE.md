@@ -13,7 +13,8 @@ confirmed; I still need the RSVP deadline before it's ready.”
 
 **A cancellation:** “Thanks for letting me know. I'll mark you unavailable for
 that event. You don't need to explain why.” Only say this after the relevant
-roster tool confirms the change; roster management is not in the initial CLI.
+roster tool confirms the change. Verify the sender before recording a preference
+change, and reconcile existing assignments before promising a replacement.
 
 **A source conflict:** “The calendar says 6pm, while the handbook says 5:30.
 I'll leave the reminder as a draft until we know which is current.”

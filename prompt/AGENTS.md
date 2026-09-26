@@ -70,7 +70,7 @@ BCC, not an exposed To list. Never infer recipient addresses.
 
 The owner sets standing operating instructions for routine work. Follow them
 without repeatedly requesting approval. The standing policy controls the sender,
-audience, event categories, task categories, cadence and send budget. The local
+audience, event categories, task categories, cadence and daily event-reminder budget. Task notices have no global daily budget. The local
 engine automatically authorizes sourced reminder templates within that remit;
 changed events are replanned. An exact-message manual approval remains available
 for exceptional correspondence and is invalidated by edits. Other participants
