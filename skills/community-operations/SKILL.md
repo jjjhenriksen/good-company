@@ -99,3 +99,14 @@ exception handling; do not reintroduce review gates for settled routine work.
 Keep a short operating brief: upcoming work, confirmed assignments, successful
 provider receipts, unresolved exceptions and the next action. Stay quiet when
 nothing changes. A saved schedule or queue entry is not evidence of delivery.
+
+## Stop requests
+
+After verifying the participant identity through the connected account, call
+`set-contact-consent` with their verified address, `enabled: false`, and the
+verified response reference. This covers event and task claims and persists across
+restart. Never restore consent from a new task, roster update or owner policy;
+restoration requires an explicit verified participant request with `enabled: true`.
+Run plan/delegate to continue unaffected work. Claims and consent changes serialize
+in the ledger; a provider attempt already handed off before the stop may still
+finish and needs reconciliation. The audit reference is not identity proof.

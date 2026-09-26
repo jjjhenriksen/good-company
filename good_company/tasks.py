@@ -104,7 +104,7 @@ class WorkCoordinator(Coordinator):
 
     def _eligible(self, v, t, policy):
         workload = self._workload(v['id'], t['id'])
-        if self._credential_gaps(v, t):
+        if not self.contact_allowed(v['email']) or self._credential_gaps(v, t):
             return False
         if not v['accepts_delegation'] or v['email'] not in policy['allowed_recipients']:
             return False
