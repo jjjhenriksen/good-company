@@ -138,8 +138,9 @@ no attire requirement. Event-category authorization remains separate. `required`
 and legacy/`unknown` typed events still require current, accessible, applicable
 supplied rules; never invent a policy or infer not-applicable from a meeting title.
 
-The engine supports one event-reminder audience per instance, complete normalized
-calendar JSON, and immutable task definitions. Different event mailing lists,
+The engine supports a legacy global reminder audience and explicit per-program
+audiences within the standing recipient list, complete normalized calendar JSON,
+and immutable task definitions.
 raw ICS recurrence parsing, dedicated RSVP extraction, automatic certificate/form
 verification, travel-aware scheduling and general regulatory compliance checking
 are not implemented. Already-delivered corrections and changed task assignments

@@ -112,6 +112,16 @@ class Coordinator:
         for address in [policy.get('sender')] + policy['allowed_recipients']:
             if not isinstance(address, str) or not re.fullmatch(r'[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+', address):
                 raise ValueError('The sender and recipients must be verified email addresses.')
+        audiences = policy.get('program_audiences', {})
+        if not isinstance(audiences, dict):
+            raise ValueError('program_audiences must map explicit program names to recipient lists.')
+        for program, recipients in audiences.items():
+            if not isinstance(program, str) or not program.strip() or program == '*':
+                raise ValueError('Use explicit program names.')
+            if not isinstance(recipients, list) or any(not isinstance(r, str) for r in recipients):
+                raise ValueError('Program recipients must be a list of verified addresses.')
+            if not set(recipients) <= set(policy['allowed_recipients']):
+                raise ValueError('Program recipients must be within the standing recipient list.')
         if not set(policy['reminder_recipients']) <= set(policy['allowed_recipients']):
             raise ValueError('Reminder recipients must be within the standing recipient list.')
         if any(type(n) is not int or not 1 <= n <= 30 for n in policy['cadence_days']):
@@ -135,11 +145,21 @@ class Coordinator:
         row = self.db.execute("SELECT value FROM settings WHERE key='autonomy'").fetchone()
         return json.loads(row[0]) if row else None
 
+    def _event_recipients(self, policy, event):
+        if not policy:
+            return []
+        # Explicit program events never fall back to the global audience.
+        recipients = (policy.get('program_audiences', {}).get(event['program'], [])
+                      if event.get('program') else policy['reminder_recipients'])
+        if not set(recipients) <= set(policy['allowed_recipients']):
+            return []
+        return sorted(set(recipients))
+
     def _autonomous_scope(self, policy, event, calendar, kind):
         return bool(policy and policy['enabled'] and calendar in policy['calendar_scopes']
                     and event.get('event_type') in policy['allowed_event_types']
                     and kind in [f'{n}d' for n in policy['cadence_days']]
-                    and policy['reminder_recipients'])
+                    and self._event_recipients(policy, event))
 
     def ingest(self, text, source, title, updated, audience='volunteer'):
         """Replace one document atomically; preserve headings and line citations."""
@@ -314,6 +334,8 @@ class Coordinator:
         prepared = []
         for raw in snapshot['events']:
             event = dict(raw)
+            if 'program' in event:
+                required(event['program'], 'event program')
             uid = required(event.get('id'), 'event instance id')
             required(event.get('title'), 'event title')
             required(event.get('source'), 'event source citation')
@@ -406,7 +428,7 @@ class Coordinator:
                     routine = self._autonomous_scope(policy, event, row['calendar'], kind)
                     if routine:
                         message['sender'] = policy['sender']
-                        message['bcc'] = policy['reminder_recipients']
+                        message['bcc'] = self._event_recipients(policy, event)
                     changed = self.db.execute('''INSERT INTO reminders
                       (id,event_id,revision,kind,due,status,message,created_at) VALUES(?,?,?,?,?,'draft',?,?)
                       ON CONFLICT(id) DO UPDATE SET due=excluded.due, status='draft',
@@ -559,7 +581,7 @@ class Coordinator:
                 expected = self._draft(json.loads(event['payload']), profile,
                                        stamp(event['start']).astimezone(zone), now)
                 expected['sender'] = policy['sender']
-                expected['bcc'] = policy['reminder_recipients']
+                expected['bcc'] = self._event_recipients(policy, json.loads(event['payload']))
                 if expected['missing'] or expected != item['message']:
                     raise ValueError('Automatic message no longer matches the safe current template; run plan again.')
                 day_start = datetime.combine(now.astimezone(zone).date(), time.min, zone)
