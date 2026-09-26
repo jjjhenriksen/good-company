@@ -6,6 +6,9 @@ Working identity:
 - Blurb: An executive assistant for busy community leaders: knows the supplied rules, coordinates volunteers, and handles routine reminders.
 - Runtime: OpenClaw on the Plow base
 
+Repository: [jjjhenriksen/good-company](https://github.com/jjjhenriksen/good-company)
+(currently private). [Audit and fixes](AUDIT.md); [remaining work](ROADMAP.md).
+
 ## Completed locally
 
 - Original coordinator persona, workflow skill, persistence tools, and MIT license.
@@ -25,7 +28,8 @@ Working identity:
 - [ ] Verify skill-based assignment, notices, verified declines and reassignment.
 - [ ] Verify one scheduler run and no duplicate delivery on the next run.
 - [ ] Claim the Index slug and verify reporting after genuine model activity.
-- [ ] Create the public source repository with MIT LICENSE; record the exact commit.
+- [x] Create the source repository with MIT LICENSE and conventional feature commits.
+- [ ] Review the audit PRs and publish the currently private repository; record the exact release commit.
 - [ ] Record a demo video using fictional data and no credentials or private membership content.
 - [ ] Capture at least one image of the working agent; choose an optional logo.
 - [ ] Publish the image and make it publicly pullable.
