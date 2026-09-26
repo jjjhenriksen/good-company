@@ -401,6 +401,15 @@ class Coordinator:
                         made.append(rid)
                         self.log('reminder_draft', rid, {'event_id': row['id']}, now)
                     current = self.reminder(rid)
+                    # Revalidate stored automatic templates after an engine upgrade.
+                    # Manual edits remain drafts and are never silently overwritten.
+                    if (current['status'] == 'approved' and current['approval']
+                            and json.loads(current['approval']).get('mode') == 'autonomous'
+                            and current['message'] != message):
+                        self.db.execute("UPDATE reminders SET status='draft',message=?,approval=NULL WHERE id=?",
+                                        (json.dumps(message), rid))
+                        self.log('reminder_template_refresh', rid, {}, now)
+                        current = self.reminder(rid)
                     # Only the canonical sourced template is automatically authorized.
                     # A manually edited draft is not silently overwritten or authorized.
                     if routine and not message['missing'] and current['status'] == 'draft' and current['message'] == message:
@@ -429,7 +438,7 @@ class Coordinator:
         event = dict(event)
         if event.get('event_type'):
             result = self.dress_code(event_type=event['event_type'], role=event.get('dress_code_role'),
-                                     on=local.date().isoformat(), audience='coordinator', now=now)
+                                     on=local.date().isoformat(), audience='volunteer', now=now)
             if result['status'] == 'supported':
                 supplied = ' '.join(event.get('attire', '').casefold().split())
                 resolved = ' '.join(result['attire'].casefold().split())
@@ -522,7 +531,14 @@ class Coordinator:
                 policy = self.autonomy()
                 if not self._autonomous_scope(policy, json.loads(event['payload']), event['calendar'], item['kind']) or approval['policy_hash'] != digest(policy):
                     raise ValueError('Standing instructions changed or no longer permit this reminder.')
-                zone = ZoneInfo(self.profile()['timezone'])
+                profile = self.profile()
+                zone = ZoneInfo(profile['timezone'])
+                expected = self._draft(json.loads(event['payload']), profile,
+                                       stamp(event['start']).astimezone(zone), now)
+                expected['sender'] = policy['sender']
+                expected['bcc'] = policy['reminder_recipients']
+                if expected['missing'] or expected != item['message']:
+                    raise ValueError('Automatic message no longer matches the safe current template; run plan again.')
                 day_start = datetime.combine(now.astimezone(zone).date(), time.min, zone)
                 day_end = day_start + timedelta(days=1)
                 count = self.db.execute('SELECT count(*) FROM reminders WHERE claimed_at>=? AND claimed_at<?',
