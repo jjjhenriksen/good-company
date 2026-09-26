@@ -31,6 +31,18 @@ Ask for relevant sources, timezone, calendar scope, sending account and audience
 as needed. Do not assume a youth group, membership structure, dress policy or
 formal term book. Preview one useful event or answer before collecting more.
 
+Use `onboarding {}` to get the missing-context prompts. Collect answers in natural
+conversation, verify sender and roster with connected tools, and translate the
+answers into `profile` and `policy` internally. The owner never edits JSON.
+Call `onboarding` with those objects and the owner instruction `authority` to
+preview the remit without changing state. Present its scope in ordinary language,
+then apply the already-authorized instructions with `apply: true`. Do not invent
+missing fields or require individual reminder approvals. Setup is atomic and
+repeatable. Preview one sourced answer or event; if no source/calendar is connected,
+explain that limitation instead of presenting a fictional result as live.
+This flow still needs a real-model acceptance run before claiming verified
+conversational onboarding.
+
 `configure` takes `profile`; see `profile.json` in the examples directory.
 Its supported fields are organization, timezone, greeting, signoff, audience,
 reminder_days and send_hour. Ask for the owner’s cadence; sample values are only
