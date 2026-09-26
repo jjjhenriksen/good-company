@@ -116,3 +116,26 @@ verified owner/calendar context. Do not infer it from a title. Omitted values
 preserve the legacy unknown behavior. An explicitly not-applicable meeting can
 send an otherwise complete authorized reminder without a dress rule. Conflicting
 attire text must be reconciled before importing a not-applicable event.
+
+## Mixed-role reminders
+
+For an event marked `mixed_role_audience: true`, record verified event-audience
+roles in the standing policy's `recipient_roles` mapping (address to role). Every
+authorized recipient needs an applicable role. The planner creates separate
+role-labelled messages with distinct cadence/group IDs and volunteer-safe dress
+sources, and each claim reconstructs its current group. Missing/private/conflicting
+requirements remain blocked for that group. A sent recipient cannot receive the
+same cadence again merely by changing their role group; use explicit corrections.
+The mapping is supplied verified context, not a role inferred from a name or email.
+## Corrections after a delivery attempt
+
+Reconcile an uncertain original before issuing a correction. Use `create-correction`
+with kind (`event` or `task`), original_id, exact message fields (sender, to, bcc,
+subject, body), expected_hash and a verified authority/source reference. Explain
+the sourced change; do not invent it. Only still-authorized original recipients
+may receive this correction. New participants receive their own normal notices.
+The correction records its source revision and original relationship. Claim once
+with `correction-claim` and record `correction-receipt`; uncertain attempts require
+provider reconciliation, never a new correction or automatic retry. Claims obey
+the shared budget, consent, preferences and quiet hours, and expire after 24 hours.
+Changed authority/context requires explicit reconciliation, not silent editing.

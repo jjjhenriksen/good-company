@@ -79,7 +79,12 @@ Compose builds Linux/amd64 and uses separate named volumes for OpenClaw runtime
 state and Good Company coordination data. This keeps the app database outside
 OpenClaw's protected managed-state directory while preserving it across restarts. The dashboard is
 [localhost:3007](http://localhost:3007). It is loopback-only and grants local
-operator access. Do not expose that port to other machines.
+operator access. Do not expose that port to other machines. The proxy accepts only localhost and
+127.0.0.1 Host names and the documented local Origin values, removes caller-supplied
+forwarded identity headers, and assigns the development owner identity itself.
+These are local-development checks, not public multi-user authentication.
+`python3 scripts/check_proxy.py` exercises these behaviors against the pinned Caddy
+image with a fictional echo backend and an ephemeral loopback port.
 
 Local Compose deliberately overrides `AGENT_ID` to empty unless you set it, so
 previewing does not claim a public listing. Cloud installs use the Dockerfile's

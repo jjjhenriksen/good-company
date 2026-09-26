@@ -26,6 +26,9 @@ jobs:
       - run: python -m pip install build
       - run: python -m build --wheel
       - run: python scripts/check_wheel.py dist/*.whl
+      - name: Exercise pinned development proxy
+        if: matrix.python == '3.13'
+        run: python scripts/check_proxy.py
       - name: Validate Compose without real credentials
         run: |
           touch plow-credentials
