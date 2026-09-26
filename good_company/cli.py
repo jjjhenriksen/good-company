@@ -6,6 +6,7 @@ import sqlite3
 import sys
 from pathlib import Path
 from .core import digest
+from .validation import MAX_REQUEST_BYTES, RequestError, validate_request, safe_error
 from .corrections import CorrectionCoordinator as Coordinator
 
 
@@ -20,8 +21,17 @@ def main():
     parser.add_argument('--input', type=Path, help='JSON request file; defaults to stdin, or {} when terminal')
     args = parser.parse_args()
     coordinator = None
+    request = {}
     try:
-        request = json.loads(args.input.read_text() if args.input else ('{}' if sys.stdin.isatty() else sys.stdin.read() or '{}'))
+        if args.input:
+            with args.input.open('rb') as stream:
+                raw = stream.read(MAX_REQUEST_BYTES + 1)
+        else:
+            raw = b'{}' if sys.stdin.isatty() else sys.stdin.buffer.read(MAX_REQUEST_BYTES + 1) or b'{}'
+        if len(raw) > MAX_REQUEST_BYTES:
+            raise RequestError('Request exceeds the 2 MB limit.')
+        request = json.loads(raw)
+        validate_request(request)
         if not isinstance(request, dict):
             raise ValueError('Request must be a JSON object.')
         if 'now' in request:
@@ -34,8 +44,8 @@ def main():
             action = args.action.replace('-', '_')
             result = getattr(coordinator, action)(**request)
         print(json.dumps(result, indent=2, ensure_ascii=False))
-    except (ValueError, KeyError, TypeError, OSError, sqlite3.Error) as error:
-        print(json.dumps({'error': str(error)}), file=sys.stderr)
+    except (ValueError, KeyError, TypeError, OSError, sqlite3.Error, RecursionError) as error:
+        print(json.dumps({'error': safe_error(error, request)}), file=sys.stderr)
         return 2
     finally:
         if coordinator is not None:
