@@ -54,6 +54,8 @@ class Coordinator:
           id TEXT PRIMARY KEY, calendar TEXT NOT NULL, start TEXT NOT NULL,
           end TEXT NOT NULL, revision TEXT NOT NULL, payload TEXT NOT NULL,
           checked_at TEXT NOT NULL, cancelled INTEGER NOT NULL DEFAULT 0);
+        CREATE TABLE IF NOT EXISTS calendar_sync(
+          calendar TEXT PRIMARY KEY, checked_at TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS reminders(
           id TEXT PRIMARY KEY, event_id TEXT NOT NULL REFERENCES events(id),
           revision TEXT NOT NULL, kind TEXT NOT NULL, due TEXT NOT NULL,
@@ -337,7 +339,8 @@ class Coordinator:
             # Serialize updates with delivery claims and reject out-of-order snapshots.
             self.db.execute('BEGIN IMMEDIATE')
             rows = self.db.execute('SELECT * FROM events WHERE calendar=?', (calendar,)).fetchall()
-            if any(stamp(r['checked_at']) > checked for r in rows):
+            watermark = self.db.execute('SELECT checked_at FROM calendar_sync WHERE calendar=?', (calendar,)).fetchone()
+            if (watermark and stamp(watermark[0]) > checked) or any(stamp(r['checked_at']) > checked for r in rows):
                 raise ValueError('Snapshot is older than the stored calendar; refresh it.')
             old = {r['id']: r for r in rows}
             changes = 0
@@ -355,6 +358,7 @@ class Coordinator:
                     self.db.execute('UPDATE events SET cancelled=1,checked_at=? WHERE id=?', (iso(checked), row['id']))
                     self._invalidate(row['id'])
                     changes += 1
+            self.db.execute('INSERT OR REPLACE INTO calendar_sync VALUES(?,?)', (calendar, iso(checked)))
             self.log('calendar_import', calendar, {'events': len(ids), 'changes': changes}, now)
         return {'imported': len(ids), 'changes': changes}
 
@@ -369,7 +373,7 @@ class Coordinator:
 
     def plan(self, now=None):
         now, profile = stamp(now), self.profile()
-        zone, made, authorized = ZoneInfo(profile['timezone']), [], []
+        zone, made, authorized, exceptions = ZoneInfo(profile['timezone']), [], [], []
         policy = self.autonomy()
         with self.db:
             self.db.execute('BEGIN IMMEDIATE')
@@ -386,6 +390,14 @@ class Coordinator:
                         continue  # No flood of overdue reminders on first import.
                     kind = f'{days}d'
                     rid = digest([row['id'], row['revision'], kind])[:24]
+                    previous = self.db.execute('''SELECT id,status FROM reminders
+                      WHERE event_id=? AND kind=? AND id<>? AND claimed_at IS NOT NULL
+                      LIMIT 1''', (row['id'], kind, rid)).fetchone()
+                    if previous:
+                        exceptions.append({'event_id': row['id'], 'kind': kind,
+                                           'previous_reminder_id': previous['id'],
+                                           'reason': 'A previous revision already had a delivery attempt; reconcile before sending a separate correction.'})
+                        continue
                     message = self._draft(event, profile, local, now)
                     routine = self._autonomous_scope(policy, event, row['calendar'], kind)
                     if routine:
@@ -409,7 +421,7 @@ class Coordinator:
                         self.db.execute("UPDATE reminders SET status='approved',approval=? WHERE id=?", (json.dumps(approval), rid))
                         self.log('reminder_auto_authorize', rid, approval, now)
                         authorized.append(rid)
-        return {'created': made, 'automatically_authorized': authorized}
+        return {'created': made, 'automatically_authorized': authorized, 'exceptions': exceptions}
 
     def _draft(self, event, profile, local, now):
         when = local.strftime('%A, %B %-d')
@@ -511,6 +523,11 @@ class Coordinator:
                 raise ValueError('Reminder is not approved or was already claimed; do not send.')
             if event['cancelled'] or event['revision'] != item['revision']:
                 raise ValueError('Event changed; do not send.')
+            previous = self.db.execute('''SELECT id FROM reminders WHERE event_id=?
+              AND kind=? AND id<>? AND claimed_at IS NOT NULL LIMIT 1''',
+              (item['event_id'], item['kind'], rid)).fetchone()
+            if previous:
+                raise ValueError('A previous revision already had a delivery attempt; reconcile before a separate correction.')
             if now - stamp(event['checked_at']) > timedelta(minutes=15):
                 raise ValueError('Refresh the live calendar before sending (maximum age 15 minutes).')
             if not stamp(item['due']) <= now < min(stamp(item['due']) + timedelta(hours=12), stamp(event['start'])):
