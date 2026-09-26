@@ -58,6 +58,10 @@ class WorkCoordinator(Coordinator):
             raise ValueError('Task end must follow start.')
         if not isinstance(t.get('eligible_roles'), list) or not t['eligible_roles']:
             raise ValueError('Supply the roles eligible for this task.')
+        if t.get('role_match', 'ANY') not in ('ANY', 'ALL'):
+            raise ValueError('role_match must be ANY or ALL.')
+        if any(not isinstance(role, str) or not role.strip() for role in t['eligible_roles']):
+            raise ValueError('Eligible roles must be explicit nonempty names.')
         if not isinstance(t.get('required_skills'), dict) or any(type(n) is not int or not 1 <= n <= 3 for n in t['required_skills'].values()):
             raise ValueError('required_skills must map skills to minimum proficiency 1–3.')
         if not isinstance(t.get('preferred_skills'), list):
@@ -80,7 +84,9 @@ class WorkCoordinator(Coordinator):
         workload = self._workload(v['id'], t['id'])
         if not v['accepts_delegation'] or v['email'] not in policy['allowed_recipients']:
             return False
-        if t['category'] in v['avoid_categories'] or not set(t['eligible_roles']) & set(v['roles']):
+        roles, required_roles = set(v['roles']), set(t['eligible_roles'])
+        matches = required_roles <= roles if t.get('role_match', 'ANY') == 'ALL' else bool(required_roles & roles)
+        if t['category'] in v['avoid_categories'] or not matches:
             return False
         if any(v['skills'].get(skill, 0) < level for skill, level in t['required_skills'].items()):
             return False
