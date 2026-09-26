@@ -133,9 +133,10 @@ people. Required roles are supplied by the authoritative roster; the software
 does not itself verify certifications. Its ranking is a simple deterministic
 heuristic, not global schedule optimization.
 
-Automatic typed event reminders currently require a supported dress rule, even
-when attire is irrelevant. Separating those concerns is a priority in the roadmap;
-do not invent rules to make a no-dress-policy event pass.
+Events can explicitly declare `dress_applicability: not_applicable` when there is
+no attire requirement. Event-category authorization remains separate. `required`
+and legacy/`unknown` typed events still require current, accessible, applicable
+supplied rules; never invent a policy or infer not-applicable from a meeting title.
 
 The engine supports one event-reminder audience per instance, complete normalized
 calendar JSON, and immutable task definitions. Different event mailing lists,

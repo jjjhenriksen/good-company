@@ -108,3 +108,11 @@ travel buffers. This helper only compares supplied intervals and does not book.
 When the owner authorizes a booking, use the real connected calendar tool, verify
 its returned event id and time, and report it. Preserve attendee and series
 semantics. Never expose private conflict titles in a group response.
+
+## Attire applicability
+
+Import `dress_applicability` as `required`, `not_applicable`, or `unknown` from
+verified owner/calendar context. Do not infer it from a title. Omitted values
+preserve the legacy unknown behavior. An explicitly not-applicable meeting can
+send an otherwise complete authorized reminder without a dress rule. Conflicting
+attire text must be reconciled before importing a not-applicable event.
