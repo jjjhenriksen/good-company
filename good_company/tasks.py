@@ -318,3 +318,11 @@ class WorkCoordinator(Coordinator):
             self.db.execute("UPDATE task_notices SET status='cancelled' WHERE status='pending' AND assignment_id IN (SELECT id FROM assignments WHERE task_id=?)", (task_id,))
             self.log('task_' + status, task_id, {'authority': authority}, stamp(now))
         return {'task_id': task_id, 'status': status}
+
+    def record_participation(self, **request):
+        from .participation import record
+        return record(self, **request)
+
+    def participation_history(self, record_id):
+        from .participation import history
+        return history(self, record_id)
