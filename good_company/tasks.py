@@ -63,6 +63,7 @@ class WorkCoordinator(Coordinator):
         if not isinstance(t.get('preferred_skills'), list):
             raise ValueError('preferred_skills must be a list.')
         with self.db:
+            self.db.execute('BEGIN IMMEDIATE')
             old = self.db.execute('SELECT payload FROM tasks WHERE id=?', (t['id'],)).fetchone()
             if old and json.loads(old[0]) != t:
                 raise ValueError('Existing tasks are immutable: complete/cancel and explicitly replace changed assignments.')
@@ -96,16 +97,24 @@ class WorkCoordinator(Coordinator):
         message = {'sender': policy['sender'], 'to': [v['email']], 'bcc': [],
                    'subject': f'{prefix}: {t["title"]}',
                    'body': f'Hi {v["name"]},\n\n{t["title"]}\nWhen: {date}\n\nThis is within the work you agreed to help with. If your availability has changed, reply and I will find another arrangement.\n\n{self.profile()["signoff"]}'}
-        self.db.execute("INSERT OR IGNORE INTO task_notices VALUES(?,?,?,?,'pending',?,NULL)",
+        self.db.execute("""INSERT INTO task_notices VALUES(?,?,?,?,'pending',?,NULL)
+          ON CONFLICT(id) DO UPDATE SET message=excluded.message,status='pending'
+          WHERE task_notices.status IN ('pending','cancelled')""",
                         (aid, assignment_id, kind, iso(due), json.dumps(message)))
 
     def delegate(self, now=None):
-        now, policy = stamp(now), self.autonomy()
-        if not policy or not policy['enabled']:
-            return {'assigned': [], 'exceptions': [{'reason': 'Configure standing delegation instructions first.'}]}
+        now = stamp(now)
         made, exceptions = [], []
         with self.db:
             self.db.execute('BEGIN IMMEDIATE')
+            policy = self.autonomy()
+            if not policy or not policy['enabled']:
+                return {'assigned': [], 'exceptions': [{'reason': 'Configure standing delegation instructions first.'}]}
+            allowed_kinds = {'assignment'} | {f'{h}h' for h in policy.get('task_reminder_hours', [24])}
+            for notice in self.db.execute("SELECT id,kind FROM task_notices WHERE status='pending'").fetchall():
+                if notice['kind'] not in allowed_kinds:
+                    self.db.execute("UPDATE task_notices SET status='cancelled' WHERE id=?", (notice['id'],))
+                    self.log('task_notice_cadence_revoked', notice['id'], {}, now)
             volunteers = [json.loads(r[0]) for r in self.db.execute('SELECT payload FROM volunteers ORDER BY id')]
             tasks = sorted([json.loads(r[0]) for r in self.db.execute("SELECT payload FROM tasks WHERE status='open'")], key=lambda t: (stamp(t['start']), t['id']))
             for t in tasks:
@@ -122,6 +131,7 @@ class WorkCoordinator(Coordinator):
                         continue
                     assignment_id = existing['id']
                     self.db.execute('UPDATE assignments SET policy_hash=? WHERE id=?', (digest(policy), assignment_id))
+                    self._notice(assignment_id, t, v, 'assignment', now, policy)
                 else:
                     declined = {r[0] for r in self.db.execute("SELECT volunteer_id FROM assignments WHERE task_id=? AND status='declined'", (t['id'],))}
                     candidates = [v for v in volunteers if v['id'] not in declined and self._eligible(v, t, policy)]
@@ -153,16 +163,20 @@ class WorkCoordinator(Coordinator):
                 self.db.execute('SELECT * FROM task_notices ORDER BY due,id')]
 
     def task_claim(self, notice_id, now=None):
-        now, policy = stamp(now), self.autonomy()
-        if not policy or not policy['enabled']:
-            raise ValueError('Autonomy is paused or unconfigured.')
-        if not 7 <= now.astimezone(ZoneInfo(self.profile()['timezone'])).hour < 21:
-            raise ValueError('Quiet hours; leave the notice queued.')
+        now = stamp(now)
         with self.db:
             self.db.execute('BEGIN IMMEDIATE')
+            policy = self.autonomy()
+            if not policy or not policy['enabled']:
+                raise ValueError('Autonomy is paused or unconfigured.')
+            if not 7 <= now.astimezone(ZoneInfo(self.profile()['timezone'])).hour < 21:
+                raise ValueError('Quiet hours; leave the notice queued.')
             notice = self.db.execute('SELECT * FROM task_notices WHERE id=?', (notice_id,)).fetchone()
             if not notice or notice['status'] != 'pending' or stamp(notice['due']) > now:
                 raise ValueError('Notice is not due or is already claimed.')
+            allowed_kinds = {'assignment'} | {f'{h}h' for h in policy.get('task_reminder_hours', [24])}
+            if notice['kind'] not in allowed_kinds:
+                raise ValueError('Notice cadence is no longer authorized.')
             assignment = self.db.execute('SELECT * FROM assignments WHERE id=?', (notice['assignment_id'],)).fetchone()
             task = self.db.execute('SELECT * FROM tasks WHERE id=?', (assignment['task_id'],)).fetchone()
             t = json.loads(task['payload'])
