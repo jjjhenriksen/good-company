@@ -67,7 +67,7 @@ class SetupCoordinator(CorrectionCoordinator):
         from datetime import timedelta
         if component not in ('calendar', 'mail', 'scheduler'):
             raise ValueError('Component must be calendar, mail, or scheduler.')
-        if status not in ('verified', 'unavailable', 'unknown'):
+        if status not in ('verified', 'unavailable', 'unknown', 'missing_credentials'):
             raise ValueError('Unknown connection status.')
         required(evidence, 'private observation reference')
         now, checked = stamp(now), stamp(checked_at)
@@ -131,3 +131,7 @@ class SetupCoordinator(CorrectionCoordinator):
                              'failed': counts.get('failed', 0)},
                 'unresolved_exceptions': exceptions,
                 'scope': 'Trusted operator observations and local ledger; provider acceptance does not prove receipt by a person.'}
+
+    def health(self, now=None):
+        from .health import report
+        return report(self, now)

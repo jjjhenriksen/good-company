@@ -158,3 +158,13 @@ Leave deferred work queued; existing expiry rules still apply. Summarize the
 backlog and surface time-sensitive corrections to the owner rather than silently
 dropping them or sending an extra digest outside the budget. Changes to the limit
 require the owner's standing authority. There is no automatic urgency bypass.
+
+## Operational health
+
+Use `health {}` after the recurring loop. It reports missing/paused authority,
+stale calendars and sources, unverified or unavailable connections, missing
+credentials, and unknown/failed work without recipient lists or private evidence.
+Record `missing_credentials` only from a trusted connection observation; never
+copy secrets into evidence. `notify` recommends a concise owner update on changed
+failures or recovery. Repeated unchanged states are quiet. No alert is sent by this
+command; delivery still requires the owner's authorized channel and budget.
