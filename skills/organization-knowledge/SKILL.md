@@ -84,3 +84,18 @@ including overridden rules, and the decision evidence is identified separately.
 Cycles and overlapping contradictory versions remain unresolved. General prose
 retrieval still presents evidence and gaps; it does not infer a legal or national/
 regional/local hierarchy from organization names.
+
+## Accessible and translated evidence
+
+Verified preferences may select language `en` or `es` and format `plain_text` or
+`structured_plain_text`. `accessible-evidence` uses those recorded preferences
+while retaining original text, source/section citations and all gaps. A Spanish
+variant exists only after `register-translation` records a bilingual review of
+exact current public source text; changing the source invalidates that match.
+Preserve every role, date, exception and condition during review. The tool checks
+source identity, not linguistic correctness. Missing variants return the original
+with an explicit unavailable status; never invent translated requirements.
+
+Automatic outgoing notices currently support English plain text only. Other
+preferences defer claims rather than silently ignoring the participant's needs.
+This evidence feature is operator-side; it does not add a public identity endpoint.
