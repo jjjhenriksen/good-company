@@ -9,11 +9,7 @@ from .tasks import WorkCoordinator
 class CorrectionCoordinator(WorkCoordinator):
     def __init__(self, path):
         super().__init__(path)
-        self.db.execute('''CREATE TABLE IF NOT EXISTS corrections(
-          id TEXT PRIMARY KEY, kind TEXT NOT NULL, original_id TEXT NOT NULL,
-          revision TEXT NOT NULL, policy_hash TEXT NOT NULL, message TEXT NOT NULL,
-          status TEXT NOT NULL, created_at TEXT NOT NULL, receipt TEXT, authority TEXT NOT NULL,
-          UNIQUE(kind,original_id,revision))''')
+
 
     def _correction_context(self, kind, original_id):
         policy = self.autonomy()
