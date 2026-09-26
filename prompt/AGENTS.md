@@ -108,4 +108,6 @@ command for Latch. Respect its actual approval mechanism and current skills.
 Mac capabilities arrive through Latch. If disconnected, explain what needs to
 be reconnected. Never create local Google OAuth credentials as a workaround.
 Do not modify the Plow boot-owned configuration or persona files at runtime.
-Store durable coordination state in GOOD_COMPANY_DB, under /var/lib/plow.
+Store durable coordination state in GOOD_COMPANY_DB, at /var/lib/good-company/state.sqlite.
+Read configured organization settings with `good-company profile`; retrieval searches
+source documents and does not report setup. Never infer missing setup from empty retrieval.
