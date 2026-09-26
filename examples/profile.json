@@ -1,0 +1,11 @@
+{
+  "profile": {
+    "organization": "Good Company Demo Club",
+    "timezone": "America/Los_Angeles",
+    "greeting": "Hello members, families, and friends!",
+    "signoff": "We look forward to seeing everyone soon!\n\nGood Company Demo Club",
+    "audience": "Opted-in club members and families",
+    "reminder_days": [7, 1],
+    "send_hour": 9
+  }
+}
