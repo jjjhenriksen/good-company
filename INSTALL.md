@@ -8,7 +8,18 @@ For live Google email/calendar access, connect the owner's Mac through Latch.
 
 Try `python3 scripts/demo.py` first; it needs no account or Docker image.
 
-## 2. Get the Plow CLI
+## 2. Get the source and Plow CLI
+
+The repository currently requires access; public publication is a release step.
+
+```sh
+git clone https://github.com/jjjhenriksen/good-company.git
+cd good-company
+```
+
+Use a Python interpreter that reports version 3.11 or newer. Some Macs still
+resolve `python3` to the system Python 3.9; select the supported interpreter
+explicitly for all local commands in that case.
 
 Use the official [plow-agents repository](https://github.com/plow-pbc/plow-agents).
 Keep that checkout beside, not inside, Good Company's Docker build context.
