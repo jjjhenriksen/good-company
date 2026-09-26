@@ -110,3 +110,12 @@ restoration requires an explicit verified participant request with `enabled: tru
 Run plan/delegate to continue unaffected work. Claims and consent changes serialize
 in the ledger; a provider attempt already handed off before the stop may still
 finish and needs reconciliation. The audit reference is not identity proof.
+
+Use `set-contact-preferences` for verified participant preferences: timezone (IANA),
+channels (`["email"]` or `[]`), quiet_start/quiet_end (distinct local whole hours,
+end exclusive), and min_interval_hours (0–168). Cross-midnight windows are supported.
+Both claim paths enforce these settings using the recipient's timezone, including
+DST, in addition to organization quiet hours. A shared message waits if any
+recipient is outside their window; no recipients are silently dropped. Deferred
+notices remain queued and expire normally. Preferences never restore consent.
+Cadence counts attempts, including ambiguous ones, across both notice types.
