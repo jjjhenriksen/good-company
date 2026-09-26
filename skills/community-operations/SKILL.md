@@ -40,8 +40,8 @@ then apply the already-authorized instructions with `apply: true`. Do not invent
 missing fields or require individual reminder approvals. Setup is atomic and
 repeatable. Preview one sourced answer or event; if no source/calendar is connected,
 explain that limitation instead of presenting a fictional result as live.
-This flow still needs a real-model acceptance run before claiming verified
-conversational onboarding.
+A real-model local setup run is recorded in docs/ONBOARDING-VALIDATION.md.
+Connected accounts and unattended delivery still need separate observed evidence.
 
 `configure` takes `profile`; see `profile.json` in the examples directory.
 Its supported fields are organization, timezone, greeting, signoff, audience,
