@@ -116,3 +116,14 @@ verified owner/calendar context. Do not infer it from a title. Omitted values
 preserve the legacy unknown behavior. An explicitly not-applicable meeting can
 send an otherwise complete authorized reminder without a dress rule. Conflicting
 attire text must be reconciled before importing a not-applicable event.
+
+## Mixed-role reminders
+
+For an event marked `mixed_role_audience: true`, record verified event-audience
+roles in the standing policy's `recipient_roles` mapping (address to role). Every
+authorized recipient needs an applicable role. The planner creates separate
+role-labelled messages with distinct cadence/group IDs and volunteer-safe dress
+sources, and each claim reconstructs its current group. Missing/private/conflicting
+requirements remain blocked for that group. A sent recipient cannot receive the
+same cadence again merely by changing their role group; use explicit corrections.
+The mapping is supplied verified context, not a role inferred from a name or email.

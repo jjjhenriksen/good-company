@@ -118,6 +118,9 @@ class Coordinator:
         for address in [policy.get('sender')] + policy['allowed_recipients']:
             if not isinstance(address, str) or not re.fullmatch(r'[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+', address):
                 raise ValueError('The sender and recipients must be verified email addresses.')
+        roles = policy.get('recipient_roles', {})
+        if not isinstance(roles, dict) or any(address not in policy['allowed_recipients'] or not isinstance(role, str) or not role.strip() for address, role in roles.items()):
+            raise ValueError('recipient_roles must map authorized addresses to verified role names.')
         audiences = policy.get('program_audiences', {})
         if not isinstance(audiences, dict):
             raise ValueError('program_audiences must map explicit program names to recipient lists.')
@@ -268,7 +271,7 @@ class Coordinator:
     def _autonomous_scope(self, policy, event, calendar, kind):
         return bool(policy and policy['enabled'] and calendar in policy['calendar_scopes']
                     and event.get('event_type') in policy['allowed_event_types']
-                    and kind in [f'{n}d' for n in policy['cadence_days']]
+                    and kind.split(':', 1)[0] in [f'{n}d' for n in policy['cadence_days']]
                     and self._event_recipients(policy, event))
 
     def ingest(self, text, source, title, updated, audience='volunteer'):
@@ -444,6 +447,8 @@ class Coordinator:
         prepared = []
         for raw in snapshot['events']:
             event = dict(raw)
+            if 'mixed_role_audience' in event and type(event['mixed_role_audience']) is not bool:
+                raise ValueError('mixed_role_audience must be true or false.')
             if 'program' in event:
                 required(event['program'], 'event program')
             uid = required(event.get('id'), 'event instance id')
@@ -503,6 +508,30 @@ class Coordinator:
         # A send that may already have happened requires reconciliation, never a retry.
         self.db.execute("UPDATE reminders SET status='uncertain', approval=NULL WHERE event_id=? AND status='sending'", (event_id,))
 
+    def _message_groups(self, event, policy, kind):
+        recipients = self._event_recipients(policy, event)
+        if not event.get('mixed_role_audience'):
+            return [(event, kind, recipients)]
+        roles = (policy or {}).get('recipient_roles', {})
+        if not recipients or any(address not in roles for address in recipients):
+            return []
+        groups = {}
+        for address in recipients:
+            role = roles[address].strip().casefold()
+            groups.setdefault(role, []).append(address)
+        return [(dict(event, dress_code_role=role), kind + ':' + digest(role)[:12], addresses)
+                for role, addresses in sorted(groups.items())]
+
+    def _prior_group_attempt(self, event_id, kind, rid, recipients):
+        cadence = kind.split(':', 1)[0]
+        for row in self.db.execute("SELECT id,status,kind,message FROM reminders WHERE event_id=? AND id<>? AND claimed_at IS NOT NULL", (event_id, rid)):
+            if row['kind'].split(':', 1)[0] != cadence:
+                continue
+            message = json.loads(row['message'])
+            if row['kind'] == kind or set(recipients) & set(message.get('to', []) + message.get('bcc', [])):
+                return row
+        return None
+
     def events(self):
         return [dict(row) | {'payload': json.loads(row['payload'])} for row in
                 self.db.execute('SELECT * FROM events ORDER BY start')]
@@ -524,48 +553,49 @@ class Coordinator:
                     due = datetime.combine(local.date() - timedelta(days=days), time(profile['send_hour']), zone)
                     if due < now - timedelta(hours=12):
                         continue  # No flood of overdue reminders on first import.
-                    kind = f'{days}d'
-                    rid = digest([row['id'], row['revision'], kind])[:24]
-                    previous = self.db.execute('''SELECT id,status FROM reminders
-                      WHERE event_id=? AND kind=? AND id<>? AND claimed_at IS NOT NULL
-                      LIMIT 1''', (row['id'], kind, rid)).fetchone()
-                    if previous:
-                        exceptions.append({'event_id': row['id'], 'kind': kind,
-                                           'previous_reminder_id': previous['id'],
-                                           'reason': 'A previous revision already had a delivery attempt; reconcile before sending a separate correction.'})
-                        continue
-                    message = self._draft(event, profile, local, now)
-                    routine = self._autonomous_scope(policy, event, row['calendar'], kind)
-                    if routine:
-                        message['sender'] = policy['sender']
-                        message['bcc'] = self._event_recipients(policy, event)
-                    changed = self.db.execute('''INSERT INTO reminders
-                      (id,event_id,revision,kind,due,status,message,created_at) VALUES(?,?,?,?,?,'draft',?,?)
-                      ON CONFLICT(id) DO UPDATE SET due=excluded.due, status='draft',
-                        message=excluded.message, approval=NULL, claimed_at=NULL, receipt=NULL
-                      WHERE reminders.status='superseded' ''',
-                      (rid, row['id'], row['revision'], kind, iso(due), json.dumps(message), iso(now))).rowcount
-                    if changed:
-                        made.append(rid)
-                        self.log('reminder_draft', rid, {'event_id': row['id']}, now)
-                    current = self.reminder(rid)
-                    # Revalidate stored automatic templates after an engine upgrade.
-                    # Manual edits remain drafts and are never silently overwritten.
-                    if (current['status'] == 'approved' and current['approval']
-                            and json.loads(current['approval']).get('mode') == 'autonomous'
-                            and current['message'] != message):
-                        self.db.execute("UPDATE reminders SET status='draft',message=?,approval=NULL WHERE id=?",
-                                        (json.dumps(message), rid))
-                        self.log('reminder_template_refresh', rid, {}, now)
+                    groups = self._message_groups(row['payload'], policy, f'{days}d')
+                    if not groups:
+                        exceptions.append({'event_id': row['id'], 'reason': 'Verify an applicable role for every mixed-audience recipient.'})
+                    for event, kind, recipients in groups:
+                        rid = digest([row['id'], row['revision'], kind])[:24]
+                        previous = self._prior_group_attempt(row['id'], kind, rid, recipients)
+                        if previous:
+                            exceptions.append({'event_id': row['id'], 'kind': kind,
+                                               'previous_reminder_id': previous['id'],
+                                               'reason': 'A previous revision already had a delivery attempt; reconcile before sending a separate correction.'})
+                            continue
+                        message = self._draft(event, profile, local, now)
+                        routine = self._autonomous_scope(policy, event, row['calendar'], kind)
+                        if routine:
+                            message['sender'] = policy['sender']
+                            message['bcc'] = recipients
+                        changed = self.db.execute('''INSERT INTO reminders
+                          (id,event_id,revision,kind,due,status,message,created_at) VALUES(?,?,?,?,?,'draft',?,?)
+                          ON CONFLICT(id) DO UPDATE SET due=excluded.due, status='draft',
+                            message=excluded.message, approval=NULL, claimed_at=NULL, receipt=NULL
+                          WHERE reminders.status='superseded' ''',
+                          (rid, row['id'], row['revision'], kind, iso(due), json.dumps(message), iso(now))).rowcount
+                        if changed:
+                            made.append(rid)
+                            self.log('reminder_draft', rid, {'event_id': row['id']}, now)
                         current = self.reminder(rid)
-                    # Only the canonical sourced template is automatically authorized.
-                    # A manually edited draft is not silently overwritten or authorized.
-                    if routine and not message['missing'] and current['status'] == 'draft' and current['message'] == message:
-                        approval = {'mode': 'autonomous', 'message_hash': digest(message),
-                                    'policy_hash': digest(policy), 'at': iso(now)}
-                        self.db.execute("UPDATE reminders SET status='approved',approval=? WHERE id=?", (json.dumps(approval), rid))
-                        self.log('reminder_auto_authorize', rid, approval, now)
-                        authorized.append(rid)
+                        # Revalidate stored automatic templates after an engine upgrade.
+                        # Manual edits remain drafts and are never silently overwritten.
+                        if (current['status'] == 'approved' and current['approval']
+                                and json.loads(current['approval']).get('mode') == 'autonomous'
+                                and current['message'] != message):
+                            self.db.execute("UPDATE reminders SET status='draft',message=?,approval=NULL WHERE id=?",
+                                            (json.dumps(message), rid))
+                            self.log('reminder_template_refresh', rid, {}, now)
+                            current = self.reminder(rid)
+                        # Only the canonical sourced template is automatically authorized.
+                        # A manually edited draft is not silently overwritten or authorized.
+                        if routine and not message['missing'] and current['status'] == 'draft' and current['message'] == message:
+                            approval = {'mode': 'autonomous', 'message_hash': digest(message),
+                                        'policy_hash': digest(policy), 'at': iso(now)}
+                            self.db.execute("UPDATE reminders SET status='approved',approval=? WHERE id=?", (json.dumps(approval), rid))
+                            self.log('reminder_auto_authorize', rid, approval, now)
+                            authorized.append(rid)
         return {'created': made, 'automatically_authorized': authorized, 'exceptions': exceptions}
 
     def _draft(self, event, profile, local, now):
@@ -573,6 +603,8 @@ class Coordinator:
         lines = [profile['greeting'], '', f'Please see below for details for {event["title"].lower()}.', '',
                  f'{when} - {event["title"]}']
         missing = []
+        if event.get('mixed_role_audience'):
+            lines.append('For: ' + event['dress_code_role'])
         if event.get('all_day'):
             lines.append('  - Time to be confirmed')
             missing.append('event time')
@@ -670,9 +702,7 @@ class Coordinator:
                 raise ValueError('Reminder is not approved or was already claimed; do not send.')
             if event['cancelled'] or event['revision'] != item['revision']:
                 raise ValueError('Event changed; do not send.')
-            previous = self.db.execute('''SELECT id FROM reminders WHERE event_id=?
-              AND kind=? AND id<>? AND claimed_at IS NOT NULL LIMIT 1''',
-              (item['event_id'], item['kind'], rid)).fetchone()
+            previous = self._prior_group_attempt(item['event_id'], item['kind'], rid, item['message'].get('to', []) + item['message'].get('bcc', []))
             if previous:
                 raise ValueError('A previous revision already had a delivery attempt; reconcile before a separate correction.')
             if now - stamp(event['checked_at']) > timedelta(minutes=15):
@@ -690,10 +720,14 @@ class Coordinator:
                     raise ValueError('Standing instructions changed or no longer permit this reminder.')
                 profile = self.profile()
                 zone = ZoneInfo(profile['timezone'])
-                expected = self._draft(json.loads(event['payload']), profile,
+                groups = self._message_groups(json.loads(event['payload']), policy, item['kind'].split(':', 1)[0])
+                group = next((g for g in groups if g[1] == item['kind']), None)
+                if not group:
+                    raise ValueError('Recipient role group is no longer authorized.')
+                expected = self._draft(group[0], profile,
                                        stamp(event['start']).astimezone(zone), now)
                 expected['sender'] = policy['sender']
-                expected['bcc'] = self._event_recipients(policy, json.loads(event['payload']))
+                expected['bcc'] = group[2]
                 if expected['missing'] or expected != item['message']:
                     raise ValueError('Automatic message no longer matches the safe current template; run plan again.')
                 day_start = datetime.combine(now.astimezone(zone).date(), time.min, zone)
