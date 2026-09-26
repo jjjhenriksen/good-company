@@ -1,0 +1,4 @@
+[
+  {"task":{"id":"welcome-table","title":"Prepare the welcome table","category":"event preparation","start":"2026-09-27T17:00:00-07:00","end":"2026-09-27T17:30:00-07:00","eligible_roles":["adult volunteer"],"required_skills":{"organizing":2},"preferred_skills":["organizing"]},"authority":"Fictional demo todo list"},
+  {"task":{"id":"welcome-note","title":"Prepare the welcome note","category":"communications","start":"2026-09-27T16:00:00-07:00","end":"2026-09-27T16:30:00-07:00","eligible_roles":["adult volunteer"],"required_skills":{"writing":2},"preferred_skills":["writing"]},"authority":"Fictional demo todo list"}
+]

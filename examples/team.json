@@ -1,0 +1,4 @@
+[
+  {"volunteer":{"id":"alex","name":"Alex","email":"alex@example.invalid","roles":["adult volunteer"],"skills":{"organizing":3,"writing":1},"accepts_delegation":true,"max_open_tasks":2,"avoid_categories":[],"preferred_categories":["event preparation"],"availability":[{"start":"2026-09-25T00:00:00Z","end":"2026-10-01T00:00:00Z"}]},"authority":"Fictional opted-in demo roster"},
+  {"volunteer":{"id":"sam","name":"Sam","email":"sam@example.invalid","roles":["adult volunteer"],"skills":{"organizing":2,"writing":3},"accepts_delegation":true,"max_open_tasks":2,"avoid_categories":[],"preferred_categories":["communications"],"availability":[{"start":"2026-09-25T00:00:00Z","end":"2026-10-01T00:00:00Z"}]},"authority":"Fictional opted-in demo roster"}
+]

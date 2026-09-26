@@ -5,13 +5,17 @@ import os
 import sys
 from pathlib import Path
 from .core import digest
-from .core import Coordinator
+from .tasks import WorkCoordinator as Coordinator
 
 
 def main():
     parser = argparse.ArgumentParser(description='Good Company coordination tools')
     parser.add_argument('--db', default=os.environ.get('GOOD_COMPANY_DB', '.state/good-company.sqlite'))
-    parser.add_argument('action', choices=['configure', 'ingest', 'retrieve', 'import-calendar', 'events', 'plan', 'queue', 'review', 'edit', 'approve', 'claim', 'receipt', 'conflicts', 'set-dress-code', 'dress-code', 'configure-autonomy', 'autonomy'])
+    parser.add_argument('action', choices=['configure', 'ingest', 'retrieve', 'import-calendar', 'events',
+                                         'plan', 'queue', 'review', 'edit', 'approve', 'claim', 'receipt', 'conflicts',
+                                         'set-dress-code', 'dress-code', 'configure-autonomy', 'autonomy',
+                                         'set-volunteer', 'add-task', 'delegate', 'task-queue', 'task-claim',
+                                         'task-receipt', 'decline-task', 'close-task'])
     parser.add_argument('--input', type=Path, help='JSON request file; defaults to stdin, or {} when terminal')
     args = parser.parse_args()
     try:

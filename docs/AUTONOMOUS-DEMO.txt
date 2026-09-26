@@ -1,0 +1,16 @@
+GOOD COMPANY — FICTIONAL AUTONOMY REPLAY
+Simulated date: September 25, 2026. No network or live email.
+
+What do I wear?
+The demo club shirt, comfortable trousers, and closed-toe shoes.
+Source: demo://fictional-club-dress-code Service activities, section 2
+
+Routine reminders authorized without per-message review: 1
+
+Task assignments:
+welcome-note → sam (notice queued, not sent)
+welcome-table → alex (notice queued, not sent)
+Second allocation pass: 0 new assignments
+After a decline: [('welcome-table', 'sam')]
+
+All notices remain local queue records. No provider receipt has been fabricated.
