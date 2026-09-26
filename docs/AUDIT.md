@@ -10,7 +10,7 @@ The initial history groups the existing snapshot by feature; it does not purport
 to recover the original edit chronology. Calendar, rules, autonomy and task
 commits were each tested from their exact staged tree (19, 34, 40 and 51 tests).
 
-## Confirmed problems and proposed fixes
+## Confirmed problems and fixes
 
 | Finding | Impact | Work |
 |---|---|---|
@@ -22,8 +22,10 @@ commits were each tested from their exact staged tree (19, 34, 40 and 51 tests).
 | CLI operational errors could escape its JSON contract | Corrupt databases emitted a traceback instead of a structured failure. | PR 4: database errors, object validation and connection cleanup. |
 | Build context used only a denylist | Unexpectedly named local documents could enter the Docker build context. | PR 4: runtime-source allowlist and broader local-secret ignores. |
 
-PRs are proposed changes until merged. Their individual validation results are
-recorded in the PR descriptions. They do not make the baseline branch fixed.
+PRs 1–5 were reviewed and merged into `main` at `a7a83db`. Their individual
+validation results remain in the PR descriptions. The file inventory below
+preserves the original baseline paths; current skill names and portability
+findings are in [ADAPTING.md](ADAPTING.md) and [ROADMAP.md](ROADMAP.md).
 
 The security scan classified the private-rule leak as a medium-severity disclosure.
 The task lifecycle defects are separately tracked as engineering correctness
@@ -32,7 +34,7 @@ API was inferred. No actual email or private pilot document was used in testing.
 
 ## Combined validation
 
-The five proposed PRs merge without conflicts on `audit/integration-check`.
+The five PRs were first combined without conflicts on `audit/integration-check`.
 At commit `3254ee9a5cbef1a72bec8b0f77858d25f4b20682`:
 
 - 70 unique tests passed locally on Python 3.12.
@@ -47,8 +49,8 @@ At commit `3254ee9a5cbef1a72bec8b0f77858d25f4b20682`:
 
 No public image was pushed. No full Plow gateway boot, real model conversation,
 mail send, live calendar synchronization or Index registration was tested.
-`main` remains the baseline until the PRs are reviewed and merged. This validation
-branch is for checking the combined changes, not a separate release.
+The merged `main` tree at `a7a83db` matches the final integration branch exactly.
+These checks establish packaged-engine behavior, not a live-service release.
 
 GitHub reported deprecation advisories for the Actions' Node 20 declarations
 (running under Node 24) and upcoming runner-image migration. The runs succeeded;

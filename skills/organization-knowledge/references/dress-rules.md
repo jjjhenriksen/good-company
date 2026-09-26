@@ -81,4 +81,3 @@ logistics; they have NOT passed the rules check. Before presenting an event as
 rule-checked, establish its event type and intended role and run the resolver.
 Do not clear dress-related `missing` fields without a supported result or an
 explicit, documented coordinator resolution.
-
