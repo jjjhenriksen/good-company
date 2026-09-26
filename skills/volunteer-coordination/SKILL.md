@@ -97,3 +97,12 @@ windows and prior provider attempts. Preserve history by cancelling the old task
 and adding an explicitly authorized replacement with a new ID, after verifying
 availability for the new window. Never rewrite attempted notices or infer new
 availability from old assignments. Impact reports are private operator output.
+
+## Overdue work
+
+Use `overdue-tasks {}` to surface open tasks whose window has ended. Repeated
+checks are read-only and never infer completion or release capacity. Use
+`follow-up-task` with a verified reference, note and explicit outcome: still_open,
+completed or cancelled. The latter two use the existing lifecycle transition and
+stop unsent notices. Keep follow-up notes private; do not infer reliability from
+missing outcomes or missed windows.
