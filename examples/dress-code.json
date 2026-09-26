@@ -1,0 +1,32 @@
+{
+  "source": "demo://fictional-club-dress-code",
+  "authority": "Fictional demo fixture; not approval for live organization data",
+  "rules": [
+    {
+      "id": "service-members",
+      "event_type": "service activity",
+      "role": "member",
+      "attire": "The demo club shirt, comfortable trousers, and closed-toe shoes.",
+      "issuing_body": "Fictional Demo Club",
+      "section": "Service activities, section 2",
+      "version": "Fictional 2026 example",
+      "effective_from": "2026-01-01",
+      "effective_until": "2027-01-01",
+      "review_by": "2026-12-31",
+      "audience": "volunteer"
+    },
+    {
+      "id": "service-adults",
+      "event_type": "service activity",
+      "role": "adult volunteer",
+      "attire": "A plain shirt, comfortable trousers, and closed-toe shoes.",
+      "issuing_body": "Fictional Demo Club",
+      "section": "Service activities, section 3",
+      "version": "Fictional 2026 example",
+      "effective_from": "2026-01-01",
+      "effective_until": "2027-01-01",
+      "review_by": "2026-12-31",
+      "audience": "volunteer"
+    }
+  ]
+}

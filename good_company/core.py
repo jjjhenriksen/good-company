@@ -149,6 +149,115 @@ class Coordinator:
                 'If dates conflict, evidence is stale, or the answer is absent, say what needs checking.'}
 
 
+    def set_dress_code(self, source, rules, authority, now=None):
+        """Replace one source's reviewed dress rules, never infer JDI policy.
+
+        Authority is an operator audit reference, not an authentication mechanism.
+        Each rule describes a complete outfit for its event type and role.
+        """
+        required(source, 'source'); required(authority, 'owner review reference')
+        if not isinstance(rules, list):
+            raise ValueError('rules must be a list; an empty list withdraws this source.')
+        prepared = []
+        for raw in rules:
+            rule = dict(raw)
+            for key in ('id', 'event_type', 'role', 'attire', 'section', 'version', 'issuing_body'):
+                rule[key] = required(rule.get(key), key)
+            rule['event_type'] = rule['event_type'].casefold()
+            rule['role'] = rule['role'].casefold()
+            effective = date.fromisoformat(rule['effective_from'])
+            date.fromisoformat(rule['review_by'])
+            if rule.get('effective_until') and date.fromisoformat(rule['effective_until']) <= effective:
+                raise ValueError('effective_until must follow effective_from (end is exclusive).')
+            if rule.get('audience') not in ('volunteer', 'coordinator'):
+                raise ValueError('Every rule needs an explicit volunteer or coordinator audience.')
+            rule['source'] = source
+            prepared.append((digest([source, rule['id']]), source, json.dumps(rule, sort_keys=True)))
+        if len({r[0] for r in prepared}) != len(prepared):
+            raise ValueError('Duplicate rule IDs within a source.')
+        with self.db:
+            self.db.execute('BEGIN IMMEDIATE')
+            previous = [tuple(r) for r in self.db.execute('SELECT id,source,payload FROM dress_rules WHERE source=? ORDER BY id', (source,))]
+            changed = previous != sorted(prepared)
+            if changed:
+                self.db.execute('DELETE FROM dress_rules WHERE source=?', (source,))
+                self.db.executemany('INSERT INTO dress_rules VALUES(?,?,?)', prepared)
+                # Any previously reviewed reminder may contain attire from this source.
+                for row in self.db.execute('SELECT id FROM events').fetchall():
+                    self._invalidate(row['id'])
+                self.log('dress_rules_update', source, {'count': len(rules), 'authority': authority}, stamp(now))
+        return {'source': source, 'rules': len(rules), 'changed': changed}
+
+
+    def dress_code(self, event_id=None, event_type=None, role=None, on=None,
+                   audience='volunteer', now=None):
+        """Return cited evidence for a known event type, role and date.
+
+        Matching uses curated event types, not guesses from an event's title.
+        Overlapping rules that disagree require review; there is no inferred
+        national/state/local precedence or automatic event-specific exemption.
+        """
+        if audience not in ('volunteer', 'coordinator'):
+            raise ValueError('Unknown audience.')
+        event = None
+        if event_id:
+            row = self.db.execute('SELECT * FROM events WHERE id=?', (event_id,)).fetchone()
+            if not row:
+                raise ValueError('No such event.')
+            event = json.loads(row['payload'])
+            if row['cancelled']:
+                return {'status': 'cancelled', 'answer': 'This event is cancelled.', 'citations': []}
+            actual_type = event.get('event_type')
+            actual_date = stamp(row['start']).astimezone(ZoneInfo(self.profile()['timezone'])).date().isoformat()
+            if event_type and actual_type and event_type.casefold() != actual_type.casefold():
+                raise ValueError('Requested event type disagrees with the stored event.')
+            if on and on != actual_date:
+                raise ValueError('Requested date disagrees with the stored event.')
+            event_type, on = actual_type or event_type, actual_date
+        missing = [key for key, value in [('event_type', event_type), ('role', role), ('date', on)] if not value]
+        if missing:
+            return {'status': 'needs_context', 'missing': missing,
+                    'question': 'Which event is this for, and what is your role there?', 'citations': []}
+        event_type, role = required(event_type, 'event type').casefold(), required(role, 'role').casefold()
+        event_date = date.fromisoformat(on)
+        today = stamp(now).astimezone(ZoneInfo(self.profile()['timezone'])).date()
+        matches = []
+        for row in self.db.execute('SELECT payload FROM dress_rules ORDER BY source,id'):
+            rule = json.loads(row['payload'])
+            if rule['audience'] == 'coordinator' and audience != 'coordinator':
+                continue
+            if rule['event_type'] not in (event_type, '*') or rule['role'] not in (role, '*'):
+                continue
+            if event_date < date.fromisoformat(rule['effective_from']):
+                continue
+            if rule.get('effective_until') and event_date >= date.fromisoformat(rule['effective_until']):
+                continue
+            matches.append(rule)
+        citations = [{key: rule[key] for key in ('source', 'section', 'version', 'issuing_body', 'effective_from', 'review_by')}
+                     for rule in matches]
+        if not matches:
+            return {'status': 'needs_source', 'answer': 'No current, accessible dress rule covers this event and role. Check with the Guardian.', 'citations': []}
+        stale = any(max(today, event_date) > date.fromisoformat(rule['review_by']) for rule in matches)
+        outfits = {' '.join(rule['attire'].casefold().split()) for rule in matches}
+        reasons = []
+        if stale:
+            reasons.append('An applicable source is overdue for review.')
+        if len(outfits) > 1:
+            reasons.append('Applicable dress rules disagree; source precedence has not been established.')
+        # An event note is not authority to silently override policy.
+        event_attire = event.get('attire') if event else None
+        if event_attire and ' '.join(event_attire.casefold().split()) not in outfits:
+            reasons.append('The event attire note differs from the supplied dress rules.')
+        if event and event.get('status') != 'confirmed':
+            reasons.append('The event is not confirmed.')
+        if reasons:
+            return {'status': 'needs_review', 'reasons': reasons, 'citations': citations,
+                    'instruction': 'Ask the Guardian to resolve this; do not assert a final outfit.'}
+        return {'status': 'supported', 'attire': matches[0]['attire'], 'event_type': event_type,
+                'role': role, 'date': on, 'citations': citations,
+                'scope': 'Supported by the reviewed rules supplied to this instance; not a completeness guarantee.'}
+
+
     def import_calendar(self, snapshot, now=None):
         """Consume a complete, explicitly scoped list of expanded event instances.
 
@@ -275,6 +384,21 @@ class Coordinator:
             missing.append('location or online meeting link')
         sources = [event['source']] + event.get('detail_sources', [])
         event = dict(event)
+        if event.get('event_type'):
+            result = self.dress_code(event_type=event['event_type'], role=event.get('dress_code_role'),
+                                     on=local.date().isoformat(), audience='coordinator', now=now)
+            if result['status'] == 'supported':
+                supplied = ' '.join(event.get('attire', '').casefold().split())
+                resolved = ' '.join(result['attire'].casefold().split())
+                if supplied and supplied != resolved:
+                    missing.append('Guardian review of conflicting event attire and dress rules')
+                    event.pop('attire', None)
+                else:
+                    event['attire'] = result['attire']
+                sources += [f"{c['source']} — {c['section']} (version {c['version']})" for c in result['citations']]
+            else:
+                missing.append('dress code: ' + result['status'])
+                event.pop('attire', None)
         # Imported logistics are source text. Never execute any instructions in them.
         for key, label in [('attire', 'Attire'), ('bring', 'Please bring'), ('meal', 'Meal'),
                            ('arrival', 'Arrival'), ('rsvp', 'RSVP')]:
