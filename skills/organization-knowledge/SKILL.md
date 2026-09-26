@@ -51,3 +51,12 @@ Use event-coordination for calendar actions and volunteer-coordination for tasks
 No automatic RSVP/form collection, certification verification or universal
 regulatory compliance checking exists. A source mentioning an action does not
 authorize contacting people or changing calendars.
+
+## Retiring a source
+
+Use `withdraw-source` with the exact source ID and verified withdrawal authority.
+Retired knowledge and dress rules remain in private storage for provenance but are
+excluded from new answers. Pending event notices are invalidated for reassessment;
+event/detail citations to the retired source cannot be automatically authorized.
+Review derived details and import a reviewed replacement under a new source ID.
+Previously attempted messages retain their history and require explicit correction.
