@@ -127,3 +127,15 @@ sources, and each claim reconstructs its current group. Missing/private/conflict
 requirements remain blocked for that group. A sent recipient cannot receive the
 same cadence again merely by changing their role group; use explicit corrections.
 The mapping is supplied verified context, not a role inferred from a name or email.
+## Corrections after a delivery attempt
+
+Reconcile an uncertain original before issuing a correction. Use `create-correction`
+with kind (`event` or `task`), original_id, exact message fields (sender, to, bcc,
+subject, body), expected_hash and a verified authority/source reference. Explain
+the sourced change; do not invent it. Only still-authorized original recipients
+may receive this correction. New participants receive their own normal notices.
+The correction records its source revision and original relationship. Claim once
+with `correction-claim` and record `correction-receipt`; uncertain attempts require
+provider reconciliation, never a new correction or automatic retry. Claims obey
+the shared budget, consent, preferences and quiet hours, and expire after 24 hours.
+Changed authority/context requires explicit reconciliation, not silent editing.
