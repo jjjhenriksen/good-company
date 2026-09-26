@@ -187,7 +187,7 @@ class Coordinator:
                 'If dates conflict, evidence is stale, or the answer is absent, say what needs checking.'}
 
     def set_dress_code(self, source, rules, authority, now=None):
-        """Replace one source's reviewed dress rules, never infer JDI policy.
+        """Replace one source's reviewed dress rules, never infer organizational policy.
 
         Authority is an operator audit reference, not an authentication mechanism.
         Each rule describes a complete outfit for its event type and role.
@@ -272,7 +272,7 @@ class Coordinator:
         citations = [{key: rule[key] for key in ('source', 'section', 'version', 'issuing_body', 'effective_from', 'review_by')}
                      for rule in matches]
         if not matches:
-            return {'status': 'needs_source', 'answer': 'No current, accessible dress rule covers this event and role. Check with the Guardian.', 'citations': []}
+            return {'status': 'needs_source', 'answer': 'No current, accessible dress rule covers this event and role. Check with the coordinator.', 'citations': []}
         stale = any(max(today, event_date) > date.fromisoformat(rule['review_by']) for rule in matches)
         outfits = {' '.join(rule['attire'].casefold().split()) for rule in matches}
         reasons = []
@@ -288,7 +288,7 @@ class Coordinator:
             reasons.append('The event is not confirmed.')
         if reasons:
             return {'status': 'needs_review', 'reasons': reasons, 'citations': citations,
-                    'instruction': 'Ask the Guardian to resolve this; do not assert a final outfit.'}
+                    'instruction': 'Ask the coordinator to resolve this; do not assert a final outfit.'}
         return {'status': 'supported', 'attire': matches[0]['attire'], 'event_type': event_type,
                 'role': role, 'date': on, 'citations': citations,
                 'scope': 'Supported by the reviewed rules supplied to this instance; not a completeness guarantee.'}
@@ -455,7 +455,7 @@ class Coordinator:
                 supplied = ' '.join(event.get('attire', '').casefold().split())
                 resolved = ' '.join(result['attire'].casefold().split())
                 if supplied and supplied != resolved:
-                    missing.append('Guardian review of conflicting event attire and dress rules')
+                    missing.append('Coordinator review of conflicting event attire and dress rules')
                     event.pop('attire', None)
                 else:
                     event['attire'] = result['attire']

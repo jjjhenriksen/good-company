@@ -1,17 +1,17 @@
 # Good Company
 
-**An executive assistant to an overworked Bethel Guardian.**
+**An executive assistant for overworked nonprofit and community coordinators.**
 
 Good Company is an OpenClaw agent that helps a community leader stop carrying
-all the remembering, explaining, assigning and following up. The Guardian sets
+all the remembering, explaining, assigning and following up. The coordinator sets
 its remit once: trusted documents, calendar scope, volunteer team, sending account
 and communication cadence. The intended connected workflow runs routine work
 without per-message approval; that end-to-end integration is not yet verified.
-The same model can adapt to other small volunteer-led organizations.
+The persona and workflows use each organization’s own roles and supplied policies.
 
 A member asks “What do I wear?” The agent checks the event, the person's role,
 and the applicable supplied dress rules, then gives a direct answer with a
-citation. The Guardian supplies a todo list. It allocates work using stated
+citation. The coordinator supplies a todo list. It allocates work using stated
 skills, preferences, eligibility, availability and workload, queues notices and
 reminders, and finds a replacement after a verified decline.
 
@@ -19,7 +19,7 @@ reminders, and finds a replacement after a verified decline.
 
 - **Organizational knowledge:** document chunking and SQLite FTS5/BM25 retrieval,
   source/section citations, source replacement and audience filtering. OpenClaw
-  generates answers from that evidence; no JDI rules are invented or bundled.
+  generates answers from that evidence; no organization-specific rules are invented or bundled.
 - **Dress rules:** reviewed rules with issuing body, section, version, event type,
   role, effective dates and review deadline. Conflicts, missing context and expired
   rules produce explicit unresolved states. Supported attire flows into reminders.
@@ -36,7 +36,7 @@ reminders, and finds a replacement after a verified decline.
   completion/cancellation handling and reassignment after verified declines.
 - **Delivery state:** atomic claims and real provider receipts; uncertain outcomes
   are reconciled rather than blindly retried. Queued does not mean sent.
-- **Deployment package:** digest-pinned Plow base, agent persona, three skills,
+- **Deployment package:** digest-pinned Plow base, agent persona, four skills,
   MIT license, install guide and optional remote image build workflow.
 
 **The initial snapshot passed 51 behavior tests locally.**
@@ -45,8 +45,8 @@ acceptance gaps. Run the suite for the current checkout rather than treating
 this baseline count as its latest result. The combined audit changes passed 70 tests on Python 3.11–3.13 in
 [GitHub CI](https://github.com/jjjhenriksen/good-company/actions/runs/36217186171).
 The [remote image build and packaged-engine smoke test](https://github.com/jjjhenriksen/good-company/actions/runs/36217167986)
-also passed at integration commit `3254ee9`. Those changes are proposed in open
-PRs. The full Plow runtime has not been booted or texted, no operational scheduler
+also passed at integration commit `3254ee9`. All five audit PRs are now merged
+into `main`. The full Plow runtime has not been booted or texted, no operational scheduler
 has been enabled, and no live calendar sync or email send has been verified.
 
 ## Try it without credentials
@@ -84,12 +84,19 @@ persistent path. Do not put real member information in this repository.
 
 ## Agent workflows
 
-- [Autonomous Guardian](skills/autonomous-guardian/SKILL.md): standing remit,
-  volunteer profiles, task allocation, notices, cadence and unattended loop.
-- [Guardian support](skills/guardian-support/SKILL.md): what-to-wear questions,
-  rule extraction and sourced event preparation.
-- [Community coordinator](skills/community-coordinator/SKILL.md): document
-  retrieval, calendar normalization, reminder state and provider receipts.
+- [Community operations](skills/community-operations/SKILL.md): setup, standing
+  remit, recurring loop, pause and operating brief.
+- [Event coordination](skills/event-coordination/SKILL.md): scoped calendars,
+  scheduling conflicts, reminders and delivery receipts.
+- [Volunteer coordination](skills/volunteer-coordination/SKILL.md): opted-in
+  profiles, task fit, assignments, declines and completion.
+- [Organization knowledge](skills/organization-knowledge/SKILL.md): cited
+  handbook/procedure answers and supplied role-specific dress rules.
+
+[Adaptation guide](docs/ADAPTING.md): examples for food banks, arts nonprofits,
+mutual aid, nonprofit boards and youth organizations, plus the skill migration map.
+Job’s Daughters and the Bethel Guardian role are an intended use case, not a
+built-in organizational model.
 
 ## Deployment and remaining work
 
@@ -117,14 +124,18 @@ provide unattended delivery; the agent must report the limitation.
 This is a trusted single-organization assistant. The inherited runtime shell and
 shared files are powerful; prompt-level audience filtering is not isolation from
 hostile users. A public/member-facing deployment needs separately restricted
-identities and tools. The current image should run as the Guardian's trusted
-assistant, not as an unrestricted public youth chatbot.
+identities and tools. The current image should run as the coordinator's trusted
+assistant. Participant-facing access needs enforced identity and tool boundaries.
 
 “Strengths and weaknesses” means stated task fit, skill gaps, preferences and
 capacity. The allocator does not infer personal/sensitive traits or publicly rank
 people. Required roles are supplied by the authoritative roster; the software
 does not itself verify certifications. Its ranking is a simple deterministic
 heuristic, not global schedule optimization.
+
+Automatic typed event reminders currently require a supported dress rule, even
+when attire is irrelevant. Separating those concerns is a priority in the roadmap;
+do not invent rules to make a no-dress-policy event pass.
 
 The engine supports one event-reminder audience per instance, complete normalized
 calendar JSON, and immutable task definitions. Different event mailing lists,

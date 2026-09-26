@@ -100,7 +100,7 @@ plow-agents image push ghcr.io/YOUR_ACCOUNT/good-company:v2 --promote good-compa
 5. Supply a todo list; show suitable task allocation and reassignment after a verified decline.
 6. Change another event's location; show the old draft is superseded.
 7. Run the queue again; show no duplicate send.
-8. Close with the actual installation steps and how the Guardian configures or pauses the remit.
+8. Close with the actual installation steps and how the coordinator configures or pauses the remit.
 
 ## Source references checked
 
