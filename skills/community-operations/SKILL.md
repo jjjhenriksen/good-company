@@ -119,3 +119,14 @@ DST, in addition to organization quiet hours. A shared message waits if any
 recipient is outside their window; no recipients are silently dropped. Deferred
 notices remain queued and expire normally. Preferences never restore consent.
 Cadence counts attempts, including ambiguous ones, across both notice types.
+
+## Shared daily budget
+
+`max_reminders_per_day` now caps all event and task provider attempts together,
+including failed/ambiguous attempts and claims made before upgrade. It resets at
+organization-local midnight and is reserved inside the same transaction as the
+claim. Read `communication-budget {}` to explain remaining capacity and reset time.
+Leave deferred work queued; existing expiry rules still apply. Summarize the
+backlog and surface time-sensitive corrections to the owner rather than silently
+dropping them or sending an extra digest outside the budget. Changes to the limit
+require the owner's standing authority. There is no automatic urgency bypass.
