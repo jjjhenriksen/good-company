@@ -204,7 +204,7 @@ class Coordinator:
         end = start + timedelta(days=1)
         # Audit claims predate the shared ledger, so include them in upgrades.
         count = self.db.execute("""SELECT count(*) FROM audit
-          WHERE action IN ('send_claim','task_notice_claim') AND at>=? AND at<?""",
+          WHERE action IN ('send_claim','task_notice_claim','correction_claim') AND at>=? AND at<?""",
                                 (iso(start), iso(end))).fetchone()[0]
         if count >= policy['max_reminders_per_day']:
             raise ValueError('Deferred: shared daily communication budget reached; leave queued and report the backlog.')
@@ -218,7 +218,7 @@ class Coordinator:
         start = datetime.combine(now.astimezone(zone).date(), time.min, zone)
         end = start + timedelta(days=1)
         used = self.db.execute("""SELECT count(*) FROM audit
-          WHERE action IN ('send_claim','task_notice_claim') AND at>=? AND at<?""",
+          WHERE action IN ('send_claim','task_notice_claim','correction_claim') AND at>=? AND at<?""",
                                (iso(start), iso(end))).fetchone()[0]
         return {'configured': True, 'limit': policy['max_reminders_per_day'], 'used': used,
                 'remaining': max(0, policy['max_reminders_per_day'] - used), 'resets_at': iso(end),
