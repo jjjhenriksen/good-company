@@ -168,3 +168,11 @@ Record `missing_credentials` only from a trusted connection observation; never
 copy secrets into evidence. `notify` recommends a concise owner update on changed
 failures or recovery. Repeated unchanged states are quiet. No alert is sent by this
 command; delivery still requires the owner's authorized channel and budget.
+
+`weekly-brief` takes week_start (ISO date) and exports confirmed participation and
+minutes for that seven-day period, upcoming work for the following week, and
+current unresolved delivery counts. The export is aggregate and contains no
+participant IDs, recipient lists or assessments. It reflects the latest authorized
+corrections and includes an audit revision. Missing/disputed/unsupplied outcomes
+remain explicit; do not treat absence of records as zero attendance or count sent
+messages as completed work. Sending a brief requires separate standing authority.

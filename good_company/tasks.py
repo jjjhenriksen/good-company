@@ -326,3 +326,7 @@ class WorkCoordinator(Coordinator):
     def participation_history(self, record_id):
         from .participation import history
         return history(self, record_id)
+
+    def weekly_brief(self, week_start):
+        from .reporting import weekly
+        return weekly(self, week_start)
