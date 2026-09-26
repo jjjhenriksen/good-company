@@ -318,3 +318,11 @@ class WorkCoordinator(Coordinator):
             self.db.execute("UPDATE task_notices SET status='cancelled' WHERE status='pending' AND assignment_id IN (SELECT id FROM assignments WHERE task_id=?)", (task_id,))
             self.log('task_' + status, task_id, {'authority': authority}, stamp(now))
         return {'task_id': task_id, 'status': status}
+
+    def add_shift(self, shift, authority, now=None):
+        from .shifts import add_shift
+        return add_shift(self, shift, authority, now)
+
+    def shift_status(self, shift_id):
+        from .shifts import status
+        return status(self, shift_id)

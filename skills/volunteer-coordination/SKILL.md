@@ -97,3 +97,14 @@ windows and prior provider attempts. Preserve history by cancelling the old task
 and adding an explicitly authorized replacement with a new ID, after verifying
 availability for the new window. Never rewrite attempted notices or infer new
 availability from old assignments. Impact reports are private operator output.
+
+## Staffed shifts
+
+Use `add-shift` with id, title, capacity and explicit `slots`. Every slot contains
+the normal task fields (including roles/ANY-or-ALL, skills and qualifications);
+capacity must equal its slot count. Slots become immutable tasks with IDs
+`shift-id:slot-id`. Existing atomic allocation enforces one volunteer per slot,
+non-overlap and workload capacity across shifts. Repeat identical setup is safe.
+Use `shift-status` for filled and unfilled capacity. Allocation is not an accepted
+signup or attendance. Declines use the exact assignment ID; replacement still
+passes every task eligibility check. Never silently weaken staffing requirements.
