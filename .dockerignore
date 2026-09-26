@@ -10,3 +10,6 @@
 !skills/**
 !scripts/
 !scripts/good-company
+!examples/
+!examples/*.json
+!examples/*.md
