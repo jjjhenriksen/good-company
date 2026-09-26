@@ -198,7 +198,7 @@ class Coordinator:
     def _check_communication_budget(self, now):
         policy = self.autonomy()
         if not policy:
-            raise ValueError('Configure a communication budget before sending.')
+            return  # Preserve legacy individually approved sends without a standing remit.
         zone = ZoneInfo(self.profile()['timezone'])
         start = datetime.combine(now.astimezone(zone).date(), time.min, zone)
         end = start + timedelta(days=1)
