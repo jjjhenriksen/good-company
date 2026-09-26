@@ -195,6 +195,35 @@ class Coordinator:
             if last and now - stamp(last) < timedelta(hours=prefs['min_interval_hours']):
                 raise ValueError('Deferred: recipient communication cadence; leave the notice queued.')
 
+    def _check_communication_budget(self, now):
+        policy = self.autonomy()
+        if not policy:
+            return  # Preserve legacy individually approved sends without a standing remit.
+        zone = ZoneInfo(self.profile()['timezone'])
+        start = datetime.combine(now.astimezone(zone).date(), time.min, zone)
+        end = start + timedelta(days=1)
+        # Audit claims predate the shared ledger, so include them in upgrades.
+        count = self.db.execute("""SELECT count(*) FROM audit
+          WHERE action IN ('send_claim','task_notice_claim') AND at>=? AND at<?""",
+                                (iso(start), iso(end))).fetchone()[0]
+        if count >= policy['max_reminders_per_day']:
+            raise ValueError('Deferred: shared daily communication budget reached; leave queued and report the backlog.')
+
+    def communication_budget(self, now=None):
+        now = stamp(now)
+        policy = self.autonomy()
+        if not policy:
+            return {'configured': False}
+        zone = ZoneInfo(self.profile()['timezone'])
+        start = datetime.combine(now.astimezone(zone).date(), time.min, zone)
+        end = start + timedelta(days=1)
+        used = self.db.execute("""SELECT count(*) FROM audit
+          WHERE action IN ('send_claim','task_notice_claim') AND at>=? AND at<?""",
+                               (iso(start), iso(end))).fetchone()[0]
+        return {'configured': True, 'limit': policy['max_reminders_per_day'], 'used': used,
+                'remaining': max(0, policy['max_reminders_per_day'] - used), 'resets_at': iso(end),
+                'backlog': 'Leave deferred notices queued; report time-sensitive work to the owner. Never bypass consent or quiet hours.'}
+
     def _record_contacts(self, kind, notice_id, message, now):
         self.db.executemany('INSERT INTO communication_claims VALUES(?,?,?,?)',
                            [(kind, notice_id, address.casefold(), iso(now)) for address in
@@ -676,6 +705,7 @@ class Coordinator:
             hour = now.astimezone(ZoneInfo(self.profile()['timezone'])).hour
             if not 7 <= hour < 21:
                 raise ValueError('Quiet hours: do not send before 7am or after 9pm.')
+            self._check_communication_budget(now)
             self._check_contacts(item['message'], now)
             self._record_contacts('event', rid, item['message'], now)
             self.db.execute("UPDATE reminders SET status='sending',claimed_at=? WHERE id=?", (iso(now), rid))
