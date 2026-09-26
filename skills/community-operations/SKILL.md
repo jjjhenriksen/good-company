@@ -112,6 +112,22 @@ Keep a short operating brief: upcoming work, confirmed assignments, successful
 provider receipts, unresolved exceptions and the next action. Stay quiet when
 nothing changes. A saved schedule or queue entry is not evidence of delivery.
 
+## Show readiness
+
+Use `readiness {}` during onboarding and after each cycle. Summarize its reasons,
+calendar freshness, last scheduler observation and delivery counts. Queued means
+pending work; provider acceptance does not establish receipt by a person, and
+unknown delivery needs reconciliation.
+
+After actually checking the connected calendar/mail tools or observing a scheduler
+execution, use `record-connection` with component (`calendar`, `mail`, `scheduler`),
+status (`verified`, `unavailable`, `unknown`), checked_at and a private evidence
+reference. For scheduler, verify execution, not merely a saved job. For mail,
+verify the actual configured sender and unattended permissions. For calendar,
+verify the exact scopes. Never record a fixture as a live observation. These are
+trusted-operator attestations, not authentication. They expire after 30 minutes
+and a changed remit requires new verification. Readiness never echoes evidence
+references, addresses, calendar identifiers or document contents.
 ## Stop requests
 
 After verifying the participant identity through the connected account, call
