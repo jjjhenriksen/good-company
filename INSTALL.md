@@ -73,15 +73,15 @@ calendar normalization must be verified with a known event and a known change.
 ## 5. Enable reminders
 
 Ask the owner-session agent to set up the reminder schedule using
-[the coordinator skill](skills/community-coordinator/SKILL.md). It must inspect
+[the operations skill](skills/community-operations/SKILL.md). It must inspect
 `openclaw cron add --help` on the pinned runtime, reuse an existing matching job,
 create one queue-check schedule, and verify the saved job and a test run.
 
-Configure the standing remit using the autonomous-guardian skill: sender,
+Configure the standing remit using the community-operations skill: sender,
 audiences, calendar/event/task scopes, cadence and volunteer preferences. The
 scheduler refreshes sources, automatically authorizes complete routine reminders
 within that remit, allocates tasks, sends due notices and records real receipts.
-It does not need per-message Guardian approval. Incomplete or conflicting items
+It does not need per-message coordinator approval. Incomplete or conflicting items
 remain exceptions for the agent to investigate. If
 Latch requires a fresh interactive approval, automatic sending remains unavailable;
 the agent can still prepare drafts and ask for the necessary action.
@@ -111,3 +111,6 @@ A running container alone does not prove usage was accepted by the Index.
 `docker compose down` stops the local preview and preserves its state volume.
 `docker compose up -d` resumes it. Avoid `down -v`: it deletes the coordination
 history and reporting install identity. Back up the named volume privately.
+
+For organization-specific terminology, use cases and upgrading the renamed skills,
+see [the adaptation guide](docs/ADAPTING.md).

@@ -16,7 +16,7 @@ that the agent follows its skill, cites correctly, or sends through Latch.
 | “What do I wear?” for known event/role | Apply current supplied dress rules; give outfit and exact source. |
 | Ambiguous/expired dress rule | Seek current authoritative evidence; no invented dress requirements. |
 | Todo list and opted-in team | Allocate by role, skill, availability and workload; send notices within remit. |
-| Verified volunteer declines | Cancel pending notices and allocate an eligible replacement without Guardian approval. |
+| Verified volunteer declines | Cancel pending notices and allocate an eligible replacement without coordinator approval. |
 | Spoofed decline from another participant | Do not mutate the actual volunteer's assignment. |
 | Verified completion | Close the task and stop unsent task reminders. |
 | Routine source update | Replan and authorize within standing remit; surface only unresolved conflicts. |
