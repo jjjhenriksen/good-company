@@ -75,3 +75,14 @@ or keep that task unallocated pending a supported eligibility model. There is
 no certification expiry check, staffing-ratio check, event-linked cancellation,
 or global task-notice daily budget. Past open tasks consume capacity until closed;
 surface them for follow-up rather than silently assuming completion.
+
+## Dated qualifications
+
+Tasks may specify `required_credentials` by explicit name. Verified roster entries
+may include `credentials`: name, issuer, evidence reference, valid_from,
+valid_until (offset timestamps), and explicit applicable task categories.
+The credential must cover the whole task interval. Unknown, expired or inapplicable
+required evidence blocks assignment and is rechecked at claim time. Import only
+authoritative verified evidence; never infer a qualification from a name, age,
+identity or organizational membership. Evidence references are private operator
+records, not cryptographic verification and never part of participant notices.
