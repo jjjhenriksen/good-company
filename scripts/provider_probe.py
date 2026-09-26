@@ -2,6 +2,7 @@
 """Read-only Plow connected-tool discovery; never sends mail or prints credentials."""
 import json
 import os
+import sys
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -13,10 +14,15 @@ def probe():
         return {'ready': False, 'reason': 'missing_plow_connection_environment'}
     if urllib.parse.urlparse(base).scheme != 'https':
         return {'ready': False, 'reason': 'https_required'}
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None
+
+    opener = urllib.request.build_opener(NoRedirect)
     headers = {'Authorization': 'Bearer ' + token}
     try:
         request = urllib.request.Request(base.rstrip('/') + '/v1/agents/me', headers=headers)
-        with urllib.request.urlopen(request, timeout=15) as response:
+        with opener.open(request, timeout=15) as response:
             identity = json.load(response)
         url = identity.get('mcp_url')
         if not url or urllib.parse.urlparse(url).scheme != 'https':
@@ -24,13 +30,18 @@ def probe():
         headers.update({'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream'})
 
         def call(method, params, request_id):
-            data = json.dumps({'jsonrpc': '2.0', 'id': request_id, 'method': method, 'params': params}).encode()
+            envelope = {'jsonrpc': '2.0', 'method': method, 'params': params}
+            if request_id is not None:
+                envelope['id'] = request_id
+            data = json.dumps(envelope).encode()
             request = urllib.request.Request(url, data=data, headers=headers)
-            with urllib.request.urlopen(request, timeout=20) as response:
+            with opener.open(request, timeout=20) as response:
                 session = response.headers.get('Mcp-Session-Id')
                 if session:
                     headers['Mcp-Session-Id'] = session
                 raw = response.read(2_000_001)
+            if request_id is None:
+                return {}
             if len(raw) > 2_000_000:
                 raise ValueError('tool_catalog_too_large')
             text = raw.decode()
@@ -41,8 +52,10 @@ def probe():
                 raise ValueError('mcp_request_refused')
             return result['result']
 
-        call('initialize', {'protocolVersion': '2024-11-05', 'capabilities': {},
+        initialized = call('initialize', {'protocolVersion': '2024-11-05', 'capabilities': {},
                            'clientInfo': {'name': 'good-company-provider-probe', 'version': '0.1'}}, 1)
+        headers['MCP-Protocol-Version'] = initialized['protocolVersion']
+        call('notifications/initialized', {}, None)
         catalog = call('tools/list', {}, 2)
         return {'ready': False, 'discovery': 'reachable', 'tool_names': [tool['name'] for tool in catalog.get('tools', [])],
                 'next': 'Verify exact calendar/mail schemas, account identity and permissions before implementing the adapter. Discovery alone does not establish readiness.'}
@@ -53,4 +66,6 @@ def probe():
 
 
 if __name__ == '__main__':
-    print(json.dumps(probe(), indent=2))
+    result = probe()
+    print(json.dumps(result, indent=2))
+    sys.exit(0 if result.get('discovery') == 'reachable' else 2)
