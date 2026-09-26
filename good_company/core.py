@@ -86,6 +86,18 @@ class Coordinator:
         self.db.execute('INSERT INTO audit(at, action, object_id, detail) VALUES(?,?,?,?)',
                         (iso(now), action, object_id, json.dumps(detail)))
 
+    def export_summary(self, authority):
+        from .lifecycle import export_summary
+        return export_summary(self, authority)
+
+    def delete_source(self, source, authority, now=None):
+        from .lifecycle import delete_source
+        return delete_source(self, source, authority, now)
+
+    def retain_delivery_history(self, before, authority, now=None):
+        from .lifecycle import retain_delivery_history
+        return retain_delivery_history(self, before, authority, now)
+
     def configure(self, profile):
         for key in ('organization', 'timezone', 'greeting', 'signoff', 'audience'):
             required(profile.get(key), key)
