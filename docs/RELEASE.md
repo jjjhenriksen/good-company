@@ -9,7 +9,7 @@ Working identity:
 Repository: [jjjhenriksen/good-company](https://github.com/jjjhenriksen/good-company)
 (currently private). [Audit and fixes](AUDIT.md); [remaining work](ROADMAP.md).
 
-## Completed locally
+## Verified development checks
 
 - Original coordinator persona, workflow skill, persistence tools, and MIT license.
 - Fictional example knowledge and a credential-free demonstration.
@@ -20,7 +20,8 @@ Repository: [jjjhenriksen/good-company](https://github.com/jjjhenriksen/good-com
 
 ## Required before publication
 
-- [ ] Build Linux/amd64 image, boot on a selected free Plow line, and receive a real text reply.
+- [x] Build the combined audit image and smoke-test its packaged CLI/database remotely (integration commit `3254ee9`; see AUDIT.md).
+- [ ] Boot the full runtime on a selected free Plow line and receive a real text reply.
 - [ ] Verify inherited Latch capabilities with the intended calendar/mail accounts.
 - [ ] Verify one complete scoped calendar import and a changed/cancelled occurrence.
 - [ ] Configure standing instructions for a test audience; verify an automatic reminder and receipt without per-message review.

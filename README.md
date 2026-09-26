@@ -42,10 +42,12 @@ reminders, and finds a replacement after a verified decline.
 **The initial snapshot passed 51 behavior tests locally.**
 [The engineering audit](docs/AUDIT.md) records coverage, fix PRs and remaining
 acceptance gaps. Run the suite for the current checkout rather than treating
-this baseline count as its latest result. The Docker image has not been built or booted
-here: low local disk space blocked the base-image download. Plow login succeeded,
-but no line was claimed, listing published, scheduler enabled, live calendar
-synchronized or email sent. The integrated model/tool behavior remains unverified.
+this baseline count as its latest result. The combined audit changes passed 70 tests on Python 3.11–3.13 in
+[GitHub CI](https://github.com/jjjhenriksen/good-company/actions/runs/36217186171).
+The [remote image build and packaged-engine smoke test](https://github.com/jjjhenriksen/good-company/actions/runs/36217167986)
+also passed at integration commit `3254ee9`. Those changes are proposed in open
+PRs. The full Plow runtime has not been booted or texted, no operational scheduler
+has been enabled, and no live calendar sync or email send has been verified.
 
 ## Try it without credentials
 

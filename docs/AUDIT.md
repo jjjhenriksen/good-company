@@ -30,6 +30,31 @@ The task lifecycle defects are separately tracked as engineering correctness
 failures under the documented trusted-operator model. No public unauthenticated
 API was inferred. No actual email or private pilot document was used in testing.
 
+## Combined validation
+
+The five proposed PRs merge without conflicts on `audit/integration-check`.
+At commit `3254ee9a5cbef1a72bec8b0f77858d25f4b20682`:
+
+- 70 unique tests passed locally on Python 3.12.
+- [GitHub CI](https://github.com/jjjhenriksen/good-company/actions/runs/36217186171)
+  passed on Python 3.11, 3.12 and 3.13, including both demos, wheel installation
+  outside the checkout and Compose validation.
+- [Linux/amd64 image build and container smoke test](https://github.com/jjjhenriksen/good-company/actions/runs/36217167986)
+  passed. The smoke test exercised the installed CLI and SQLite engine with
+  networking disabled and the service entrypoint overridden.
+- Source credential-pattern checks found no matches; no live pilot inputs were
+  included. This is a scoped check, not a guarantee about arbitrary future files.
+
+No public image was pushed. No full Plow gateway boot, real model conversation,
+mail send, live calendar synchronization or Index registration was tested.
+`main` remains the baseline until the PRs are reviewed and merged. This validation
+branch is for checking the combined changes, not a separate release.
+
+GitHub reported deprecation advisories for the Actions' Node 20 declarations
+(running under Node 24) and upcoming runner-image migration. The runs succeeded;
+actions/runtime updates remain maintenance work. Security-scan token usage was
+not available from the tool result.
+
 ## Complete baseline file inventory
 
 | File | Review result / remaining boundary |
