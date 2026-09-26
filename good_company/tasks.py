@@ -44,6 +44,18 @@ class WorkCoordinator(Coordinator):
         for interval in v['availability']:
             if stamp(interval['start']) >= stamp(interval['end']):
                 raise ValueError('Availability end must follow start.')
+        credentials = v.get('credentials', [])
+        if not isinstance(credentials, list):
+            raise ValueError('credentials must be a list of verified evidence records.')
+        for credential in credentials:
+            if not isinstance(credential, dict):
+                raise ValueError('Each credential must be an object.')
+            for key in ('name', 'evidence', 'issuer'):
+                required(credential.get(key), 'credential ' + key)
+            if not stamp(credential['valid_from']) < stamp(credential['valid_until']):
+                raise ValueError('Credential validity must have a positive interval.')
+            if not isinstance(credential.get('categories'), list) or not credential['categories'] or any(not isinstance(c, str) or not c.strip() or c == '*' for c in credential['categories']):
+                raise ValueError('Credential categories must be explicit task categories.')
         with self.db:
             self.db.execute('INSERT OR REPLACE INTO volunteers VALUES(?,?)', (v['id'], json.dumps(v)))
             self.log('volunteer_update', v['id'], {'authority': authority}, stamp(now))
@@ -58,10 +70,23 @@ class WorkCoordinator(Coordinator):
             raise ValueError('Task end must follow start.')
         if not isinstance(t.get('eligible_roles'), list) or not t['eligible_roles']:
             raise ValueError('Supply the roles eligible for this task.')
+        if t.get('role_match', 'ANY') not in ('ANY', 'ALL'):
+            raise ValueError('role_match must be ANY or ALL.')
+        if any(not isinstance(role, str) or not role.strip() for role in t['eligible_roles']):
+            raise ValueError('Eligible roles must be explicit nonempty names.')
         if not isinstance(t.get('required_skills'), dict) or any(type(n) is not int or not 1 <= n <= 3 for n in t['required_skills'].values()):
             raise ValueError('required_skills must map skills to minimum proficiency 1–3.')
         if not isinstance(t.get('preferred_skills'), list):
             raise ValueError('preferred_skills must be a list.')
+        if t.get('event_id'):
+            event = self.db.execute('SELECT revision,payload,cancelled FROM events WHERE id=?', (t['event_id'],)).fetchone()
+            if not event or event['cancelled']:
+                raise ValueError('Link tasks only to an existing active event.')
+            t['event_revision'] = event['revision']
+            t['event_start'] = json.loads(event['payload'])['start']
+        credentials = t.get('required_credentials', [])
+        if not isinstance(credentials, list) or any(not isinstance(c, str) or not c.strip() for c in credentials):
+            raise ValueError('required_credentials must be a list of named qualifications.')
         with self.db:
             self.db.execute('BEGIN IMMEDIATE')
             old = self.db.execute('SELECT payload FROM tasks WHERE id=?', (t['id'],)).fetchone()
@@ -76,11 +101,60 @@ class WorkCoordinator(Coordinator):
           JOIN assignments a ON a.task_id=t.id WHERE a.volunteer_id=? AND a.status='assigned'
           AND t.status='open' AND t.id<>?''', (volunteer_id, excluding or ''))]
 
+    def _event_current(self, task):
+        if not task.get('event_id'):
+            return True
+        row = self.db.execute('SELECT revision,cancelled FROM events WHERE id=?', (task['event_id'],)).fetchone()
+        return bool(row and not row['cancelled'] and row['revision'] == task.get('event_revision'))
+
+    def task_impacts(self):
+        impacts = []
+        for row in self.db.execute("SELECT id,payload FROM tasks WHERE status='open'"):
+            task = json.loads(row['payload'])
+            if self._event_current(task):
+                continue
+            event = self.db.execute('SELECT revision,start,cancelled FROM events WHERE id=?', (task['event_id'],)).fetchone()
+            cancelled = not event or bool(event['cancelled'])
+            proposed = None
+            if not cancelled:
+                shift = stamp(event['start']) - stamp(task['event_start'])
+                proposed = {'start': iso(stamp(task['start']) + shift), 'end': iso(stamp(task['end']) + shift)}
+            attempts = self.db.execute("""SELECT n.id,n.status,n.receipt FROM task_notices n
+              JOIN assignments a ON a.id=n.assignment_id WHERE a.task_id=?
+              AND n.status IN ('sending','sent','uncertain','failed')""", (row['id'],)).fetchall()
+            impacts.append({'task_id': row['id'], 'event_id': task['event_id'],
+                            'reason': 'event_cancelled' if cancelled else 'event_changed',
+                            'proposed_window': proposed, 'attempts': [dict(a) for a in attempts],
+                            'next': 'Cancel the old task; for a changed event, verify availability and explicitly add a replacement with a new ID. Reconcile attempted notices separately.'})
+        return {'impacts': impacts}
+
+    def import_calendar(self, snapshot, now=None):
+        result = super().import_calendar(snapshot, now=now)
+        with self.db:
+            self.db.execute('BEGIN IMMEDIATE')
+            for row in self.db.execute("SELECT id,payload FROM tasks WHERE status='open'").fetchall():
+                if not self._event_current(json.loads(row['payload'])):
+                    self._retire_pending(row['id'])
+        return result | self.task_impacts()
+
+    def _credential_gaps(self, v, t):
+        return [name for name in t.get('required_credentials', [])
+                if not any(c['name'] == name and t['category'] in c['categories']
+                           and stamp(c['valid_from']) <= stamp(t['start'])
+                           and stamp(c['valid_until']) >= stamp(t['end'])
+                           for c in v.get('credentials', []))]
+
     def _eligible(self, v, t, policy):
         workload = self._workload(v['id'], t['id'])
+        if not self._event_current(t):
+            return False
+        if not self.contact_allowed(v['email']) or self._credential_gaps(v, t):
+            return False
         if not v['accepts_delegation'] or v['email'] not in policy['allowed_recipients']:
             return False
-        if t['category'] in v['avoid_categories'] or not set(t['eligible_roles']) & set(v['roles']):
+        roles, required_roles = set(v['roles']), set(t['eligible_roles'])
+        matches = required_roles <= roles if t.get('role_match', 'ANY') == 'ALL' else bool(required_roles & roles)
+        if t['category'] in v['avoid_categories'] or not matches:
             return False
         if any(v['skills'].get(skill, 0) < level for skill, level in t['required_skills'].items()):
             return False
@@ -102,6 +176,10 @@ class WorkCoordinator(Coordinator):
           WHERE task_notices.status IN ('pending','cancelled')""",
                         (aid, assignment_id, kind, iso(due), json.dumps(message)))
 
+    def _retire_pending(self, task_id):
+        self.db.execute("""UPDATE task_notices SET status='cancelled' WHERE status='pending'
+          AND assignment_id IN (SELECT id FROM assignments WHERE task_id=?)""", (task_id,))
+
     def delegate(self, now=None):
         now = stamp(now)
         made, exceptions = [], []
@@ -118,25 +196,37 @@ class WorkCoordinator(Coordinator):
             volunteers = [json.loads(r[0]) for r in self.db.execute('SELECT payload FROM volunteers ORDER BY id')]
             tasks = sorted([json.loads(r[0]) for r in self.db.execute("SELECT payload FROM tasks WHERE status='open'")], key=lambda t: (stamp(t['start']), t['id']))
             for t in tasks:
+                if not self._event_current(t):
+                    self._retire_pending(t['id'])
+                    exceptions.append({'task_id': t['id'], 'reason': 'Linked event changed; review task_impacts and verified availability.'})
+                    continue
                 if stamp(t['start']) <= now:
+                    self._retire_pending(t['id'])
                     continue
                 if t['category'] not in policy['allowed_task_categories']:
+                    self._retire_pending(t['id'])
                     exceptions.append({'task_id': t['id'], 'reason': 'Task category is outside standing instructions.'})
                     continue
                 existing = self.db.execute("SELECT * FROM assignments WHERE task_id=? AND status='assigned'", (t['id'],)).fetchone()
                 if existing:
                     v = next((v for v in volunteers if v['id'] == existing['volunteer_id']), None)
                     if not v or not self._eligible(v, t, policy):
+                        self._retire_pending(t['id'])
                         exceptions.append({'task_id': t['id'], 'reason': 'An existing assignment needs reconciliation after availability or role changed.'})
                         continue
                     assignment_id = existing['id']
                     self.db.execute('UPDATE assignments SET policy_hash=? WHERE id=?', (digest(policy), assignment_id))
                     self._notice(assignment_id, t, v, 'assignment', now, policy)
+                    # Include overdue notices that fall outside the cadence creation
+                    # window. Only never-attempted rows may get new routing.
+                    for pending in self.db.execute("SELECT kind,due FROM task_notices WHERE assignment_id=? AND status='pending'", (assignment_id,)).fetchall():
+                        if pending['kind'] in allowed_kinds:
+                            self._notice(assignment_id, t, v, pending['kind'], pending['due'], policy)
                 else:
                     declined = {r[0] for r in self.db.execute("SELECT volunteer_id FROM assignments WHERE task_id=? AND status='declined'", (t['id'],))}
                     candidates = [v for v in volunteers if v['id'] not in declined and self._eligible(v, t, policy)]
                     if not candidates:
-                        exceptions.append({'task_id': t['id'], 'reason': 'No eligible, available volunteer has capacity.'})
+                        exceptions.append({'task_id': t['id'], 'reason': ('Required credential evidence is missing, expired or inapplicable.' if t.get('required_credentials') and all(self._credential_gaps(v, t) for v in volunteers) else 'No eligible, available volunteer has capacity.')})
                         continue
                     def rank(v):
                         matches = sum(v['skills'].get(s, 0) for s in t['preferred_skills'])
@@ -188,6 +278,9 @@ class WorkCoordinator(Coordinator):
             message = json.loads(notice['message'])
             if message['sender'] != policy['sender'] or message['to'] != [v['email']]:
                 raise ValueError('The sending account or volunteer address changed; reconcile the notice.')
+            self._check_communication_budget(now)
+            self._check_contacts(message, now)
+            self._record_contacts('task', notice_id, message, now)
             self.db.execute("UPDATE task_notices SET status='sending' WHERE id=?", (notice_id,))
             self.log('task_notice_claim', notice_id, {'policy_hash': digest(policy)}, now)
         return {'id': notice_id, 'message': message, 'instruction': 'Send exactly once through the configured sender; record the real provider receipt.'}

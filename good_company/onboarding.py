@@ -2,9 +2,10 @@
 import json
 from .core import digest, required, stamp
 from .tasks import WorkCoordinator
+from .corrections import CorrectionCoordinator
 
 
-class SetupCoordinator(WorkCoordinator):
+class SetupCoordinator(CorrectionCoordinator):
     def onboarding(self, profile=None, policy=None, authority=None, apply=False):
         """Preview a complete remit before applying it in one transaction.
 
