@@ -60,3 +60,14 @@ excluded from new answers. Pending event notices are invalidated for reassessmen
 event/detail citations to the retired source cannot be automatically authorized.
 Review derived details and import a reviewed replacement under a new source ID.
 Previously attempted messages retain their history and require explicit correction.
+
+## General document versions
+
+`ingest` accepts optional metadata: version, original_source, effective_from,
+effective_until (optional, exclusive), review_by, and review_authority. Supply
+these from reviewed sources; never invent missing dates. Versions are immutable
+and prior content remains in a private archive. `retrieve` accepts `on` for a
+requested date and reports expired reviews, absent applicable versions, and
+overlapping versions as gaps. Legacy documents remain marked as having unknown
+review metadata; do not assert current requirements from that status. Current
+source privacy also protects archived versions after a source is reclassified.
