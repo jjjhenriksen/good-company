@@ -50,6 +50,19 @@ credential file). A passing result only checks syscall support. An `openat2`
 `Function not implemented` failure means this Linux emulation cannot run the pinned
 OpenClaw state filesystem. Use a compatible Linux host. Do not bypass filesystem
 containment, repeatedly reset the state volume, or count the build as a live boot.
+For the tested native Apple Silicon preview, add `-f compose.arm64.yml` to the
+Compose command after `-f compose.yml`. For example:
+
+```sh
+docker compose -f compose.yml -f compose.arm64.yml build agent
+docker compose -f compose.yml -f compose.arm64.yml run --rm --no-deps --entrypoint python3 agent /opt/good-company/runtime_preflight.py
+```
+
+Use the same file pair for startup, logs, stop and restart. Mint the selected Plow
+line's credential with `plow-agents mint LINE_ID`, then start this native Compose
+configuration directly; the generic `deploy --local` command uses the default
+AMD64 file. The native path passed boot, actual model-response and restart-state
+checks; connected calendar/mail remains unverified.
 The initial Apple Silicon x86-emulation attempt hit this failure; see
 [the runtime evidence](docs/RUNTIME-VALIDATION.md).
 

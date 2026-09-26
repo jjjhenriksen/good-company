@@ -1,6 +1,6 @@
 # Runtime acceptance attempt — 2026-09-26
 
-Related issue: #7. **Not accepted; live runtime validation remains blocked.**
+Related issue: #7. The initial emulated boot failed; a pinned native ARM64 candidate subsequently booted and answered through the real Plow model.
 
 A private local Plow deployment on an available line successfully built the pinned
 base and created the service with a new dedicated state volume. The service
@@ -30,3 +30,24 @@ then observe boot, available tools, one real model response, and state after
 restart. Keep line identifiers, credentials, account addresses and private logs
 outside this repository. Do not mark downstream delivery/publication checks done
 on the strength of this build or a fixture.
+
+## Native ARM64 verification
+
+A separate native build avoids the unsupported emulation syscall. It uses the
+same Plow source, the official OpenClaw 2026.9.6 ARM64 manifest, and the official
+agentsview 0.44.0 ARM64 artifact verified against its release SHA-256. The original
+AMD64 Dockerfile remains available for compatible Linux hosts.
+
+- Candidate source: `34e3a3c` (committed native preview build)
+- Local immutable image ID: `sha256:04df13977cbe575be23f19ca9589c6b6c2a013d5a993ec7c3aba7a5fbbc1535c`
+- Native preflight: Linux aarch64, `openat2` available
+- Gateway: reached ready; Plow channel connected
+- Model: real `plow/z-ai/glm-5.2` response, successful run recorded privately
+- State: fictional organization profile survived a service restart; sending authority remained unconfigured
+- Owner: uid/gid 1000; local Good Company tool executed successfully
+
+The initial model response identified itself as Good Company. No external message
+was delivered. Latch instructions remained unavailable, so this does not establish
+calendar/mail acceptance, Agent Index registration, public release or unattended
+scheduler delivery. The image ID identifies a local built artifact, not a public
+registry manifest. Provider and publication work remains separate.
