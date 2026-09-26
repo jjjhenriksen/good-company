@@ -50,6 +50,8 @@ class Coordinator:
         self.db.executescript('''
         PRAGMA foreign_keys=ON;
         CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS contact_consent(
+          address TEXT PRIMARY KEY, enabled INTEGER NOT NULL, authority TEXT NOT NULL, changed_at TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS events(
           id TEXT PRIMARY KEY, calendar TEXT NOT NULL, start TEXT NOT NULL,
           end TEXT NOT NULL, revision TEXT NOT NULL, payload TEXT NOT NULL,
@@ -145,6 +147,32 @@ class Coordinator:
         row = self.db.execute("SELECT value FROM settings WHERE key='autonomy'").fetchone()
         return json.loads(row[0]) if row else None
 
+    def contact_allowed(self, address):
+        row = self.db.execute('SELECT enabled FROM contact_consent WHERE address=?', (address.casefold(),)).fetchone()
+        return row is None or bool(row[0])
+
+    def set_contact_consent(self, address, enabled, authority, now=None):
+        required(authority, 'verified participant consent reference')
+        if not isinstance(address, str) or not re.fullmatch(r'[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+', address):
+            raise ValueError('Use a verified participant email address.')
+        if type(enabled) is not bool:
+            raise ValueError('enabled must be explicit true or false.')
+        now = stamp(now)
+        address = address.casefold()
+        with self.db:
+            self.db.execute('BEGIN IMMEDIATE')
+            self.db.execute('INSERT OR REPLACE INTO contact_consent VALUES(?,?,?,?)',
+                            (address, int(enabled), authority, iso(now)))
+            for row in self.db.execute('SELECT id FROM events').fetchall():
+                self._invalidate(row['id'])
+            if not enabled and self.db.execute("SELECT 1 FROM sqlite_master WHERE name='task_notices'").fetchone():
+                for row in self.db.execute("SELECT id,message FROM task_notices WHERE status='pending'").fetchall():
+                    message = json.loads(row['message'])
+                    if address in [a.casefold() for a in message.get('to', []) + message.get('bcc', [])]:
+                        self.db.execute("UPDATE task_notices SET status='cancelled' WHERE id=?", (row['id'],))
+            self.log('contact_consent', digest(address)[:24], {'enabled': enabled, 'authority': authority}, now)
+        return {'enabled': enabled, 'scope': 'Subsequent claims; previously handed-off provider attempts still require reconciliation.'}
+
     def _event_recipients(self, policy, event):
         if not policy:
             return []
@@ -153,7 +181,7 @@ class Coordinator:
                       if event.get('program') else policy['reminder_recipients'])
         if not set(recipients) <= set(policy['allowed_recipients']):
             return []
-        return sorted(set(recipients))
+        return sorted({a for a in recipients if self.contact_allowed(a)})
 
     def _autonomous_scope(self, policy, event, calendar, kind):
         return bool(policy and policy['enabled'] and calendar in policy['calendar_scopes']
@@ -569,6 +597,8 @@ class Coordinator:
                 raise ValueError('Refresh the live calendar before sending (maximum age 15 minutes).')
             if not stamp(item['due']) <= now < min(stamp(item['due']) + timedelta(hours=12), stamp(event['start'])):
                 raise ValueError('Reminder is not due or has expired; do not send.')
+            if any(not self.contact_allowed(a) for a in item['message'].get('to', []) + item['message'].get('bcc', [])):
+                raise ValueError('A recipient has withdrawn communication consent.')
             approval = json.loads(item['approval'])
             if approval['message_hash'] != digest(item['message']):
                 raise ValueError('Message differs from approval; do not send.')

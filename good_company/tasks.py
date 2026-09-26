@@ -82,6 +82,8 @@ class WorkCoordinator(Coordinator):
 
     def _eligible(self, v, t, policy):
         workload = self._workload(v['id'], t['id'])
+        if not self.contact_allowed(v['email']):
+            return False
         if not v['accepts_delegation'] or v['email'] not in policy['allowed_recipients']:
             return False
         roles, required_roles = set(v['roles']), set(t['eligible_roles'])
