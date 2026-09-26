@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import sqlite3
 import sys
 from pathlib import Path
 from .core import digest
@@ -18,22 +19,27 @@ def main():
                                          'task-receipt', 'decline-task', 'close-task'])
     parser.add_argument('--input', type=Path, help='JSON request file; defaults to stdin, or {} when terminal')
     args = parser.parse_args()
+    coordinator = None
     try:
         request = json.loads(args.input.read_text() if args.input else ('{}' if sys.stdin.isatty() else sys.stdin.read() or '{}'))
+        if not isinstance(request, dict):
+            raise ValueError('Request must be a JSON object.')
+        if 'now' in request:
+            raise ValueError('The CLI uses the real clock. Simulated times are for library tests only.')
         coordinator = Coordinator(args.db)
         if args.action == 'review':
             result = coordinator.reminder(request['rid'])
             result['review_hash'] = digest(result['message'])
         else:
-            # No simulated clock in the public CLI; tests call the library directly.
-            if 'now' in request:
-                raise ValueError('The CLI uses the real clock. Simulated times are for library tests only.')
             action = args.action.replace('-', '_')
             result = getattr(coordinator, action)(**request)
         print(json.dumps(result, indent=2, ensure_ascii=False))
-    except (ValueError, KeyError, TypeError, OSError) as error:
+    except (ValueError, KeyError, TypeError, OSError, sqlite3.Error) as error:
         print(json.dumps({'error': str(error)}), file=sys.stderr)
         return 2
+    finally:
+        if coordinator is not None:
+            coordinator.db.close()
     return 0
 
 
