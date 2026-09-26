@@ -12,18 +12,7 @@ from .core import Coordinator, required, stamp, iso, digest
 class WorkCoordinator(Coordinator):
     def __init__(self, path):
         super().__init__(path)
-        self.db.executescript('''
-        CREATE TABLE IF NOT EXISTS volunteers(id TEXT PRIMARY KEY, payload TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, payload TEXT NOT NULL, status TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS assignments(
-          id TEXT PRIMARY KEY, task_id TEXT NOT NULL, volunteer_id TEXT NOT NULL,
-          status TEXT NOT NULL, policy_hash TEXT NOT NULL,
-          UNIQUE(task_id, volunteer_id));
-        CREATE TABLE IF NOT EXISTS task_notices(
-          id TEXT PRIMARY KEY, assignment_id TEXT NOT NULL, kind TEXT NOT NULL,
-          due TEXT NOT NULL, status TEXT NOT NULL, message TEXT NOT NULL, receipt TEXT,
-          UNIQUE(assignment_id, kind));
-        ''')
+
 
     def set_volunteer(self, volunteer, authority, now=None):
         required(authority, 'roster source or authorization reference')

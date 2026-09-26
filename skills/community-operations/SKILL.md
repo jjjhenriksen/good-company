@@ -112,6 +112,22 @@ Keep a short operating brief: upcoming work, confirmed assignments, successful
 provider receipts, unresolved exceptions and the next action. Stay quiet when
 nothing changes. A saved schedule or queue entry is not evidence of delivery.
 
+## Show readiness
+
+Use `readiness {}` during onboarding and after each cycle. Summarize its reasons,
+calendar freshness, last scheduler observation and delivery counts. Queued means
+pending work; provider acceptance does not establish receipt by a person, and
+unknown delivery needs reconciliation.
+
+After actually checking the connected calendar/mail tools or observing a scheduler
+execution, use `record-connection` with component (`calendar`, `mail`, `scheduler`),
+status (`verified`, `unavailable`, `unknown`), checked_at and a private evidence
+reference. For scheduler, verify execution, not merely a saved job. For mail,
+verify the actual configured sender and unattended permissions. For calendar,
+verify the exact scopes. Never record a fixture as a live observation. These are
+trusted-operator attestations, not authentication. They expire after 30 minutes
+and a changed remit requires new verification. Readiness never echoes evidence
+references, addresses, calendar identifiers or document contents.
 ## Stop requests
 
 After verifying the participant identity through the connected account, call
@@ -150,3 +166,12 @@ task notice subjects use the configured task term. Omitted fields preserve the
 existing English default without changing authority. Dates include the year;
 times include timezone and UTC offset to disambiguate DST. Other locales/languages
 are unsupported until reviewed wording exists; do not invent translated rules.
+## Operational health
+
+Use `health {}` after the recurring loop. It reports missing/paused authority,
+stale calendars and sources, unverified or unavailable connections, missing
+credentials, and unknown/failed work without recipient lists or private evidence.
+Record `missing_credentials` only from a trusted connection observation; never
+copy secrets into evidence. `notify` recommends a concise owner update on changed
+failures or recovery. Repeated unchanged states are quiet. No alert is sent by this
+command; delivery still requires the owner's authorized channel and budget.
