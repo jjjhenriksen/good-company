@@ -230,6 +230,8 @@ class WorkCoordinator(Coordinator):
             message = json.loads(notice['message'])
             if message['sender'] != policy['sender'] or message['to'] != [v['email']]:
                 raise ValueError('The sending account or volunteer address changed; reconcile the notice.')
+            self._check_contacts(message, now)
+            self._record_contacts('task', notice_id, message, now)
             self.db.execute("UPDATE task_notices SET status='sending' WHERE id=?", (notice_id,))
             self.log('task_notice_claim', notice_id, {'policy_hash': digest(policy)}, now)
         return {'id': notice_id, 'message': message, 'instruction': 'Send exactly once through the configured sender; record the real provider receipt.'}

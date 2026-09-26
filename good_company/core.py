@@ -50,6 +50,10 @@ class Coordinator:
         self.db.executescript('''
         PRAGMA foreign_keys=ON;
         CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS contact_preferences(address TEXT PRIMARY KEY, payload TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS communication_claims(
+          kind TEXT NOT NULL, notice_id TEXT NOT NULL, address TEXT NOT NULL, at TEXT NOT NULL,
+          PRIMARY KEY(kind,notice_id,address));
         CREATE TABLE IF NOT EXISTS contact_consent(
           address TEXT PRIMARY KEY, enabled INTEGER NOT NULL, authority TEXT NOT NULL, changed_at TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS events(
@@ -146,6 +150,55 @@ class Coordinator:
     def autonomy(self):
         row = self.db.execute("SELECT value FROM settings WHERE key='autonomy'").fetchone()
         return json.loads(row[0]) if row else None
+
+    def set_contact_preferences(self, address, preferences, authority, now=None):
+        required(authority, 'verified participant preference reference')
+        if not isinstance(address, str) or not re.fullmatch(r'[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+', address):
+            raise ValueError('Use a verified participant address.')
+        if not isinstance(preferences, dict):
+            raise ValueError('preferences must be an object.')
+        ZoneInfo(required(preferences.get('timezone'), 'participant timezone'))
+        channels = preferences.get('channels')
+        if not isinstance(channels, list) or any(c != 'email' for c in channels):
+            raise ValueError('Only email is supported; use an empty list for no supported channel.')
+        start, end = preferences.get('quiet_start'), preferences.get('quiet_end')
+        if any(type(h) is not int or not 0 <= h <= 23 for h in (start, end)) or start == end:
+            raise ValueError('Quiet hours need distinct start/end hours from 0 to 23.')
+        cadence = preferences.get('min_interval_hours')
+        if type(cadence) is not int or not 0 <= cadence <= 168:
+            raise ValueError('min_interval_hours must be 0–168.')
+        with self.db:
+            self.db.execute('BEGIN IMMEDIATE')
+            self.db.execute('INSERT OR REPLACE INTO contact_preferences VALUES(?,?)',
+                            (address.casefold(), json.dumps(preferences)))
+            for row in self.db.execute('SELECT id FROM events').fetchall():
+                self._invalidate(row['id'])
+            self.log('contact_preferences', digest(address.casefold())[:24], {'authority': authority}, stamp(now))
+        return {'updated': True, 'consent_enabled': self.contact_allowed(address)}
+
+    def _check_contacts(self, message, now):
+        for address in message.get('to', []) + message.get('bcc', []):
+            if not self.contact_allowed(address):
+                raise ValueError('A recipient has withdrawn communication consent.')
+            row = self.db.execute('SELECT payload FROM contact_preferences WHERE address=?', (address.casefold(),)).fetchone()
+            if not row:
+                continue
+            prefs = json.loads(row[0])
+            if 'email' not in prefs['channels']:
+                raise ValueError('Deferred: email is outside a recipient channel preference.')
+            hour = now.astimezone(ZoneInfo(prefs['timezone'])).hour
+            start, end = prefs['quiet_start'], prefs['quiet_end']
+            quiet = start <= hour < end if start < end else hour >= start or hour < end
+            if quiet:
+                raise ValueError('Deferred: recipient-local quiet hours; leave the notice queued.')
+            last = self.db.execute('SELECT max(at) FROM communication_claims WHERE address=?', (address.casefold(),)).fetchone()[0]
+            if last and now - stamp(last) < timedelta(hours=prefs['min_interval_hours']):
+                raise ValueError('Deferred: recipient communication cadence; leave the notice queued.')
+
+    def _record_contacts(self, kind, notice_id, message, now):
+        self.db.executemany('INSERT INTO communication_claims VALUES(?,?,?,?)',
+                           [(kind, notice_id, address.casefold(), iso(now)) for address in
+                            set(message.get('to', []) + message.get('bcc', []))])
 
     def contact_allowed(self, address):
         row = self.db.execute('SELECT enabled FROM contact_consent WHERE address=?', (address.casefold(),)).fetchone()
@@ -623,6 +676,8 @@ class Coordinator:
             hour = now.astimezone(ZoneInfo(self.profile()['timezone'])).hour
             if not 7 <= hour < 21:
                 raise ValueError('Quiet hours: do not send before 7am or after 9pm.')
+            self._check_contacts(item['message'], now)
+            self._record_contacts('event', rid, item['message'], now)
             self.db.execute("UPDATE reminders SET status='sending',claimed_at=? WHERE id=?", (iso(now), rid))
             self.log('send_claim', rid, {'message_hash': digest(item['message'])}, now)
         return {'id': rid, 'message': item['message'], 'instruction': 'Send these exact fields once. Record the provider receipt. Unknown outcome must be marked uncertain; never resend automatically.'}
