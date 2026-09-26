@@ -129,7 +129,8 @@ assistant. Participant-facing access needs enforced identity and tool boundaries
 
 “Strengths and weaknesses” means stated task fit, skill gaps, preferences and
 capacity. The allocator does not infer personal/sensitive traits or publicly rank
-people. Required roles are supplied by the authoritative roster; the software
+people. Tasks can declare `role_match: ANY` or `ALL`; omitted values preserve legacy ANY
+semantics. Required roles are supplied by the authoritative roster; the software
 does not itself verify certifications. Its ranking is a simple deterministic
 heuristic, not global schedule optimization.
 
