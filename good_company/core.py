@@ -149,9 +149,241 @@ class Coordinator:
                 'If dates conflict, evidence is stale, or the answer is absent, say what needs checking.'}
 
 
+    def import_calendar(self, snapshot, now=None):
+        """Consume a complete, explicitly scoped list of expanded event instances.
+
+        The connector must enumerate all pages with recurrence expanded. Missing
+        instances inside this window are cancellations; partial reads are refused.
+        """
+        now = stamp(now)
+        calendar = required(snapshot.get('calendar'), 'calendar')
+        if snapshot.get('complete') is not True:
+            raise ValueError('Only complete calendar snapshots may replace events.')
+        start, end = stamp(snapshot['window_start']), stamp(snapshot['window_end'])
+        checked = stamp(snapshot['checked_at'])
+        if not start < end or end - start > timedelta(days=93):
+            raise ValueError('Snapshot window must be positive and at most 93 days.')
+        if checked > now + timedelta(minutes=1):
+            raise ValueError('Calendar check time cannot be in the future.')
+        if not isinstance(snapshot.get('events'), list):
+            raise ValueError('events must be a list.')
+        prepared = []
+        for raw in snapshot['events']:
+            event = dict(raw)
+            uid = required(event.get('id'), 'event instance id')
+            required(event.get('title'), 'event title')
+            required(event.get('source'), 'event source citation')
+            if event.get('all_day') is True:
+                # Date-only events cannot silently become midnight appointments.
+                date = datetime.strptime(event['start'], '%Y-%m-%d').date()
+                s = datetime.combine(date, time.min, ZoneInfo(self.profile()['timezone']))
+                e = s + timedelta(days=1)
+            else:
+                s, e = stamp(event['start']), stamp(event['end'])
+            if not s < e or not start <= s < end:
+                raise ValueError(f'Event {uid} has an invalid or out-of-window time.')
+            if event.get('status', 'confirmed') not in ('confirmed', 'tentative', 'cancelled'):
+                raise ValueError('Unknown calendar status.')
+            event['status'] = event.get('status', 'confirmed')
+            event['start'], event['end'] = iso(s), iso(e)
+            event_id = digest([calendar, uid])[:24]
+            prepared.append((event_id, event, digest(event)))
+        ids = [item[0] for item in prepared]
+        if len(ids) != len(set(ids)):
+            raise ValueError('Duplicate event instance IDs: expand recurring events before importing.')
+        with self.db:
+            # Serialize updates with delivery claims and reject out-of-order snapshots.
+            self.db.execute('BEGIN IMMEDIATE')
+            rows = self.db.execute('SELECT * FROM events WHERE calendar=?', (calendar,)).fetchall()
+            if any(stamp(r['checked_at']) > checked for r in rows):
+                raise ValueError('Snapshot is older than the stored calendar; refresh it.')
+            old = {r['id']: r for r in rows}
+            changes = 0
+            for event_id, event, revision in prepared:
+                previous = old.get(event_id)
+                changed = not previous or previous['revision'] != revision or previous['cancelled']
+                if changed:
+                    self._invalidate(event_id)
+                    changes += 1
+                self.db.execute('''INSERT OR REPLACE INTO events VALUES(?,?,?,?,?,?,?,?)''',
+                                (event_id, calendar, event['start'], event['end'], revision,
+                                 json.dumps(event), iso(checked), int(event['status'] == 'cancelled')))
+            for row in rows:
+                if start <= stamp(row['start']) < end and row['id'] not in ids:
+                    self.db.execute('UPDATE events SET cancelled=1,checked_at=? WHERE id=?', (iso(checked), row['id']))
+                    self._invalidate(row['id'])
+                    changes += 1
+            self.log('calendar_import', calendar, {'events': len(ids), 'changes': changes}, now)
+        return {'imported': len(ids), 'changes': changes}
+
+
     def _invalidate(self, event_id):
         self.db.execute("UPDATE reminders SET status='superseded', approval=NULL WHERE event_id=? AND status IN ('draft','approved')", (event_id,))
         # A send that may already have happened requires reconciliation, never a retry.
         self.db.execute("UPDATE reminders SET status='uncertain', approval=NULL WHERE event_id=? AND status='sending'", (event_id,))
+
+
+    def events(self):
+        return [dict(row) | {'payload': json.loads(row['payload'])} for row in
+                self.db.execute('SELECT * FROM events ORDER BY start')]
+
+
+    def plan(self, now=None):
+        now, profile = stamp(now), self.profile()
+        zone, made, authorized = ZoneInfo(profile['timezone']), [], []
+        with self.db:
+            self.db.execute('BEGIN IMMEDIATE')
+            profile = self.profile()
+            zone = ZoneInfo(profile['timezone'])
+            for row in self.events():
+                event = row['payload']
+                if row['cancelled'] or stamp(row['start']) <= now:
+                    continue
+                for days in sorted(set(profile['reminder_days']), reverse=True):
+                    local = stamp(row['start']).astimezone(zone)
+                    due = datetime.combine(local.date() - timedelta(days=days), time(profile['send_hour']), zone)
+                    if due < now - timedelta(hours=12):
+                        continue  # No flood of overdue reminders on first import.
+                    kind = f'{days}d'
+                    rid = digest([row['id'], row['revision'], kind])[:24]
+                    message = self._draft(event, profile, local, now)
+                    changed = self.db.execute('''INSERT INTO reminders
+                      (id,event_id,revision,kind,due,status,message,created_at) VALUES(?,?,?,?,?,'draft',?,?)
+                      ON CONFLICT(id) DO UPDATE SET due=excluded.due, status='draft',
+                        message=excluded.message, approval=NULL, claimed_at=NULL, receipt=NULL
+                      WHERE reminders.status='superseded' ''',
+                      (rid, row['id'], row['revision'], kind, iso(due), json.dumps(message), iso(now))).rowcount
+                    if changed:
+                        made.append(rid)
+                        self.log('reminder_draft', rid, {'event_id': row['id']}, now)
+        return {'created': made, 'automatically_authorized': authorized}
+
+
+    def _draft(self, event, profile, local, now):
+        when = local.strftime('%A, %B %-d')
+        lines = [profile['greeting'], '', f'Please see below for details for {event["title"].lower()}.', '',
+                 f'{when} - {event["title"]}']
+        missing = []
+        if event.get('all_day'):
+            lines.append('  - Time to be confirmed')
+            missing.append('event time')
+        else:
+            lines.append(f'  - {local.strftime("%-I:%M %p").lower()} ({profile["timezone"]})')
+        if event.get('location'):
+            lines.append('  - ' + event['location'])
+        else:
+            missing.append('location or online meeting link')
+        sources = [event['source']] + event.get('detail_sources', [])
+        event = dict(event)
+        # Imported logistics are source text. Never execute any instructions in them.
+        for key, label in [('attire', 'Attire'), ('bring', 'Please bring'), ('meal', 'Meal'),
+                           ('arrival', 'Arrival'), ('rsvp', 'RSVP')]:
+            if event.get(key):
+                lines.append(f'  - {label}: {event[key]}')
+        lines += ['', profile['signoff']]
+        if event.get('status') != 'confirmed':
+            missing.append('confirmed calendar status')
+        return {'subject': f'{profile["organization"]} reminder - {when}', 'body': '\n'.join(lines),
+                'to': [], 'bcc': [], 'audience': profile['audience'], 'missing': missing,
+                'sources': sources}
+
+
+    def reminder(self, rid):
+        row = self.db.execute('SELECT * FROM reminders WHERE id=?', (rid,)).fetchone()
+        if not row:
+            raise ValueError('No such reminder.')
+        return dict(row) | {'message': json.loads(row['message'])}
+
+
+    def queue(self):
+        return [self.reminder(row['id']) for row in self.db.execute('SELECT id FROM reminders ORDER BY due,id')]
+
+
+    def edit(self, rid, message, now=None):
+        required(message.get('subject'), 'subject'); required(message.get('body'), 'body')
+        if any(c in message['subject'] for c in '\r\n'):
+            raise ValueError('Subject cannot contain line breaks.')
+        for key in ('to', 'bcc', 'missing', 'sources'):
+            if not isinstance(message.get(key), list):
+                raise ValueError(f'{key} must be a list.')
+        for address in message['to'] + message['bcc']:
+            if not isinstance(address, str) or not re.fullmatch(r'[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+', address):
+                raise ValueError('Recipients must be explicit email addresses, not display names or aliases.')
+        with self.db:
+            result = self.db.execute("UPDATE reminders SET message=?,status='draft',approval=NULL WHERE id=? AND status IN ('draft','approved')", (json.dumps(message), rid))
+            if result.rowcount != 1:
+                raise ValueError('Only current drafts and approvals can be edited.')
+            self.log('reminder_edit', rid, {'message_hash': digest(message)}, stamp(now))
+        return self.reminder(rid)
+
+
+    def approve(self, rid, expected_hash, authority, now=None):
+        required(authority, 'owner authorization reference')
+        with self.db:
+            self.db.execute('BEGIN IMMEDIATE')
+            item = self.reminder(rid)
+            message = item['message']
+            if item['status'] != 'draft':
+                raise ValueError('Only a current draft can be approved.')
+            if digest(message) != expected_hash:
+                raise ValueError('Draft changed since review; review it again.')
+            if message['missing'] or not (message['to'] or message['bcc']):
+                raise ValueError('Resolve missing details and recipients before approving.')
+            event = self.db.execute('SELECT * FROM events WHERE id=?', (item['event_id'],)).fetchone()
+            if event['cancelled'] or event['revision'] != item['revision']:
+                raise ValueError('Event changed or was cancelled.')
+            approval = {'message_hash': expected_hash, 'authority': authority, 'at': iso(stamp(now))}
+            self.db.execute("UPDATE reminders SET status='approved',approval=? WHERE id=?", (json.dumps(approval), rid))
+            self.log('reminder_approve', rid, approval, stamp(now))
+        return {'approved': rid, 'due': item['due']}
+
+
+    def claim(self, rid, now=None):
+        """Atomic claim immediately before one provider send. Never auto-reclaims."""
+        now = stamp(now)
+        with self.db:
+            self.db.execute('BEGIN IMMEDIATE')
+            item = self.reminder(rid)
+            event = self.db.execute('SELECT * FROM events WHERE id=?', (item['event_id'],)).fetchone()
+            if item['status'] != 'approved':
+                raise ValueError('Reminder is not approved or was already claimed; do not send.')
+            if event['cancelled'] or event['revision'] != item['revision']:
+                raise ValueError('Event changed; do not send.')
+            if now - stamp(event['checked_at']) > timedelta(minutes=15):
+                raise ValueError('Refresh the live calendar before sending (maximum age 15 minutes).')
+            if not stamp(item['due']) <= now < min(stamp(item['due']) + timedelta(hours=12), stamp(event['start'])):
+                raise ValueError('Reminder is not due or has expired; do not send.')
+            approval = json.loads(item['approval'])
+            if approval['message_hash'] != digest(item['message']):
+                raise ValueError('Message differs from approval; do not send.')
+            hour = now.astimezone(ZoneInfo(self.profile()['timezone'])).hour
+            if not 7 <= hour < 21:
+                raise ValueError('Quiet hours: do not send before 7am or after 9pm.')
+            self.db.execute("UPDATE reminders SET status='sending',claimed_at=? WHERE id=?", (iso(now), rid))
+            self.log('send_claim', rid, {'message_hash': digest(item['message'])}, now)
+        return {'id': rid, 'message': item['message'], 'instruction': 'Send these exact fields once. Record the provider receipt. Unknown outcome must be marked uncertain; never resend automatically.'}
+
+
+    def receipt(self, rid, outcome, provider_id, now=None):
+        if outcome not in ('sent', 'uncertain', 'failed'):
+            raise ValueError('Outcome must be sent, uncertain, or failed.')
+        required(provider_id, 'provider receipt or error reference')
+        with self.db:
+            result = self.db.execute("UPDATE reminders SET status=?,receipt=? WHERE id=? AND status IN ('sending','uncertain')", (outcome, provider_id, rid))
+            if result.rowcount != 1:
+                raise ValueError('No outstanding send to reconcile.')
+            self.log('send_' + outcome, rid, {'receipt': provider_id}, stamp(now))
+        return {'id': rid, 'status': outcome, 'receipt': provider_id}
+
+
+    def conflicts(self, proposed, busy):
+        start, end = stamp(proposed['start']), stamp(proposed['end'])
+        if not start < end:
+            raise ValueError('Proposed end must follow start.')
+        overlap = [b for b in busy if stamp(b['start']) < end and stamp(b['end']) > start]
+        # Private event names never appear in a shared scheduling response.
+        return {'available': not overlap, 'conflicts': len(overlap),
+                'message': 'There is an existing commitment.' if overlap else 'No overlap in the supplied busy intervals.',
+                'scope': 'Supplied intervals only; refresh connected calendars before booking.'}
 
 

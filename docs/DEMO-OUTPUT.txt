@@ -1,0 +1,35 @@
+GOOD COMPANY — FICTIONAL DEMO
+
+Question: When should I arrive to help?
+Retrieved evidence (the deployed OpenClaw agent turns this into a cited answer):
+## Helping at an event
+Arrive fifteen minutes before the time on your confirmed volunteer assignment.
+The event coordinator will introduce you to your station partner. If your plans
+change, tell the coordinator; you do not need to share a personal explanation.
+
+Source: examples/handbook.md — Helping at an event (lines 5–9)
+
+Calendar → reminder draft
+
+Subject: Good Company Demo Club reminder - Saturday, October 3
+Hello members, families, and friends!
+
+Please see below for details for community dinner.
+
+Saturday, October 3 - Community dinner
+  - 5:30 pm (America/Los_Angeles)
+  - Demo Hall, 123 Example Lane
+  - Attire: Comfortable clothes
+  - RSVP: Reply to the event coordinator by Friday for a meal headcount.
+
+We look forward to seeing everyone soon!
+
+Good Company Demo Club
+
+Status: DRAFT — no recipients, no approval, no email sent.
+First planning pass: 2 reminders. Repeated pass: 0 new reminders.
+Upcoming reminder times: 2026-09-26T16:00:00+00:00, 2026-10-02T16:00:00+00:00
+
+Calendar changes: moving the dinner to a different hall.
+Old reminder status: superseded
+Replacement drafts: 2
