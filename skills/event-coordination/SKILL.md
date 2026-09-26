@@ -108,3 +108,24 @@ travel buffers. This helper only compares supplied intervals and does not book.
 When the owner authorizes a booking, use the real connected calendar tool, verify
 its returned event id and time, and report it. Preserve attendee and series
 semantics. Never expose private conflict titles in a group response.
+
+## Attire applicability
+
+Import `dress_applicability` as `required`, `not_applicable`, or `unknown` from
+verified owner/calendar context. Do not infer it from a title. Omitted values
+preserve the legacy unknown behavior. An explicitly not-applicable meeting can
+send an otherwise complete authorized reminder without a dress rule. Conflicting
+attire text must be reconciled before importing a not-applicable event.
+
+## Corrections after a delivery attempt
+
+Reconcile an uncertain original before issuing a correction. Use `create-correction`
+with kind (`event` or `task`), original_id, exact message fields (sender, to, bcc,
+subject, body), expected_hash and a verified authority/source reference. Explain
+the sourced change; do not invent it. Only still-authorized original recipients
+may receive this correction. New participants receive their own normal notices.
+The correction records its source revision and original relationship. Claim once
+with `correction-claim` and record `correction-receipt`; uncertain attempts require
+provider reconciliation, never a new correction or automatic retry. Claims obey
+the shared budget, consent, preferences and quiet hours, and expire after 24 hours.
+Changed authority/context requires explicit reconciliation, not silent editing.

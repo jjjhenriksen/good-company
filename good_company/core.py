@@ -50,6 +50,12 @@ class Coordinator:
         self.db.executescript('''
         PRAGMA foreign_keys=ON;
         CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS contact_preferences(address TEXT PRIMARY KEY, payload TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS communication_claims(
+          kind TEXT NOT NULL, notice_id TEXT NOT NULL, address TEXT NOT NULL, at TEXT NOT NULL,
+          PRIMARY KEY(kind,notice_id,address));
+        CREATE TABLE IF NOT EXISTS contact_consent(
+          address TEXT PRIMARY KEY, enabled INTEGER NOT NULL, authority TEXT NOT NULL, changed_at TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS events(
           id TEXT PRIMARY KEY, calendar TEXT NOT NULL, start TEXT NOT NULL,
           end TEXT NOT NULL, revision TEXT NOT NULL, payload TEXT NOT NULL,
@@ -112,6 +118,16 @@ class Coordinator:
         for address in [policy.get('sender')] + policy['allowed_recipients']:
             if not isinstance(address, str) or not re.fullmatch(r'[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+', address):
                 raise ValueError('The sender and recipients must be verified email addresses.')
+        audiences = policy.get('program_audiences', {})
+        if not isinstance(audiences, dict):
+            raise ValueError('program_audiences must map explicit program names to recipient lists.')
+        for program, recipients in audiences.items():
+            if not isinstance(program, str) or not program.strip() or program == '*':
+                raise ValueError('Use explicit program names.')
+            if not isinstance(recipients, list) or any(not isinstance(r, str) for r in recipients):
+                raise ValueError('Program recipients must be a list of verified addresses.')
+            if not set(recipients) <= set(policy['allowed_recipients']):
+                raise ValueError('Program recipients must be within the standing recipient list.')
         if not set(policy['reminder_recipients']) <= set(policy['allowed_recipients']):
             raise ValueError('Reminder recipients must be within the standing recipient list.')
         if any(type(n) is not int or not 1 <= n <= 30 for n in policy['cadence_days']):
@@ -135,11 +151,125 @@ class Coordinator:
         row = self.db.execute("SELECT value FROM settings WHERE key='autonomy'").fetchone()
         return json.loads(row[0]) if row else None
 
+    def set_contact_preferences(self, address, preferences, authority, now=None):
+        required(authority, 'verified participant preference reference')
+        if not isinstance(address, str) or not re.fullmatch(r'[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+', address):
+            raise ValueError('Use a verified participant address.')
+        if not isinstance(preferences, dict):
+            raise ValueError('preferences must be an object.')
+        ZoneInfo(required(preferences.get('timezone'), 'participant timezone'))
+        channels = preferences.get('channels')
+        if not isinstance(channels, list) or any(c != 'email' for c in channels):
+            raise ValueError('Only email is supported; use an empty list for no supported channel.')
+        start, end = preferences.get('quiet_start'), preferences.get('quiet_end')
+        if any(type(h) is not int or not 0 <= h <= 23 for h in (start, end)) or start == end:
+            raise ValueError('Quiet hours need distinct start/end hours from 0 to 23.')
+        cadence = preferences.get('min_interval_hours')
+        if type(cadence) is not int or not 0 <= cadence <= 168:
+            raise ValueError('min_interval_hours must be 0–168.')
+        with self.db:
+            self.db.execute('BEGIN IMMEDIATE')
+            self.db.execute('INSERT OR REPLACE INTO contact_preferences VALUES(?,?)',
+                            (address.casefold(), json.dumps(preferences)))
+            for row in self.db.execute('SELECT id FROM events').fetchall():
+                self._invalidate(row['id'])
+            self.log('contact_preferences', digest(address.casefold())[:24], {'authority': authority}, stamp(now))
+        return {'updated': True, 'consent_enabled': self.contact_allowed(address)}
+
+    def _check_contacts(self, message, now):
+        for address in message.get('to', []) + message.get('bcc', []):
+            if not self.contact_allowed(address):
+                raise ValueError('A recipient has withdrawn communication consent.')
+            row = self.db.execute('SELECT payload FROM contact_preferences WHERE address=?', (address.casefold(),)).fetchone()
+            if not row:
+                continue
+            prefs = json.loads(row[0])
+            if 'email' not in prefs['channels']:
+                raise ValueError('Deferred: email is outside a recipient channel preference.')
+            hour = now.astimezone(ZoneInfo(prefs['timezone'])).hour
+            start, end = prefs['quiet_start'], prefs['quiet_end']
+            quiet = start <= hour < end if start < end else hour >= start or hour < end
+            if quiet:
+                raise ValueError('Deferred: recipient-local quiet hours; leave the notice queued.')
+            last = self.db.execute('SELECT max(at) FROM communication_claims WHERE address=?', (address.casefold(),)).fetchone()[0]
+            if last and now - stamp(last) < timedelta(hours=prefs['min_interval_hours']):
+                raise ValueError('Deferred: recipient communication cadence; leave the notice queued.')
+
+    def _check_communication_budget(self, now):
+        policy = self.autonomy()
+        if not policy:
+            return  # Preserve legacy individually approved sends without a standing remit.
+        zone = ZoneInfo(self.profile()['timezone'])
+        start = datetime.combine(now.astimezone(zone).date(), time.min, zone)
+        end = start + timedelta(days=1)
+        # Audit claims predate the shared ledger, so include them in upgrades.
+        count = self.db.execute("""SELECT count(*) FROM audit
+          WHERE action IN ('send_claim','task_notice_claim','correction_claim') AND at>=? AND at<?""",
+                                (iso(start), iso(end))).fetchone()[0]
+        if count >= policy['max_reminders_per_day']:
+            raise ValueError('Deferred: shared daily communication budget reached; leave queued and report the backlog.')
+
+    def communication_budget(self, now=None):
+        now = stamp(now)
+        policy = self.autonomy()
+        if not policy:
+            return {'configured': False}
+        zone = ZoneInfo(self.profile()['timezone'])
+        start = datetime.combine(now.astimezone(zone).date(), time.min, zone)
+        end = start + timedelta(days=1)
+        used = self.db.execute("""SELECT count(*) FROM audit
+          WHERE action IN ('send_claim','task_notice_claim','correction_claim') AND at>=? AND at<?""",
+                               (iso(start), iso(end))).fetchone()[0]
+        return {'configured': True, 'limit': policy['max_reminders_per_day'], 'used': used,
+                'remaining': max(0, policy['max_reminders_per_day'] - used), 'resets_at': iso(end),
+                'backlog': 'Leave deferred notices queued; report time-sensitive work to the owner. Never bypass consent or quiet hours.'}
+
+    def _record_contacts(self, kind, notice_id, message, now):
+        self.db.executemany('INSERT INTO communication_claims VALUES(?,?,?,?)',
+                           [(kind, notice_id, address.casefold(), iso(now)) for address in
+                            set(message.get('to', []) + message.get('bcc', []))])
+
+    def contact_allowed(self, address):
+        row = self.db.execute('SELECT enabled FROM contact_consent WHERE address=?', (address.casefold(),)).fetchone()
+        return row is None or bool(row[0])
+
+    def set_contact_consent(self, address, enabled, authority, now=None):
+        required(authority, 'verified participant consent reference')
+        if not isinstance(address, str) or not re.fullmatch(r'[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+', address):
+            raise ValueError('Use a verified participant email address.')
+        if type(enabled) is not bool:
+            raise ValueError('enabled must be explicit true or false.')
+        now = stamp(now)
+        address = address.casefold()
+        with self.db:
+            self.db.execute('BEGIN IMMEDIATE')
+            self.db.execute('INSERT OR REPLACE INTO contact_consent VALUES(?,?,?,?)',
+                            (address, int(enabled), authority, iso(now)))
+            for row in self.db.execute('SELECT id FROM events').fetchall():
+                self._invalidate(row['id'])
+            if not enabled and self.db.execute("SELECT 1 FROM sqlite_master WHERE name='task_notices'").fetchone():
+                for row in self.db.execute("SELECT id,message FROM task_notices WHERE status='pending'").fetchall():
+                    message = json.loads(row['message'])
+                    if address in [a.casefold() for a in message.get('to', []) + message.get('bcc', [])]:
+                        self.db.execute("UPDATE task_notices SET status='cancelled' WHERE id=?", (row['id'],))
+            self.log('contact_consent', digest(address)[:24], {'enabled': enabled, 'authority': authority}, now)
+        return {'enabled': enabled, 'scope': 'Subsequent claims; previously handed-off provider attempts still require reconciliation.'}
+
+    def _event_recipients(self, policy, event):
+        if not policy:
+            return []
+        # Explicit program events never fall back to the global audience.
+        recipients = (policy.get('program_audiences', {}).get(event['program'], [])
+                      if event.get('program') else policy['reminder_recipients'])
+        if not set(recipients) <= set(policy['allowed_recipients']):
+            return []
+        return sorted({a for a in recipients if self.contact_allowed(a)})
+
     def _autonomous_scope(self, policy, event, calendar, kind):
         return bool(policy and policy['enabled'] and calendar in policy['calendar_scopes']
                     and event.get('event_type') in policy['allowed_event_types']
                     and kind in [f'{n}d' for n in policy['cadence_days']]
-                    and policy['reminder_recipients'])
+                    and self._event_recipients(policy, event))
 
     def ingest(self, text, source, title, updated, audience='volunteer'):
         """Replace one document atomically; preserve headings and line citations."""
@@ -314,6 +444,8 @@ class Coordinator:
         prepared = []
         for raw in snapshot['events']:
             event = dict(raw)
+            if 'program' in event:
+                required(event['program'], 'event program')
             uid = required(event.get('id'), 'event instance id')
             required(event.get('title'), 'event title')
             required(event.get('source'), 'event source citation')
@@ -328,6 +460,10 @@ class Coordinator:
                 raise ValueError(f'Event {uid} has an invalid or out-of-window time.')
             if event.get('status', 'confirmed') not in ('confirmed', 'tentative', 'cancelled'):
                 raise ValueError('Unknown calendar status.')
+            if event.get('dress_applicability', 'unknown') not in ('required', 'not_applicable', 'unknown'):
+                raise ValueError('dress_applicability must be required, not_applicable, or unknown.')
+            if event.get('dress_applicability') == 'not_applicable' and event.get('attire'):
+                raise ValueError('An event without an attire requirement cannot also specify attire.')
             event['status'] = event.get('status', 'confirmed')
             event['start'], event['end'] = iso(s), iso(e)
             event_id = digest([calendar, uid])[:24]
@@ -402,7 +538,7 @@ class Coordinator:
                     routine = self._autonomous_scope(policy, event, row['calendar'], kind)
                     if routine:
                         message['sender'] = policy['sender']
-                        message['bcc'] = policy['reminder_recipients']
+                        message['bcc'] = self._event_recipients(policy, event)
                     changed = self.db.execute('''INSERT INTO reminders
                       (id,event_id,revision,kind,due,status,message,created_at) VALUES(?,?,?,?,?,'draft',?,?)
                       ON CONFLICT(id) DO UPDATE SET due=excluded.due, status='draft',
@@ -448,8 +584,10 @@ class Coordinator:
             missing.append('location or online meeting link')
         sources = [event['source']] + event.get('detail_sources', [])
         event = dict(event)
-        if event.get('event_type'):
-            result = self.dress_code(event_type=event['event_type'], role=event.get('dress_code_role'),
+        if event.get('dress_applicability') == 'not_applicable':
+            event.pop('attire', None)
+        elif event.get('event_type') or event.get('dress_applicability') == 'required':
+            result = self.dress_code(event_type=event.get('event_type'), role=event.get('dress_code_role'),
                                      on=local.date().isoformat(), audience='volunteer', now=now)
             if result['status'] == 'supported':
                 supplied = ' '.join(event.get('attire', '').casefold().split())
@@ -541,6 +679,8 @@ class Coordinator:
                 raise ValueError('Refresh the live calendar before sending (maximum age 15 minutes).')
             if not stamp(item['due']) <= now < min(stamp(item['due']) + timedelta(hours=12), stamp(event['start'])):
                 raise ValueError('Reminder is not due or has expired; do not send.')
+            if any(not self.contact_allowed(a) for a in item['message'].get('to', []) + item['message'].get('bcc', [])):
+                raise ValueError('A recipient has withdrawn communication consent.')
             approval = json.loads(item['approval'])
             if approval['message_hash'] != digest(item['message']):
                 raise ValueError('Message differs from approval; do not send.')
@@ -553,7 +693,7 @@ class Coordinator:
                 expected = self._draft(json.loads(event['payload']), profile,
                                        stamp(event['start']).astimezone(zone), now)
                 expected['sender'] = policy['sender']
-                expected['bcc'] = policy['reminder_recipients']
+                expected['bcc'] = self._event_recipients(policy, json.loads(event['payload']))
                 if expected['missing'] or expected != item['message']:
                     raise ValueError('Automatic message no longer matches the safe current template; run plan again.')
                 day_start = datetime.combine(now.astimezone(zone).date(), time.min, zone)
@@ -565,6 +705,9 @@ class Coordinator:
             hour = now.astimezone(ZoneInfo(self.profile()['timezone'])).hour
             if not 7 <= hour < 21:
                 raise ValueError('Quiet hours: do not send before 7am or after 9pm.')
+            self._check_communication_budget(now)
+            self._check_contacts(item['message'], now)
+            self._record_contacts('event', rid, item['message'], now)
             self.db.execute("UPDATE reminders SET status='sending',claimed_at=? WHERE id=?", (iso(now), rid))
             self.log('send_claim', rid, {'message_hash': digest(item['message'])}, now)
         return {'id': rid, 'message': item['message'], 'instruction': 'Send these exact fields once. Record the provider receipt. Unknown outcome must be marked uncertain; never resend automatically.'}

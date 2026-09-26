@@ -75,3 +75,25 @@ or keep that task unallocated pending a supported eligibility model. There is
 no certification expiry check, staffing-ratio check, event-linked cancellation,
 or global task-notice daily budget. Past open tasks consume capacity until closed;
 surface them for follow-up rather than silently assuming completion.
+
+## Dated qualifications
+
+Tasks may specify `required_credentials` by explicit name. Verified roster entries
+may include `credentials`: name, issuer, evidence reference, valid_from,
+valid_until (offset timestamps), and explicit applicable task categories.
+The credential must cover the whole task interval. Unknown, expired or inapplicable
+required evidence blocks assignment and is rechecked at claim time. Import only
+authoritative verified evidence; never infer a qualification from a name, age,
+identity or organizational membership. Evidence references are private operator
+records, not cryptographic verification and never part of participant notices.
+
+## Tasks linked to events
+
+Include an imported `event_id` when adding related tasks. The engine records the
+current event revision. Calendar moves, cancellations and other revision changes
+retire unsent notices and block claims/allocation until reconciled. Independent
+legacy tasks retain their behavior. Inspect `task-impacts {}` for proposed shifted
+windows and prior provider attempts. Preserve history by cancelling the old task
+and adding an explicitly authorized replacement with a new ID, after verifying
+availability for the new window. Never rewrite attempted notices or infer new
+availability from old assignments. Impact reports are private operator output.

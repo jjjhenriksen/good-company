@@ -2,9 +2,10 @@
 import json
 from .core import digest, required, stamp
 from .tasks import WorkCoordinator
+from .corrections import CorrectionCoordinator
 
 
-class SetupCoordinator(WorkCoordinator):
+class SetupCoordinator(CorrectionCoordinator):
     def onboarding(self, profile=None, policy=None, authority=None, apply=False):
         """Preview a complete remit before applying it in one transaction.
 
@@ -115,7 +116,7 @@ class SetupCoordinator(WorkCoordinator):
         source_state = {'documents': len(source_dates), 'stale': stale_sources,
                         'status': 'not_supplied' if not source_dates else ('needs_review' if stale_sources else 'current')}
         counts = {}
-        for table in ('reminders', 'task_notices'):
+        for table in ('reminders', 'task_notices', 'corrections'):
             for row in self.db.execute(f'SELECT status,count(*) FROM {table} GROUP BY status'):
                 counts[row[0]] = counts.get(row[0], 0) + row[1]
         exceptions = counts.get('draft', 0) + counts.get('failed', 0) + counts.get('uncertain', 0) + counts.get('sending', 0)
