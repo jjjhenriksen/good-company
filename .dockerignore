@@ -1,12 +1,12 @@
-.git
-.venv
-__pycache__
-*.egg-info
-*.sqlite*
-.env
-plow-credentials
-.state
-private
-tests
-dist
-build
+# Only runtime sources enter the build context. Local documents and credentials
+# remain excluded even when their filenames are unfamiliar.
+**
+!Dockerfile
+!good_company/
+!good_company/*.py
+!prompt/
+!prompt/AGENTS.md
+!skills/
+!skills/**
+!scripts/
+!scripts/good-company

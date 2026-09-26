@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -36,4 +38,12 @@ jobs:
           context: .
           platforms: linux/amd64
           push: ${{ inputs.publish }}
+          load: ${{ !inputs.publish }}
           tags: ${{ steps.image.outputs.name }}:${{ github.sha }}
+      - name: Smoke-test packaged engine without starting services
+        if: ${{ !inputs.publish }}
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}:${{ github.sha }}
+        run: |
+          docker run --rm --network none --entrypoint good-company "$IMAGE" --help
+          docker run --rm --network none --entrypoint python3 "$IMAGE" -c 'import tempfile; from pathlib import Path; from good_company.tasks import WorkCoordinator; d=tempfile.TemporaryDirectory(); c=WorkCoordinator(Path(d.name)/"smoke.sqlite"); assert c.task_queue()==[]; c.db.close(); d.cleanup()'
