@@ -12,7 +12,7 @@ from .corrections import CorrectionCoordinator as Coordinator
 def main():
     parser = argparse.ArgumentParser(description='Good Company coordination tools')
     parser.add_argument('--db', default=os.environ.get('GOOD_COMPANY_DB', '.state/good-company.sqlite'))
-    parser.add_argument('action', choices=['withdraw-source', 'create-correction', 'correction-queue', 'correction-claim', 'correction-receipt', 'task-impacts', 'communication-budget', 'set-contact-preferences', 'set-contact-consent', 'configure', 'ingest', 'retrieve', 'import-calendar', 'events',
+    parser.add_argument('action', choices=['overdue-tasks', 'follow-up-task', 'withdraw-source', 'create-correction', 'correction-queue', 'correction-claim', 'correction-receipt', 'task-impacts', 'communication-budget', 'set-contact-preferences', 'set-contact-consent', 'configure', 'ingest', 'retrieve', 'import-calendar', 'events',
                                          'plan', 'queue', 'review', 'edit', 'approve', 'claim', 'receipt', 'conflicts',
                                          'set-dress-code', 'dress-code', 'configure-autonomy', 'autonomy',
                                          'set-volunteer', 'add-task', 'delegate', 'task-queue', 'task-claim',
