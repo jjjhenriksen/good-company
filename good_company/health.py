@@ -11,7 +11,8 @@ def report(coordinator, now=None):
               'connections': {key: value['status'] for key, value in state['connections'].items()},
               'calendar_fresh': state['calendar']['fresh'], 'sources': state['sources'],
               'delivery': state['delivery'], 'unresolved_exceptions': state['unresolved_exceptions']}
-    fingerprint = digest(health)
+    fingerprint = digest({key: value for key, value in health.items() if key != 'delivery'} |
+                         {'delivery_failures': {key: state['delivery'][key] for key in ('unknown', 'failed')}})
     with coordinator.db:
         coordinator.db.execute('BEGIN IMMEDIATE')
         prior = coordinator.db.execute("SELECT value FROM settings WHERE key='health:last'").fetchone()
