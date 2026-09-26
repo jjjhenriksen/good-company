@@ -8,3 +8,8 @@ plow-credentials
 private/
 dist/
 build/
+.env.*
+!.env.example
+*.pem
+*.key
+.DS_Store
