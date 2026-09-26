@@ -1,0 +1,15 @@
+{
+  "authority": "Fictional demo setup; not authorization to contact real people",
+  "policy": {
+    "enabled": true,
+    "sender": "coordinator@example.invalid",
+    "calendar_scopes": ["demo-events-only"],
+    "allowed_event_types": ["service activity"],
+    "allowed_task_categories": ["event preparation", "communications"],
+    "allowed_recipients": ["alex@example.invalid", "sam@example.invalid"],
+    "reminder_recipients": ["alex@example.invalid", "sam@example.invalid"],
+    "cadence_days": [7, 1],
+    "task_reminder_hours": [24, 2],
+    "max_reminders_per_day": 4
+  }
+}
