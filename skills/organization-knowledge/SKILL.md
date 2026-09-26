@@ -71,3 +71,16 @@ requested date and reports expired reviews, absent applicable versions, and
 overlapping versions as gaps. Legacy documents remain marked as having unknown
 review metadata; do not assert current requirements from that status. Current
 source privacy also protects archived versions after a source is reclassified.
+
+## Supplied source precedence
+
+For structured dress-rule conflicts, `set-source-precedence` takes a documented
+preferred_source, overridden_source, evidence_source, section, event_type, role,
+effective_from, effective_until (exclusive), review_by, and verified authority.
+Ingest the actual governing decision first. The relationship is scoped and tied
+to that exact evidence content; changed, retired, expired or audience-inaccessible
+evidence cannot resolve a public answer. Every applicable rule remains cited,
+including overridden rules, and the decision evidence is identified separately.
+Cycles and overlapping contradictory versions remain unresolved. General prose
+retrieval still presents evidence and gaps; it does not infer a legal or national/
+regional/local hierarchy from organization names.
