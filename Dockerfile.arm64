@@ -1,0 +1,29 @@
+# Native Apple Silicon preview, preserving the pinned Plow source/runtime versions.
+FROM --platform=linux/amd64 public.ecr.aws/e1h7x4a2/plow-cloud-agents:base-1e73c82c4b3e0c9f76935bc0cc45061875b34aee@sha256:5f8ef7c3762b037420cd8843a767a7ab7e2433b1c8319e7cfe2ad1bdef5dee8a AS plow
+FROM ghcr.io/openclaw/openclaw:2026.9.6@sha256:62040ed3fe6f566adb39e60c5428cce078989a39cc713d63e873c4dccf166892
+USER root
+RUN mkdir -p /opt/plow /var/lib/plow /etc/plow/openclaw && chown node:node /var/lib/plow /etc/plow/openclaw
+COPY --from=plow /opt/plow /opt/plow
+COPY --from=plow /etc/profile.d/plow-openclaw.sh /etc/profile.d/plow-openclaw.sh
+RUN printf '\n. /etc/profile.d/plow-openclaw.sh\n' >> /home/node/.bashrc \
+ && cd /opt/plow && npm ci --omit=dev --omit=peer --omit=optional --ignore-scripts
+RUN curl -fsSL --max-time 120 -o /tmp/agentsview.tgz \
+    https://github.com/kenn-io/agentsview/releases/download/v0.44.0/agentsview_0.44.0_linux_arm64.tar.gz \
+ && echo '6f3c76ebe119826a2def1ae226c3573b214d396a3ed7c477ef282b1063345b87  /tmp/agentsview.tgz' | sha256sum -c - \
+ && tar -xzf /tmp/agentsview.tgz -C /usr/local/bin agentsview && rm /tmp/agentsview.tgz
+COPY good_company/ /opt/good-company/good_company/
+COPY scripts/start_runtime.py /opt/good-company/start_runtime.py
+COPY scripts/runtime_preflight.py /opt/good-company/runtime_preflight.py
+COPY scripts/good-company /usr/local/bin/good-company
+RUN chmod 0755 /usr/local/bin/good-company && mkdir -p /var/lib/good-company && chown node:node /var/lib/good-company
+COPY prompt/AGENTS.md /opt/plow/prompt/AGENTS.md
+COPY skills/ /opt/plow/skills/
+COPY examples/ /opt/good-company/examples/
+ENV AGENT_RUNTIME=OpenClaw OPENCLAW_STATE_DIR=/var/lib/plow OPENCLAW_CONFIG_PATH=/var/lib/plow/openclaw.json OPENCLAW_INCLUDE_ROOTS=/etc/plow/openclaw OPENCLAW_NO_RESPAWN=1 NODE_DISABLE_COMPILE_CACHE=1
+ENV PYTHONPATH=/opt/good-company GOOD_COMPANY_DB=/var/lib/good-company/state.sqlite
+ENV AGENT_ID=good-company AGENT_NAME="Good Company"
+ENV AGENT_BLURB="An executive assistant for busy community leaders: knows the supplied rules, coordinates volunteers, and handles routine reminders."
+LABEL org.opencontainers.image.title="Good Company native ARM64 preview" org.opencontainers.image.licenses="MIT"
+HEALTHCHECK NONE
+USER node
+CMD ["python3", "/opt/good-company/start_runtime.py"]

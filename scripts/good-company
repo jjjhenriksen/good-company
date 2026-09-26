@@ -1,2 +1,6 @@
 #!/bin/sh
+# OpenClaw's tool environment can omit inherited PYTHONPATH. Keep the installed
+# entry point independent of the caller's working directory and environment.
+export PYTHONPATH=/opt/good-company
+export GOOD_COMPANY_DB="${GOOD_COMPANY_DB:-/var/lib/good-company/state.sqlite}"
 exec python3 -m good_company.cli "$@"
