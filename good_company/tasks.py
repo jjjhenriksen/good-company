@@ -132,6 +132,10 @@ class WorkCoordinator(Coordinator):
           WHERE task_notices.status IN ('pending','cancelled')""",
                         (aid, assignment_id, kind, iso(due), json.dumps(message)))
 
+    def _retire_pending(self, task_id):
+        self.db.execute("""UPDATE task_notices SET status='cancelled' WHERE status='pending'
+          AND assignment_id IN (SELECT id FROM assignments WHERE task_id=?)""", (task_id,))
+
     def delegate(self, now=None):
         now = stamp(now)
         made, exceptions = [], []
@@ -149,19 +153,27 @@ class WorkCoordinator(Coordinator):
             tasks = sorted([json.loads(r[0]) for r in self.db.execute("SELECT payload FROM tasks WHERE status='open'")], key=lambda t: (stamp(t['start']), t['id']))
             for t in tasks:
                 if stamp(t['start']) <= now:
+                    self._retire_pending(t['id'])
                     continue
                 if t['category'] not in policy['allowed_task_categories']:
+                    self._retire_pending(t['id'])
                     exceptions.append({'task_id': t['id'], 'reason': 'Task category is outside standing instructions.'})
                     continue
                 existing = self.db.execute("SELECT * FROM assignments WHERE task_id=? AND status='assigned'", (t['id'],)).fetchone()
                 if existing:
                     v = next((v for v in volunteers if v['id'] == existing['volunteer_id']), None)
                     if not v or not self._eligible(v, t, policy):
+                        self._retire_pending(t['id'])
                         exceptions.append({'task_id': t['id'], 'reason': 'An existing assignment needs reconciliation after availability or role changed.'})
                         continue
                     assignment_id = existing['id']
                     self.db.execute('UPDATE assignments SET policy_hash=? WHERE id=?', (digest(policy), assignment_id))
                     self._notice(assignment_id, t, v, 'assignment', now, policy)
+                    # Include overdue notices that fall outside the cadence creation
+                    # window. Only never-attempted rows may get new routing.
+                    for pending in self.db.execute("SELECT kind,due FROM task_notices WHERE assignment_id=? AND status='pending'", (assignment_id,)).fetchall():
+                        if pending['kind'] in allowed_kinds:
+                            self._notice(assignment_id, t, v, pending['kind'], pending['due'], policy)
                 else:
                     declined = {r[0] for r in self.db.execute("SELECT volunteer_id FROM assignments WHERE task_id=? AND status='declined'", (t['id'],))}
                     candidates = [v for v in volunteers if v['id'] not in declined and self._eligible(v, t, policy)]
