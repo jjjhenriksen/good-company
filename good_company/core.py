@@ -328,6 +328,10 @@ class Coordinator:
                 raise ValueError(f'Event {uid} has an invalid or out-of-window time.')
             if event.get('status', 'confirmed') not in ('confirmed', 'tentative', 'cancelled'):
                 raise ValueError('Unknown calendar status.')
+            if event.get('dress_applicability', 'unknown') not in ('required', 'not_applicable', 'unknown'):
+                raise ValueError('dress_applicability must be required, not_applicable, or unknown.')
+            if event.get('dress_applicability') == 'not_applicable' and event.get('attire'):
+                raise ValueError('An event without an attire requirement cannot also specify attire.')
             event['status'] = event.get('status', 'confirmed')
             event['start'], event['end'] = iso(s), iso(e)
             event_id = digest([calendar, uid])[:24]
@@ -448,8 +452,10 @@ class Coordinator:
             missing.append('location or online meeting link')
         sources = [event['source']] + event.get('detail_sources', [])
         event = dict(event)
-        if event.get('event_type'):
-            result = self.dress_code(event_type=event['event_type'], role=event.get('dress_code_role'),
+        if event.get('dress_applicability') == 'not_applicable':
+            event.pop('attire', None)
+        elif event.get('event_type') or event.get('dress_applicability') == 'required':
+            result = self.dress_code(event_type=event.get('event_type'), role=event.get('dress_code_role'),
                                      on=local.date().isoformat(), audience='volunteer', now=now)
             if result['status'] == 'supported':
                 supplied = ' '.join(event.get('attire', '').casefold().split())
