@@ -37,6 +37,23 @@ shown as `free`; do not assume `ln_p1` will remain free.
 
 ## 3. Run a private preview
 
+Before allocating a Plow line, build and check runtime compatibility:
+
+```sh
+docker compose build agent
+docker compose run --rm --no-deps --entrypoint python3 agent /opt/good-company/runtime_preflight.py
+```
+
+Compose needs its environment file even for this check; before minting credentials,
+create an empty `plow-credentials` file if none exists (never overwrite an existing
+credential file). A passing result only checks syscall support. An `openat2`
+`Function not implemented` failure means this Linux emulation cannot run the pinned
+OpenClaw state filesystem. Use a compatible Linux host. Do not bypass filesystem
+containment, repeatedly reset the state volume, or count the build as a live boot.
+The initial Apple Silicon x86-emulation attempt hit this failure; see
+[the runtime evidence](docs/RUNTIME-VALIDATION.md).
+
+
 From this project directory, replacing LINE_ID with that free line:
 
 ```sh
