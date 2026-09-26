@@ -1,0 +1,6 @@
+services:
+  agent:
+    platform: linux/arm64
+    build:
+      context: .
+      dockerfile: Dockerfile.arm64

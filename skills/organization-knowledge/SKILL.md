@@ -51,3 +51,36 @@ Use event-coordination for calendar actions and volunteer-coordination for tasks
 No automatic RSVP/form collection, certification verification or universal
 regulatory compliance checking exists. A source mentioning an action does not
 authorize contacting people or changing calendars.
+
+## Retiring a source
+
+Use `withdraw-source` with the exact source ID and verified withdrawal authority.
+Retired knowledge and dress rules remain in private storage for provenance but are
+excluded from new answers. Pending event notices are invalidated for reassessment;
+event/detail citations to the retired source cannot be automatically authorized.
+Review derived details and import a reviewed replacement under a new source ID.
+Previously attempted messages retain their history and require explicit correction.
+
+## General document versions
+
+`ingest` accepts optional metadata: version, original_source, effective_from,
+effective_until (optional, exclusive), review_by, and review_authority. Supply
+these from reviewed sources; never invent missing dates. Versions are immutable
+and prior content remains in a private archive. `retrieve` accepts `on` for a
+requested date and reports expired reviews, absent applicable versions, and
+overlapping versions as gaps. Legacy documents remain marked as having unknown
+review metadata; do not assert current requirements from that status. Current
+source privacy also protects archived versions after a source is reclassified.
+
+## Supplied source precedence
+
+For structured dress-rule conflicts, `set-source-precedence` takes a documented
+preferred_source, overridden_source, evidence_source, section, event_type, role,
+effective_from, effective_until (exclusive), review_by, and verified authority.
+Ingest the actual governing decision first. The relationship is scoped and tied
+to that exact evidence content; changed, retired, expired or audience-inaccessible
+evidence cannot resolve a public answer. Every applicable rule remains cited,
+including overridden rules, and the decision evidence is identified separately.
+Cycles and overlapping contradictory versions remain unresolved. General prose
+retrieval still presents evidence and gaps; it does not infer a legal or national/
+regional/local hierarchy from organization names.
