@@ -26,6 +26,8 @@ def main():
         env = dict(os.environ)
         env.pop('PYTHONPATH', None)
         env.pop('GOOD_COMPANY_DB', None)
+        cycle = bindir/('good-company-cycle.exe' if os.name == 'nt' else 'good-company-cycle')
+        subprocess.run([str(cycle), '--help'], cwd=target, env=env, check=True, capture_output=True)
         result = subprocess.run([str(cli), 'configure', '--input', str(root/'examples/profile.json')],
                                 cwd=target, env=env, check=True, capture_output=True, text=True)
         assert json.loads(result.stdout)['configured'] == 'Good Company Demo Club'

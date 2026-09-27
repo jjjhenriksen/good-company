@@ -46,5 +46,6 @@ jobs:
           IMAGE: ${{ steps.image.outputs.name }}:${{ github.sha }}
         run: |
           docker run --rm --network none --entrypoint good-company "$IMAGE" --help
+          python3 scripts/check_cycle_image.py "$IMAGE"
           docker run --rm --network none --entrypoint python3 "$IMAGE" -c 'import tempfile; from pathlib import Path; from good_company.tasks import WorkCoordinator; d=tempfile.TemporaryDirectory(); c=WorkCoordinator(Path(d.name)/"smoke.sqlite"); assert c.task_queue()==[]; c.db.close(); d.cleanup()'
           docker run --rm --network none --entrypoint python3 "$IMAGE" -c 'import json; from pathlib import Path; root=Path("/opt/plow/skills"); names=("community-operations", "event-coordination", "volunteer-coordination", "organization-knowledge"); assert all((root/n/"SKILL.md").is_file() for n in names); assert (root/"organization-knowledge/references/dress-rules.md").is_file(); examples=Path("/opt/good-company/examples"); assert (examples/"handbook.md").is_file(); [json.loads((examples/(n+".json")).read_text()) for n in ("profile", "autonomy", "team", "tasks", "dress-code")]; print("Packaged skills and examples verified")'

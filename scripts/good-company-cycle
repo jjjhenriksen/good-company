@@ -1,0 +1,4 @@
+#!/bin/sh
+# Agent tool calls can omit PYTHONPATH; use the installed runtime explicitly.
+export PYTHONPATH=/opt/good-company
+exec python3 -m good_company.cycle_cli "$@"
