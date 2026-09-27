@@ -32,6 +32,40 @@ Run `python -m unittest discover -s tests -p test_providers.py -v` for fictional
 contract checks. The Google/Latch acceptance record separates simulated edge cases from actual
 provider receipts. A second pilot provider remains a separate requirement (#31).
 
+## Title-free Google availability
+
+`GoogleCalendar.check_availability(scope, start, end)` and the owner-only
+`good-company-availability` command query exactly one selected calendar with
+`plow-gog calendar freebusy`. The result contains only a generic conflict/free
+answer, observation time and scope limitation. It neither reads event titles nor
+imports personal events into the coordination database. It does not book time.
+
+Use a separate private configuration from the reminder scheduler, with exactly
+`journal`, `account` and `scopes` fields. `account` must be the owner-selected
+connected account, `scopes` maps a local name to one exact Google calendar ID,
+and `journal` names a private SQLite journal (relative paths resolve beside the
+configuration). Do not put personal calendars into the scheduler's event scopes.
+Names, indices and comma-separated selectors are rejected; `primary` explicitly
+resolves to the configured account. Credentials remain in the existing Latch
+environment, never in this configuration.
+
+```sh
+good-company-availability --config /private/path/availability.json \
+  --check-id UNIQUE_CHECK_ID --scope OWNER_SELECTED_SCOPE \
+  --start RFC3339_START_WITH_OFFSET --end RFC3339_END_WITH_OFFSET
+```
+
+Use a new check ID for a fresh observation; reuse the same ID/window only to
+resume an interrupted check. Observations older than 15 minutes are refused.
+Per-calendar errors, missing/extra calendar IDs and malformed intervals produce
+an unavailable result and nonzero exit, never a free result. Latch still controls
+every actual invocation. The implementation follows the upstream
+[gog freebusy command](https://github.com/openclaw/gogcli/blob/main/internal/cmd/calendar_freebusy.go)
+and [Google FreeBusy response](https://developers.google.com/workspace/calendar/api/v3/reference/freebusy/query).
+Installed gog v0.14.0 help was checked without contacting an account. Contract
+tests use fictional responses; an owner-selected live conflict remains unverified
+under #61.
+
 ## Inbound identity boundary
 
 `apply_verified_reply` fetches a `VerifiedReply` from the provider's authenticated

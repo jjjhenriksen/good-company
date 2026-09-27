@@ -2,7 +2,7 @@
 import hashlib
 import json
 import re
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
@@ -102,6 +102,62 @@ class GoogleCalendar:
             if stamp(start) <= event_start < stamp(end):
                 events.append(event)
         return CalendarPage(scope, events, observed, True, True, token or None)
+
+    def check_availability(self, scope, start, end, now=None):
+        """Owner-only free/busy check; never imports or returns event details.
+
+        Construct a separate reader with the owner's selected calendar mapping;
+        do not add personal calendars to the reminder scheduler's scopes.
+        """
+        if scope not in self.scopes:
+            raise ProviderError('google_calendar_outside_scope')
+        calendar_id = self.scopes[scope]
+        if calendar_id == 'primary':
+            calendar_id = self.email
+        # gog also accepts names, indices and comma-separated lists. This path
+        # permits only a single explicit Google calendar ID, never those selectors.
+        if not re.fullmatch(r'[^\s<>@,;]+@[^\s<>@,;]+', calendar_id) or calendar_id.startswith('-'):
+            raise ProviderError('explicit_availability_calendar_id_required')
+        try:
+            if not all(isinstance(value, str) and value.strip() for value in (start, end)):
+                raise ValueError()
+            start, end = iso(start), iso(end)
+            if not timedelta(0) < stamp(end) - stamp(start) <= timedelta(days=93):
+                raise ValueError()
+        except (ValueError, TypeError, AttributeError):
+            raise ProviderError('invalid_availability_window') from None
+        self.account()
+        data, observed = self._read(['plow-gog', 'calendar', 'freebusy', calendar_id,
+                                    '--account', self.email, '--from', start, '--to', end, '--json'])
+        if not timedelta(0) <= stamp(now) - stamp(observed) <= timedelta(minutes=15):
+            raise ProviderError('availability_observation_not_current')
+        calendars = data.get('calendars')
+        if not isinstance(calendars, dict) or set(calendars) != {calendar_id}:
+            raise ProviderError('availability_scope_unconfirmed')
+        calendar = calendars[calendar_id]
+        if not isinstance(calendar, dict) or set(calendar) - {'busy', 'errors'}:
+            raise ProviderError('availability_result_unconfirmed')
+        errors = calendar.get('errors', [])
+        if not isinstance(errors, list) or errors:
+            raise ProviderError('availability_calendar_unavailable')
+        # gog's Go serializer omits an empty busy list. An explicitly present
+        # calendar with no errors is required even for this empty result.
+        busy = calendar.get('busy', [])
+        if not isinstance(busy, list) or len(busy) > 10000:
+            raise ProviderError('availability_intervals_unconfirmed')
+        try:
+            for interval in busy:
+                if (not isinstance(interval, dict) or set(interval) != {'start', 'end'}
+                        or not all(isinstance(value, str) and value.strip() for value in interval.values())):
+                    raise ValueError()
+                first, last = stamp(interval['start']), stamp(interval['end'])
+                if not first < last or first >= stamp(end) or last <= stamp(start):
+                    raise ValueError()
+        except (ValueError, TypeError, AttributeError):
+            raise ProviderError('availability_intervals_unconfirmed') from None
+        return {'available': not busy, 'checked_at': observed,
+                'message': 'There is an existing commitment.' if busy else 'No conflict in the checked window.',
+                'scope': 'Selected calendar and requested window only; this does not reserve a time.'}
 
     @staticmethod
     def _event(raw, calendar_id):

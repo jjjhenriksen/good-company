@@ -101,6 +101,18 @@ promise automatic per-team or mixed-role messages; these require a later feature
 
 ## Calendar executive assistance
 
+For an owner-selected Google calendar, use the read-only
+`good-company-availability --config /private/path/availability.json --check-id UNIQUE_CHECK_ID --scope OWNER_SELECTED_SCOPE --start RFC3339_START --end RFC3339_END`.
+The separate private configuration contains only `journal`, `account` and `scopes`;
+scope names map to exact Google calendar IDs. Use the existing Latch credentials.
+This command queries free/busy without event titles and returns only a generic
+answer and observation time. An unavailable result is not permission to say the
+owner is free. Use a fresh check ID for a new observation; replay uses the old
+observation and refuses it after 15 minutes. Do not add personal calendars to the
+reminder scheduler's scopes. This checks the requested window, including any
+owner-supplied travel buffer, and does not book anything. Live acceptance remains
+separate from the fictional contract tests.
+
 `conflicts`: `{ "proposed":{"start":"ISO+offset","end":"ISO+offset"},
 "busy":[{"start":"ISO+offset","end":"ISO+offset"}] }`.
 Fetch current busy intervals from the actual calendars first; include the owner's

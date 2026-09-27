@@ -1,0 +1,4 @@
+#!/bin/sh
+# Use the installed runtime without requiring caller-supplied PYTHONPATH.
+export PYTHONPATH=/opt/good-company
+exec python3 -m good_company.availability_cli "$@"
