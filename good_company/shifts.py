@@ -9,6 +9,7 @@ def add_shift(coordinator, shift, authority, now=None):
     from .tasks import WorkCoordinator
     required(authority, 'shift authority')
     required(shift.get('id'), 'shift id'); required(shift.get('title'), 'shift title')
+    if type(shift.get('signup_required', False)) is not bool: raise ValueError('signup_required must be boolean.')
     slots = shift.get('slots')
     if not isinstance(slots, list) or not 1 <= len(slots) <= 100 or any(not isinstance(slot, dict) for slot in slots):
         raise ValueError('Supply 1–100 explicit staffing slots.')
@@ -21,7 +22,7 @@ def add_shift(coordinator, shift, authority, now=None):
         try:
             coordinator.db.backup(candidate.db)
             for slot in slots:
-                task = dict(slot, id=shift['id'] + ':' + slot['id'])
+                task = dict(slot, id=shift['id'] + ':' + slot['id'], signup_required=shift.get('signup_required', False))
                 candidate.add_task(task, authority, now=now)
                 tasks.append(json.loads(candidate.db.execute('SELECT payload FROM tasks WHERE id=?',(task['id'],)).fetchone()[0]))
         finally: candidate.db.close()
@@ -54,9 +55,11 @@ def status(coordinator, shift_id):
     for task_id in shift['task_ids']:
         task=coordinator.db.execute('SELECT status,payload FROM tasks WHERE id=?',(task_id,)).fetchone()
         assigned=coordinator.db.execute("SELECT count(*) FROM assignments WHERE task_id=? AND status='assigned'",(task_id,)).fetchone()[0]
+        offered=coordinator.db.execute("SELECT count(*) FROM assignments WHERE task_id=? AND status='offered'",(task_id,)).fetchone()[0]
         filled=task['status']=='open' and assigned==1
-        slots.append({'task_id':task_id,'status':task['status'],'filled':filled,
+        slots.append({'task_id':task_id,'status':task['status'],'filled':filled,'reserved_offer':bool(offered),
                       'reason':None if filled or task['status']!='open' else 'Unfilled: allocation must satisfy recorded roles, qualifications, consent, availability and workload capacity.'})
     return {'shift_id':shift_id,'capacity':shift['capacity'],'filled':sum(s['filled'] for s in slots),
-            'unfilled':sum(not s['filled'] and s['status']=='open' for s in slots),'slots':slots,
+            'reserved_offers':sum(s['reserved_offer'] for s in slots),
+            'unfilled':sum(not s['filled'] and not s['reserved_offer'] and s['status']=='open' for s in slots),'slots':slots,
             'scope':'Allocation is not verified attendance or an accepted signup.'}

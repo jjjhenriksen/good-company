@@ -87,7 +87,7 @@ class WorkCoordinator(Coordinator):
 
     def _workload(self, volunteer_id, excluding=None):
         return [json.loads(r[0]) for r in self.db.execute('''SELECT t.payload FROM tasks t
-          JOIN assignments a ON a.task_id=t.id WHERE a.volunteer_id=? AND a.status='assigned'
+          JOIN assignments a ON a.task_id=t.id WHERE a.volunteer_id=? AND a.status IN ('assigned','offered')
           AND t.status='open' AND t.id<>?''', (volunteer_id, excluding or ''))]
 
     def _event_current(self, task):
@@ -200,6 +200,8 @@ class WorkCoordinator(Coordinator):
                     exceptions.append({'task_id': t['id'], 'reason': 'Task category is outside standing instructions.'})
                     continue
                 existing = self.db.execute("SELECT * FROM assignments WHERE task_id=? AND status='assigned'", (t['id'],)).fetchone()
+                if not existing and t.get('signup_required'):
+                    continue
                 if existing:
                     v = next((v for v in volunteers if v['id'] == existing['volunteer_id']), None)
                     if not v or not self._eligible(v, t, policy):
