@@ -61,4 +61,6 @@ new ones are installed; do not remove inherited Plow skills. Update any saved jo
 instructions that refer to old skill names, keeping the existing job ID and remit.
 Verify one job remains, its permissions and next run are correct, and a controlled
 test produces no duplicate messages. New image builds contain only the new custom
-skill names; runtime copy/upgrade behavior still needs a live-install check.
+skill names. The [live upgrade acceptance](acceptance/57-runtime-upgrade.md)
+now verifies saved state, loaded skills, install identity and one duplicate-free
+post-upgrade scheduled tick for the documented local image replacement.
