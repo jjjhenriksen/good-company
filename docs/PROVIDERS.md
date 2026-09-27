@@ -76,5 +76,5 @@ do not prove scheduled unattended delivery or external-participant reply identit
 
 The probe now distinguishes the disconnected-device response without echoing
 arbitrary provider error bodies. Tool discovery and successful reads are useful
-progress, but this draft still does not implement or prove the full delivery and
+progress, but this diagnostic does not implement or prove the full delivery and
 verified-reply adapter required by #30.
