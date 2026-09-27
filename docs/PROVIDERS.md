@@ -30,3 +30,19 @@ bodies. Credentials and private messages stay outside source control and artifac
 Run `python -m unittest discover -s tests -p test_providers.py -v` for fictional
 contract checks. Live Google/Latch and a concrete second pilot provider remain
 separate acceptance requirements in #30 and #31.
+
+## Inbound identity boundary
+
+`apply_verified_reply` fetches a `VerifiedReply` from the provider's authenticated
+integration path. The same path handles genuine and spoofed contract fixtures.
+There is deliberately no CLI accepting a caller's `authenticated: true` assertion.
+A real adapter must prove sender identity independently of the From display name,
+body text, and model assertions. If its tools cannot do so, the capability is
+unavailable; do not process replies through this path.
+
+A unique verified roster address may decline/complete only its own assignment,
+stop its own communications, or set its own validated preferences. The identity
+check, state change and replay receipt share one transaction. Only an opaque
+provider evidence reference is retained, not the message body or credentials.
+The trusted-operator CLI remains powerful; this does not create a public-user
+sandbox. Live genuine/spoofed provider acceptance remains unverified (#29).

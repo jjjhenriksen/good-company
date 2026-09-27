@@ -299,6 +299,30 @@ class WorkCoordinator(Coordinator):
             self.log('task_declined', assignment_id, {'authority': authority}, stamp(now))
         return {'assignment_id': assignment_id, 'status': 'declined', 'next': 'Run delegate to find another eligible volunteer.'}
 
+    def overdue_tasks(self, now=None):
+        now = stamp(now)
+        overdue = []
+        for row in self.db.execute("SELECT id,payload FROM tasks WHERE status='open'"):
+            task = json.loads(row['payload'])
+            if stamp(task['end']) < now:
+                assignment_count = self.db.execute("SELECT count(*) FROM assignments WHERE task_id=? AND status='assigned'", (row['id'],)).fetchone()[0]
+                overdue.append({'task_id': row['id'], 'title': task['title'], 'ended_at': task['end'],
+                                'active_assignments': assignment_count, 'status': 'overdue_unresolved',
+                                'next': 'Verify completion, cancel, or record follow-up; capacity remains reserved until an explicit lifecycle transition.'})
+        return {'overdue': sorted(overdue, key=lambda item: (item['ended_at'], item['task_id']))}
+
+    def follow_up_task(self, task_id, outcome, authority, note, now=None):
+        required(authority, 'verified follow-up reference'); required(note, 'follow-up outcome note')
+        if outcome not in ('still_open', 'completed', 'cancelled'):
+            raise ValueError('Choose still_open, completed, or cancelled; never infer completion.')
+        if outcome in ('completed', 'cancelled'):
+            return self.close_task(task_id, outcome, authority, now=now)
+        with self.db:
+            if not self.db.execute("SELECT 1 FROM tasks WHERE id=? AND status='open'", (task_id,)).fetchone():
+                raise ValueError('No open task with that ID.')
+            self.log('task_follow_up', task_id, {'outcome': outcome, 'authority': authority, 'note': note}, stamp(now))
+        return {'task_id': task_id, 'status': 'open', 'capacity_released': False}
+
     def close_task(self, task_id, status, authority, now=None):
         if status not in ('completed', 'cancelled'):
             raise ValueError('Choose completed or cancelled.')
