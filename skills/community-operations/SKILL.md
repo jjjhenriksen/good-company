@@ -31,6 +31,18 @@ Ask for relevant sources, timezone, calendar scope, sending account and audience
 as needed. Do not assume a youth group, membership structure, dress policy or
 formal term book. Preview one useful event or answer before collecting more.
 
+Use `onboarding {}` to get the missing-context prompts. Collect answers in natural
+conversation, verify sender and roster with connected tools, and translate the
+answers into `profile` and `policy` internally. The owner never edits JSON.
+Call `onboarding` with those objects and the owner instruction `authority` to
+preview the remit without changing state. Present its scope in ordinary language,
+then apply the already-authorized instructions with `apply: true`. Do not invent
+missing fields or require individual reminder approvals. Setup is atomic and
+repeatable. Preview one sourced answer or event; if no source/calendar is connected,
+explain that limitation instead of presenting a fictional result as live.
+A real-model local setup run is recorded in docs/ONBOARDING-VALIDATION.md.
+Connected accounts and unattended delivery still need separate observed evidence.
+
 `configure` takes `profile`; see `profile.json` in the examples directory.
 Its supported fields are organization, timezone, greeting, signoff, audience,
 reminder_days and send_hour. Ask for the owner’s cadence; sample values are only
@@ -100,6 +112,22 @@ Keep a short operating brief: upcoming work, confirmed assignments, successful
 provider receipts, unresolved exceptions and the next action. Stay quiet when
 nothing changes. A saved schedule or queue entry is not evidence of delivery.
 
+## Show readiness
+
+Use `readiness {}` during onboarding and after each cycle. Summarize its reasons,
+calendar freshness, last scheduler observation and delivery counts. Queued means
+pending work; provider acceptance does not establish receipt by a person, and
+unknown delivery needs reconciliation.
+
+After actually checking the connected calendar/mail tools or observing a scheduler
+execution, use `record-connection` with component (`calendar`, `mail`, `scheduler`),
+status (`verified`, `unavailable`, `unknown`), checked_at and a private evidence
+reference. For scheduler, verify execution, not merely a saved job. For mail,
+verify the actual configured sender and unattended permissions. For calendar,
+verify the exact scopes. Never record a fixture as a live observation. These are
+trusted-operator attestations, not authentication. They expire after 30 minutes
+and a changed remit requires new verification. Readiness never echoes evidence
+references, addresses, calendar identifiers or document contents.
 ## Stop requests
 
 After verifying the participant identity through the connected account, call
@@ -130,3 +158,28 @@ Leave deferred work queued; existing expiry rules still apply. Summarize the
 backlog and surface time-sensitive corrections to the owner rather than silently
 dropping them or sending an extra digest outside the budget. Changes to the limit
 require the owner's standing authority. There is no automatic urgency bypass.
+
+Profiles may include `locale` (`en-US` or `en-GB`) and `terminology`, mapping
+coordinator, participant, volunteer, event and task to the organization's chosen
+single-line terms. Persist these in onboarding/configure and use them in conversation;
+task notice subjects use the configured task term. Omitted fields preserve the
+existing English default without changing authority. Dates include the year;
+times include timezone and UTC offset to disambiguate DST. Other locales/languages
+are unsupported until reviewed wording exists; do not invent translated rules.
+## Operational health
+
+Use `health {}` after the recurring loop. It reports missing/paused authority,
+stale calendars and sources, unverified or unavailable connections, missing
+credentials, and unknown/failed work without recipient lists or private evidence.
+Record `missing_credentials` only from a trusted connection observation; never
+copy secrets into evidence. `notify` recommends a concise owner update on changed
+failures or recovery. Repeated unchanged states are quiet. No alert is sent by this
+command; delivery still requires the owner's authorized channel and budget.
+
+`weekly-brief` takes week_start (ISO date) and exports confirmed participation and
+minutes for that seven-day period, upcoming work for the following week, and
+current unresolved delivery counts. The export is aggregate and contains no
+participant IDs, recipient lists or assessments. It reflects the latest authorized
+corrections and includes an audit revision. Missing/disputed/unsupplied outcomes
+remain explicit; do not treat absence of records as zero attendance or count sent
+messages as completed work. Sending a brief requires separate standing authority.
