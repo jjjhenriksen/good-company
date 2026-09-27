@@ -2,7 +2,7 @@
 
 Working identity:
 - Name: Good Company
-- Slug: good-company (not yet claimed or verified available on the Index)
+- Slug: good-company ([owned listing](https://aiworthusing.com/agent-index/good-company); genuine usage accepted)
 - Blurb: An executive assistant for busy community leaders: knows the supplied rules, coordinates volunteers, and handles routine reminders.
 - Runtime: OpenClaw on the Plow base
 
@@ -28,7 +28,7 @@ Repository: [jjjhenriksen/good-company](https://github.com/jjjhenriksen/good-com
 - [ ] Verify event/role-specific dress answers against supplied sources.
 - [ ] Verify skill-based assignment, notices, verified declines and reassignment.
 - [ ] Verify one scheduler run and no duplicate delivery on the next run.
-- [ ] Claim the Index slug and verify reporting after genuine model activity.
+- [x] Claim the Index slug and verify reporting after genuine model activity and runtime replacement; see acceptance/14-index-usage.md.
 - [x] Create the source repository with MIT LICENSE and conventional feature commits.
 - [ ] Review the audit PRs and publish the currently private repository; record the exact release commit.
 - [ ] Record a demo video using fictional data and no credentials or private membership content.

@@ -1,18 +1,21 @@
 # Index identity and usage acceptance (#14)
 
-Observed 2026-09-26: the official Index endpoint
-`https://agent-index-server.vercel.app/v1/agent?agent_id=good-company` returned HTTP
-404 with error `no such agent` (do not infer lasting availability). No ownership claim or accepted usage receipt exists.
-The local preview deliberately leaves AGENT_ID empty. Real model runs occurred,
-but that does not prove Index ingestion.
+Passed on 2026-09-27 UTC. The authenticated inherited client created
+[Good Company](https://aiworthusing.com/agent-index/good-company), and a public
+read-back confirmed the intended slug and owner. The first genuine report was
+accepted with HTTP 200 for two day/model rows, totalling 1,881,898 tokens.
 
-Using the authenticated maintainer identity, recheck then claim/update the intended
-slug with the inherited supported client. Verify ownership from the actual response,
-not merely an absent Plow catalog entry. Preserve the existing install identity.
-Enable the inherited reporter for that owned slug, run a genuine model conversation,
-and record an accepted report plus the matching listing usage observation. Restart
-and confirm the same install identity and scheduled reporting without duplicate
-install registration. Do not submit synthetic token counts or replay fixture usage.
+The deployment now sets `AGENT_ID=good-company`, enabling the inherited five-minute
+reporter. Replacing the running image preserved the exact persistent Index state
+and install identity. After restart, a fresh real GLM-5.2 setup run consumed
+685,177 tokens. With no manual report after restart, the public Index total rose
+by exactly that amount to 2,567,075 at the next periodic pass. This is observed
+automatic reporting, not merely a saved timer or synthetic usage.
 
-Pending evidence: authenticated ownership receipt, report acceptance, listing usage
-and post-restart reporting. No slug was claimed or public metadata changed here.
+[`index-live.json`](../../eval/providers/index-live.json) preserves sanitized
+registration, report, run and identity-hash evidence. The report contains only
+day-by-model token counts; prompts, messages and credentials were not submitted.
+The registration state remains private on the persistent volume.
+
+Media, public source/image references and organizer admission are still #12/#15;
+identity and usage acceptance does not imply those steps are complete.
