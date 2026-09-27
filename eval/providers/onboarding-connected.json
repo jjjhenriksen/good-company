@@ -1,0 +1,60 @@
+{
+  "status": "passed",
+  "run_id": "73bfe974-a4bd-4cc3-8db0-181c01df84e4",
+  "model": "z-ai/glm-5.2",
+  "source_commit": "8aa3621",
+  "image": "sha256:f3d2d93f85411bc894a1f27f40629746091238e2b3e2429f4bcf5a4ca1f45ad6",
+  "fresh_database": true,
+  "owner_input": "natural language, no JSON",
+  "persisted_profile": {
+    "organization": "Fictional Harbor Board",
+    "timezone": "America/Los_Angeles",
+    "greeting": "Hello board members!",
+    "signoff": "Fictional Harbor board secretary",
+    "audience": "Owner-controlled test mailbox",
+    "reminder_days": [
+      7,
+      1
+    ],
+    "send_hour": 10,
+    "locale": "en-US",
+    "terminology": {
+      "coordinator": "board secretary",
+      "participant": "board member",
+      "volunteer": "board member",
+      "event": "board meeting",
+      "task": "board preparation task"
+    }
+  },
+  "policy_checks": {
+    "enabled": false,
+    "sender_matches_previously_observed_connected_account": true,
+    "exact_calendar_scope": true,
+    "sole_recipient_is_owner_mailbox": true,
+    "distinct_event_and_task_categories": true,
+    "cadence_and_shared_budget_match": true
+  },
+  "sourced_preview": {
+    "location": "Fictional Room B",
+    "bring": "draft agenda",
+    "source": "fictional://harbor-board-handbook",
+    "source_review_status_disclosed": true
+  },
+  "readiness": {
+    "paused": true,
+    "unverified_connections_disclosed": true,
+    "no_new_provider_observation_claimed": true
+  },
+  "applied_audit_count": 1,
+  "real_model_tools_succeeded": [
+    "read",
+    "exec",
+    "write"
+  ],
+  "mail_sent": 0,
+  "new_jobs": 0,
+  "limits": [
+    "Uses previously observed owner-controlled account identity; does not claim a fresh provider read during setup.",
+    "This requested setup remains paused. The separate live scheduled acceptance proves enabled routine delivery without per-message confirmation."
+  ]
+}
