@@ -2,8 +2,9 @@
 
 Decision: no-go for implementation until a pilot selects an authoritative calendar
 and mail system. No concrete second-provider need is supplied in the current issue
-or fictional examples. Google discovery itself remains unavailable (HTTP 503), so
-its live behavior is not yet a proved portability baseline. Do not select a vendor
+or fictional examples. Google/Latch discovery and bounded owner-loopback delivery now work. General
+provider normalization, external reply identity and unattended execution remain
+unverified, so portability is not yet established. Do not select a vendor
 on the assumption that generic nonprofit workflows imply a Microsoft tenant.
 
 The pilot record must name its actual system/account owner, calendar scope,
