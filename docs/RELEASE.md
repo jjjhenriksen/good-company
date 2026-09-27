@@ -46,7 +46,10 @@ public listing are distinct receipts.
 The repository contains a manual GitHub Actions workflow at
 `.github/workflows/build-image.yml`. After creating a repository, run **Build agent
 image** from its Actions page. It builds/tests on the runner. Publishing is an
-explicit workflow input; the default builds without pushing. A successful image
+explicit workflow input; the default builds without pushing. Both paths load the
+built image and verify its installed commands, paused cycle, skills, examples and
+MIT notice before any push. Publishing pushes that exact tested local image and
+records the registry digest in the workflow summary. A successful image
 build is still not runtime or texting verification. For a first GHCR push, make
 the package public in GitHub settings before asking Plow to pull it.
 

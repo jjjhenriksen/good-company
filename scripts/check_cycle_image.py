@@ -2,6 +2,7 @@
 """Exercise the image's installed scheduler command without network or services."""
 import argparse
 import subprocess
+from pathlib import Path
 
 SCRIPT = r'''
 import json
@@ -31,6 +32,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('image')
     args = parser.parse_args()
+    expected_license = Path(__file__).resolve().parents[1].joinpath('LICENSE').read_text()
+    packaged_license = subprocess.run(['docker', 'run', '--rm', '--network', 'none',
+        '--entrypoint', 'cat', args.image, '/opt/good-company/LICENSE'],
+        text=True, capture_output=True, check=True).stdout
+    if packaged_license != expected_license:
+        raise SystemExit('The image must retain the exact project license notice.')
     subprocess.run(['docker', 'run', '--rm', '--network', 'none', '-i',
                     '--entrypoint', 'python3', args.image, '-'], input=SCRIPT,
                    text=True, check=True)
