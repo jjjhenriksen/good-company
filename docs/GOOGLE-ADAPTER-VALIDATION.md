@@ -21,4 +21,11 @@ verified account identity, full scoped recurrence pagination, permissions, actua
 provider receipts, and unknown-outcome lookup. A provider send must remain disabled
 until those capabilities are established.
 
-The committed probe is diagnostic groundwork, not the completed Google adapter.
+The Google calendar and mail adapters are now implemented, with durable Latch
+operations and reconciliation. A later owner-approved read-only run through the
+actual calendar adapter authenticated the account and imported the existing
+fictional event's exact one-hour scope. Both Latch operations completed, and a
+journal reopen reused them without network dispatch. See
+[the calendar adapter evidence](GOOGLE-CALENDAR.md). Live multi-page/recurrence,
+mail-adapter delivery/reconciliation and unattended scheduling remain outstanding;
+the earlier direct self-mail receipts do not prove those adapter paths.

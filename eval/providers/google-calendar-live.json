@@ -1,0 +1,28 @@
+{
+  "status": "completed",
+  "authenticated_account": true,
+  "scope_matches_explicit_calendar": true,
+  "complete_snapshot_imported": true,
+  "event_count": 1,
+  "fictional_event_found": true,
+  "fixture_id_sha256": "502e335ee0cd1283d16de9cdf0f8bd9b3b50018fdc17aecdf26865dfc94a118a",
+  "start": "2026-10-03T12:00:00-07:00",
+  "end": "2026-10-03T13:00:00-07:00",
+  "next_cursor_present": false,
+  "unattended_send_proven": false,
+  "mail_sent": 0,
+  "calendar_writes": 0,
+  "state_scope": "isolated read-only acceptance database",
+  "source_commit": "7cd0f711b9c2ec7c3cb5f8cfb5c0190139e5d0e2",
+  "runtime_image": "sha256:66936b66f1cb80a99e4c7db333e7865afd713c12fb38ee40236b16c7f7ac1d9f",
+  "observed_at": "2026-09-27T02:51:33.010351+00:00",
+  "journal_operations": 2,
+  "reopened_journal_replay_without_dispatch": true,
+  "gatekeeper_original_policy_restored": true,
+  "gatekeeper_enabled": true,
+  "limitations": [
+    "One non-recurring event and one complete page; no live pagination or recurrence exercised",
+    "No email read or send in this run",
+    "No unattended authority or scheduler execution established"
+  ]
+}

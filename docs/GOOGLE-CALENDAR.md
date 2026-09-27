@@ -33,11 +33,21 @@ time on restart, fresh cycle IDs, incomplete output rejection, recurring-instanc
 identity, timezone validation, overlapping events and multi-day imports. Existing
 contract tests cover atomic import and duplicate occurrence rejection.
 
-Live validation attempted on 2026-09-26 stopped at account discovery. Gatekeeper
-denied `plow-gog accounts` under its existing family-assistant remit, interpreting
-the account listing as potentially exposing account credentials. The calendar
-query was never dispatched, and no mail or calendar mutation occurred. The new
-reader therefore has contract-test evidence, not a passed live-calendar run.
+The first live attempt on 2026-09-26 was denied at account discovery under the
+family-assistant remit. After the owner authorized a temporary, exact read-only
+exception, the deployed adapter completed both account discovery and the existing
+fictional event's one-hour calendar query. Latch recorded both requests allowed
+and completed. One complete page containing the expected non-recurring event was
+normalized and imported into an isolated, paused acceptance database. The original
+Gatekeeper policy was restored immediately afterward; Gatekeeper stayed enabled.
+
+[Sanitized live evidence](../eval/providers/google-calendar-live.json) records the
+actual source/image, observation time and outcome. Reopening the private operation
+journal with a transport that refuses every call still returned the authenticated
+account and same calendar page: the two completed operations were reused without
+redispatch. The observation timestamp was preserved. No mail or calendar write
+occurred. This proves a real scoped single-page read, not live recurrence,
+multi-page completeness, scheduled delivery, or unattended authority.
 
 That observed response also exposed a transport bug: `isError` envelopes can carry
 an explicit `denied` or `blocked` result. Those states and their reason are now
@@ -45,6 +55,6 @@ preserved in the private journal, without retry. Structured account completions
 are supported without pretending they have a child-process exit code; ordinary
 calendar command output still requires an actual zero exit code and valid JSON.
 
-Issue #30 remains open for live normalization acceptance, mail sending and genuine
+Issue #30 remains open for live recurrence/pagination acceptance, mail sending and genuine
 receipt reconciliation. Issues #8/#9 still require the complete scheduled and
 lifecycle tests. This adapter does not establish those outcomes by itself.
