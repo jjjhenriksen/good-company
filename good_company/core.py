@@ -71,6 +71,8 @@ class Coordinator:
         return retain_delivery_history(self, before, authority, now)
 
     def configure(self, profile):
+        from .validation import validate_settings_fields
+        validate_settings_fields(profile, 'profile')
         from .localization import validate_profile
         validate_profile(profile)
         for key in ('organization', 'timezone', 'greeting', 'signoff', 'audience'):
@@ -98,6 +100,8 @@ class Coordinator:
 
     def configure_autonomy(self, policy, authority, now=None):
         """Set standing operating instructions once; no per-reminder approval."""
+        from .validation import validate_settings_fields
+        validate_settings_fields(policy, 'policy')
         required(authority, 'standing-instruction reference')
         if type(policy.get('enabled')) is not bool:
             raise ValueError('enabled must be true or false.')

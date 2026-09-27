@@ -37,7 +37,11 @@ answers into `profile` and `policy` internally. The owner never edits JSON.
 Call `onboarding` with those objects and the owner instruction `authority` to
 preview the remit without changing state. Present its scope in ordinary language,
 then apply the already-authorized instructions with `apply: true`. Do not invent
-missing fields or require individual reminder approvals. Setup is atomic and
+missing fields or require individual reminder approvals. Keep event categories in
+`allowed_event_types` and task categories in `allowed_task_categories` exactly as
+the owner names them; do not union the two lists or broaden their scope. Read the
+schema examples before constructing the request. Use only supported fields:
+unknown fields are rejected, not silently accepted as working settings. Setup is atomic and
 repeatable. Preview one sourced answer or event; if no source/calendar is connected,
 explain that limitation instead of presenting a fictional result as live.
 A real-model local setup run is recorded in docs/ONBOARDING-VALIDATION.md.
@@ -45,9 +49,13 @@ Connected accounts and unattended delivery still need separate observed evidence
 
 `configure` takes `profile`; see `profile.json` in the examples directory.
 Its supported fields are organization, timezone, greeting, signoff, audience,
-reminder_days and send_hour. Ask for the owner’s cadence; sample values are only
-suggestions. Vocabulary beyond these fields stays in the authorized conversation;
-there is no persistent organization-type or coordinator-title setting yet.
+reminder_days and send_hour, with optional locale and terminology. Ask for the owner’s cadence; sample values are only
+suggestions. Use `terminology` for the owner's coordinator, participant, volunteer, event and
+task names (for example coordinator = board secretary). Other vocabulary stays in
+the authorized conversation. Calendar scopes, recipients and event/task categories
+belong in the policy, not the profile. Pause with `enabled: false`, never a separate
+`paused` field. The shared daily event/task/correction attempt limit is
+`max_reminders_per_day`; there is no separate `max_daily_attempts` setting.
 
 ## Standing instructions
 

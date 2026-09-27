@@ -42,3 +42,30 @@ class OnboardingTests(unittest.TestCase):
     def test_empty_install_asks_for_scope(self):
         self.assertEqual(self.c.onboarding()['status'], 'needs_context')
         self.assertIsNone(self.c.autonomy())
+
+    def test_ignored_lookalike_settings_are_rejected_atomically(self):
+        self.c.onboarding(self.profile, self.policy, 'owner conversation', True)
+        for kind, field, value in [('profile', 'reminder_hour', 11),
+                                   ('profile', 'calendar_scope', ['another']),
+                                   ('policy', 'paused', True),
+                                   ('policy', 'max_daily_attempts', 1)]:
+            with self.subTest(kind=kind, field=field):
+                profile, policy = dict(self.profile), dict(self.policy)
+                (profile if kind == 'profile' else policy)[field] = value
+                with self.assertRaisesRegex(ValueError, 'Unsupported ' + kind):
+                    self.c.onboarding(profile, policy, 'owner conversation', True)
+                self.assertEqual(self.c.profile(), self.profile)
+                self.assertEqual(self.c.autonomy(), self.policy)
+        with self.assertRaises(ValueError):
+            self.c.configure(dict(self.profile, reminder_hour=11))
+        with self.assertRaises(ValueError):
+            self.c.configure_autonomy(dict(self.policy, paused=True), 'owner')
+
+    def test_terminology_and_distinct_categories_persist(self):
+        self.profile['terminology'] = {'coordinator': 'board secretary', 'participant': 'board member'}
+        self.policy['allowed_event_types'] = ['board meetings']
+        self.policy['allowed_task_categories'] = ['board preparation']
+        self.c.onboarding(self.profile, self.policy, 'owner conversation', True)
+        self.assertEqual(self.c.profile()['terminology'], self.profile['terminology'])
+        self.assertEqual(self.c.autonomy()['allowed_event_types'], ['board meetings'])
+        self.assertEqual(self.c.autonomy()['allowed_task_categories'], ['board preparation'])
