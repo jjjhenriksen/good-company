@@ -12,18 +12,7 @@ from .core import Coordinator, required, stamp, iso, digest
 class WorkCoordinator(Coordinator):
     def __init__(self, path):
         super().__init__(path)
-        self.db.executescript('''
-        CREATE TABLE IF NOT EXISTS volunteers(id TEXT PRIMARY KEY, payload TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, payload TEXT NOT NULL, status TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS assignments(
-          id TEXT PRIMARY KEY, task_id TEXT NOT NULL, volunteer_id TEXT NOT NULL,
-          status TEXT NOT NULL, policy_hash TEXT NOT NULL,
-          UNIQUE(task_id, volunteer_id));
-        CREATE TABLE IF NOT EXISTS task_notices(
-          id TEXT PRIMARY KEY, assignment_id TEXT NOT NULL, kind TEXT NOT NULL,
-          due TEXT NOT NULL, status TEXT NOT NULL, message TEXT NOT NULL, receipt TEXT,
-          UNIQUE(assignment_id, kind));
-        ''')
+
 
     def set_volunteer(self, volunteer, authority, now=None):
         required(authority, 'roster source or authorization reference')
@@ -166,8 +155,11 @@ class WorkCoordinator(Coordinator):
 
     def _notice(self, assignment_id, t, v, kind, due, policy):
         aid = digest([assignment_id, kind])[:24]
-        date = stamp(t['start']).astimezone(ZoneInfo(self.profile()['timezone'])).strftime('%A, %B %-d at %-I:%M %p %Z')
-        prefix = 'Your task' if kind == 'assignment' else 'Task reminder'
+        from .localization import date_text, time_text, term
+        profile = self.profile()
+        date = date_text(t['start'], profile) + ' at ' + time_text(t['start'], profile)
+        task_term = term(profile, 'task')
+        prefix = 'Your ' + task_term if kind == 'assignment' else task_term.capitalize() + ' reminder'
         message = {'sender': policy['sender'], 'to': [v['email']], 'bcc': [],
                    'subject': f'{prefix}: {t["title"]}',
                    'body': f'Hi {v["name"]},\n\n{t["title"]}\nWhen: {date}\n\nThis is within the work you agreed to help with. If your availability has changed, reply and I will find another arrangement.\n\n{self.profile()["signoff"]}'}
