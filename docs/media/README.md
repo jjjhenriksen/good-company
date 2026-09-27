@@ -1,6 +1,7 @@
 # Actual agent demo
 
-[Play or download the 36-second video](real-agent-demo.mp4)
+[Watch on YouTube](https://www.youtube.com/watch?v=8tSQjGKXOJc) ·
+[Download the 36-second original](real-agent-demo.mp4)
 
 ![Actual agent answering fictional source questions](actual-agent.png)
 
@@ -31,7 +32,7 @@ received visual inspection. No credentials, private documents, account identitie
 or real membership records were found. There is no audio track.
 The MP4 passed a complete FFmpeg decode check.
 
-These repository links require access while the repository is private. Public media
-hosting and the remaining live lifecycle acceptance in #9 are still outstanding;
-this artifact alone does not close #13. Private raw trajectories and source frame
-files are deliberately excluded from the repository.
+The repository, video and screenshot are now publicly readable. Lifecycle acceptance
+is recorded separately in [the completed lifecycle checks](../acceptance/09-lifecycle-acceptance.md).
+The Index has the public screenshot and YouTube video. The upload is unlisted on
+the owner-selected J Henriksen channel and viewable by link. Private raw trajectories and source frames remain excluded.

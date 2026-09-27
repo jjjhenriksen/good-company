@@ -5,8 +5,9 @@
 Good Company is an OpenClaw agent that helps a community leader stop carrying
 all the remembering, explaining, assigning and following up. The coordinator sets
 its remit once: trusted documents, calendar scope, volunteer team, sending account
-and communication cadence. The intended connected workflow runs routine work
-without per-message approval; that end-to-end integration is not yet verified.
+and communication cadence. A bounded Google self-test verified scheduled reminders and duplicate-free
+reconciliation under an approved standing remit. Each new organization must
+verify its own connections, audience and authority.
 The persona and workflows use each organization’s own roles and supplied policies.
 
 A member asks “What do I wear?” The agent checks the event, the person's role,
@@ -39,20 +40,17 @@ reminders, and finds a replacement after a verified decline.
 - **Deployment package:** digest-pinned Plow base, agent persona, four skills,
   MIT license, install guide and optional remote image build workflow.
 
-**The initial snapshot passed 51 behavior tests locally.**
-[The engineering audit](docs/AUDIT.md) records coverage, fix PRs and remaining
-acceptance gaps. Run the suite for the current checkout rather than treating
-this baseline count as its latest result. The combined audit changes passed 70 tests on Python 3.11–3.13 in
-[GitHub CI](https://github.com/jjjhenriksen/good-company/actions/runs/36217186171).
-The [remote image build and packaged-engine smoke test](https://github.com/jjjhenriksen/good-company/actions/runs/36217167986)
-also passed at integration commit `3254ee9`. All five audit PRs are now merged
-into `main`. Since that baseline, the native Plow runtime has been booted and the
-real model has used the installed tools. Bounded fictional self-tests produced
-verified calendar reads and four owner-loopback emails. The latest
-[runtime upgrade evidence](eval/adoption/upgrade/README.md) verifies current code
-and preserved state. No Good Company operational scheduler is enabled; unattended
-delivery, external-participant reply identity and the full live lifecycle remain
-unverified. See [scheduled acceptance](docs/acceptance/08-scheduled-cycle.md).
+The public release passed 383 behavior tests on Python 3.11–3.13, packaged-image
+checks and an anonymous image pull. See the [exact commit and immutable image](docs/acceptance/12-release-gate.md)
+and [working-agent demo](https://www.youtube.com/watch?v=8tSQjGKXOJc).
+
+The native runtime has produced genuine model/tool replies, scoped Google reads,
+scheduled self-email delivery and preserved state across upgrades. The
+[lifecycle checks](docs/acceptance/09-lifecycle-acceptance.md) cover real source
+change/cancellation/restoration and owner-loopback replies, with explicit fixture
+and fault-replay boundaries. The operational test job is disabled and its remit
+paused after acceptance. External participant identity, real pilot scenarios,
+organizer admission and fresh-user installation remain open issues.
 
 ## Try it without credentials
 

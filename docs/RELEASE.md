@@ -7,7 +7,7 @@ Working identity:
 - Runtime: OpenClaw on the Plow base
 
 Repository: [jjjhenriksen/good-company](https://github.com/jjjhenriksen/good-company)
-(currently private). [Audit and fixes](AUDIT.md); [remaining work](ROADMAP.md).
+(public). [Audit and fixes](AUDIT.md); [remaining work](ROADMAP.md).
 
 ## Verified development checks
 
@@ -28,9 +28,9 @@ Repository: [jjjhenriksen/good-company](https://github.com/jjjhenriksen/good-com
 - [x] Owned Index slug and automatic genuine usage reports: acceptance/14-index-usage.md.
 - [x] MIT source and recorded fictional demo/screenshot: media/README.md.
 - [x] Candidate source/history, build-context and media review: acceptance/12-release-gate.md.
-- [ ] Publish reviewed source and smoke-tested image; record exact commit and public registry digest.
-- [ ] Verify anonymous source/image access.
-- [ ] Register public video, screenshot and install references on the Index.
+- [x] Publish reviewed source and smoke-tested image; exact commit/digest in acceptance/12-release-gate.md.
+- [x] Verify anonymous source/image access and public-image package checks.
+- [x] Register public video, screenshot and install references on the Index.
 - [ ] Obtain organizer verification and one-click admission.
 - [ ] Complete fresh-user published-install acceptance (issue #16).
 
