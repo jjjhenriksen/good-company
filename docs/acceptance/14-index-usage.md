@@ -2,8 +2,7 @@
 
 Observed 2026-09-26: the official Index endpoint
 `https://agent-index-server.vercel.app/v1/agent?agent_id=good-company` returned HTTP
-404 with `{ "ok": false, "error": "no such agent" }` (error/status observed; do not
-infer lasting availability). No ownership claim or accepted usage receipt exists.
+404 with error `no such agent` (do not infer lasting availability). No ownership claim or accepted usage receipt exists.
 The local preview deliberately leaves AGENT_ID empty. Real model runs occurred,
 but that does not prove Index ingestion.
 
