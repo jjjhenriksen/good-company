@@ -2,7 +2,7 @@
 
 Decision: no-go pending an actual pilot inventory and booking authority. Fictional
 examples do not establish who owns equipment or permits reservations. No module,
-booking API, external write or implementation issue is enabled by this draft.
+booking API, external write or implementation issue is enabled by this decision record.
 
 Required pilot evidence: named inventory owner and authoritative system; resource
 identifiers and quantity; availability and setup/transport windows; exclusive versus
