@@ -150,6 +150,10 @@ class Coordinator:
             raise ValueError('Use a verified participant address.')
         if not isinstance(preferences, dict):
             raise ValueError('preferences must be an object.')
+        if preferences.get('language', 'en') not in ('en', 'es'):
+            raise ValueError('Supported languages are English and reviewed Spanish evidence only.')
+        if preferences.get('format', 'plain_text') not in ('plain_text', 'structured_plain_text'):
+            raise ValueError('Supported formats are plain_text and structured_plain_text.')
         ZoneInfo(required(preferences.get('timezone'), 'participant timezone'))
         channels = preferences.get('channels')
         if not isinstance(channels, list) or any(c != 'email' for c in channels):
@@ -177,6 +181,8 @@ class Coordinator:
             if not row:
                 continue
             prefs = json.loads(row[0])
+            if prefs.get('language', 'en') != 'en' or prefs.get('format', 'plain_text') != 'plain_text':
+                raise ValueError('Deferred: this recipient needs a reviewed language or accessible format; automatic notices do not support it yet.')
             if 'email' not in prefs['channels']:
                 raise ValueError('Deferred: email is outside a recipient channel preference.')
             hour = now.astimezone(ZoneInfo(prefs['timezone'])).hour
@@ -793,3 +799,11 @@ class Coordinator:
         return {'available': not overlap, 'conflicts': len(overlap),
                 'message': 'There is an existing commitment.' if overlap else 'No overlap in the supplied busy intervals.',
                 'scope': 'Supplied intervals only; refresh connected calendars before booking.'}
+
+    def register_translation(self, **request):
+        from .accessibility import register
+        return register(self, **request)
+
+    def accessible_evidence(self, **request):
+        from .accessibility import evidence
+        return evidence(self, **request)
