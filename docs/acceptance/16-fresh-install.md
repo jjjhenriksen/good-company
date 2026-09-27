@@ -191,3 +191,34 @@ a live regression of its first answer remain to be verified.
 Remaining: independent saved-state inspection, verified hosted restart/persistence,
 new phone/account activation and the actual Index texting installation flow.
 Issue #16 remains open.
+
+## Fresh hosted guidance regression — September 27, 2026, 17:18–17:23 UTC
+
+[PR #196](https://github.com/jjjhenriksen/good-company/pull/196) merged as
+`2f0e242d4dd273b170e5f1178a079261c66492ba`. Publication run
+[36335921696](https://github.com/jjjhenriksen/good-company/actions/runs/36335921696)
+passed 479 installed-image tests, both demos and package checks, then published
+`ghcr.io/jjjhenriksen/good-company@sha256:792dce8f132a0c145b6c50f00df409f93a329fc3c9694f1d57f9236ba5fdceb7`.
+Anonymous registry reads confirmed the exact manifest digest and Linux AMD64.
+
+A separate fresh hosted instance of that image received the same dashboard/restart
+question in its first conversation. Its response at 17:19:13 UTC used port 3000,
+explained that loopback is inside the host, left owner dashboard/restart access
+unverified, and declined updates, service repair or process termination as restart
+substitutes. Those parts of the guidance regression passed.
+
+The same answer incorrectly labeled authentication as password and overclaimed
+that no supervisor existed. A bounded follow-up using the exact selected
+`openclaw config get` commands returned 3000/loopback/trusted-proxy at 17:23:29 UTC,
+with `exe-init` as PID 1 and a parent chain for the gateway. The agent attributed
+its earlier authentication claim to an `openclaw status` connection label.
+The received correction is model-reported runtime evidence, not an independent
+inspection of the remote process. The skill now specifies the selected commands,
+separates configured authentication from client connection labels, and prohibits
+inferring no hosting supervisor solely from missing systemd/launchd. This final
+clarification still needs a new packaged-image/live first-answer check.
+
+Both hosted test conversations were corroborated through authenticated Plow
+message records and retained privately. No authentication, runtime data or
+existing installation was changed. Issue #16 remains open for the previously
+listed fresh-user, Index flow and independent hosted persistence requirements.

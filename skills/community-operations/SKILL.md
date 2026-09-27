@@ -28,7 +28,20 @@ Schema examples live at `/opt/good-company/examples/` in the agent image and
 
 Distinguish the Plow-hosted agent from a local Docker preview. Inspect only the
 active gateway's port, bind and authentication mode and the process names/PIDs
-needed to identify its supervisor. Do not print the complete configuration,
+needed to identify its supervisor. Read the three configuration values with:
+
+```sh
+openclaw config get gateway.port --json
+openclaw config get gateway.bind --json
+openclaw config get gateway.auth.mode --json
+```
+
+An `openclaw status` connection label is not proof of the configured gateway
+authentication mode. Report configuration separately from any observed client
+connection method; do not infer one from the other. Record PID 1 and the gateway
+parent process using names/PIDs only. Absence of systemd or launchd does not mean
+there is no hosting supervisor. If its restart interface is unknown, say so.
+Do not print the complete configuration,
 environment, process arguments, credentials or secret-bearing URLs. If configuration
 uses includes, inspect only those same selected fields in the included settings.
 
