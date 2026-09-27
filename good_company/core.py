@@ -573,11 +573,13 @@ class Coordinator:
 
     def _prior_group_attempt(self, event_id, kind, rid, recipients):
         cadence = kind.split(':', 1)[0]
+        identities = {address.casefold() for address in recipients}
         for row in self.db.execute("SELECT id,status,kind,message FROM reminders WHERE event_id=? AND id<>? AND claimed_at IS NOT NULL", (event_id, rid)):
             if row['kind'].split(':', 1)[0] != cadence:
                 continue
             message = json.loads(row['message'])
-            if row['kind'] == kind or set(recipients) & set(message.get('to', []) + message.get('bcc', [])):
+            prior_identities = {address.casefold() for address in message.get('to', []) + message.get('bcc', [])}
+            if row['kind'] == kind or identities & prior_identities:
                 return row
         return None
 
