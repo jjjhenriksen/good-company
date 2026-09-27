@@ -6,78 +6,110 @@
     {
       "id": "food-literal",
       "retrieval_pass": true,
-      "private_content_leaked": false
+      "private_content_leaked": false,
+      "citation_valid": true,
+      "answer_condition_pass": true
     },
     {
       "id": "food-paraphrase",
       "retrieval_pass": false,
-      "private_content_leaked": false
+      "private_content_leaked": false,
+      "citation_valid": true,
+      "answer_condition_pass": true
     },
     {
       "id": "food-absent",
       "retrieval_pass": true,
-      "private_content_leaked": false
+      "private_content_leaked": false,
+      "citation_valid": true,
+      "answer_condition_pass": true
     },
     {
       "id": "food-conflict",
       "retrieval_pass": true,
-      "private_content_leaked": false
+      "private_content_leaked": false,
+      "citation_valid": true,
+      "answer_condition_pass": true
     },
     {
       "id": "food-private",
       "retrieval_pass": true,
-      "private_content_leaked": false
+      "private_content_leaked": false,
+      "citation_valid": true,
+      "answer_condition_pass": true
     },
     {
       "id": "arts-literal",
       "retrieval_pass": true,
-      "private_content_leaked": false
+      "private_content_leaked": false,
+      "citation_valid": true,
+      "answer_condition_pass": true
     },
     {
       "id": "arts-paraphrase",
       "retrieval_pass": false,
-      "private_content_leaked": false
+      "private_content_leaked": false,
+      "citation_valid": true,
+      "answer_condition_pass": true
     },
     {
       "id": "arts-absent",
       "retrieval_pass": true,
-      "private_content_leaked": false
+      "private_content_leaked": false,
+      "citation_valid": true,
+      "answer_condition_pass": true
     },
     {
       "id": "arts-conflict",
       "retrieval_pass": true,
-      "private_content_leaked": false
+      "private_content_leaked": false,
+      "citation_valid": true,
+      "answer_condition_pass": true
     },
     {
       "id": "arts-private",
       "retrieval_pass": true,
-      "private_content_leaked": false
+      "private_content_leaked": false,
+      "citation_valid": true,
+      "answer_condition_pass": true
     },
     {
       "id": "board-literal",
       "retrieval_pass": true,
-      "private_content_leaked": false
+      "private_content_leaked": false,
+      "citation_valid": true,
+      "answer_condition_pass": true
     },
     {
       "id": "board-paraphrase",
       "retrieval_pass": false,
-      "private_content_leaked": false
+      "private_content_leaked": false,
+      "citation_valid": true,
+      "answer_condition_pass": true
     },
     {
       "id": "board-absent",
       "retrieval_pass": true,
-      "private_content_leaked": false
+      "private_content_leaked": false,
+      "citation_valid": true,
+      "answer_condition_pass": true
     },
     {
       "id": "board-conflict",
       "retrieval_pass": true,
-      "private_content_leaked": false
+      "private_content_leaked": false,
+      "citation_valid": true,
+      "answer_condition_pass": true
     },
     {
       "id": "board-private",
       "retrieval_pass": true,
-      "private_content_leaked": false
+      "private_content_leaked": false,
+      "citation_valid": true,
+      "answer_condition_pass": true
     }
   ],
-  "answer_scope": "Real-model supplied answers when present. Automatic checks measure required facts, abstention, conflicts and source-ID validity; human review remains necessary for semantic correctness."
+  "answer_scope": "Real-model supplied answers when present. Automatic checks measure required facts, abstention, conflicts and source-ID validity; human review remains necessary for semantic correctness.",
+  "citation_valid": 15,
+  "answer_condition_pass": 15
 }
