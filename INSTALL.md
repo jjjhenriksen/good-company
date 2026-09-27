@@ -1,5 +1,26 @@
 # Install Good Company
 
+## Hosted installation from the Agent Index
+
+Open [Good Company on the Agent Index](https://aiworthusing.com/agent-index/good-company)
+on your phone and choose **Text this agent**. The listing opens your messaging app
+with the service number and this setup phrase:
+
+> Set this up for me: aiworthusing.com/agent-index/good-company
+
+Review and send that message yourself, then follow Plow’s activation prompts.
+The listing’s current link is authoritative for the destination; do not use a
+phone number copied from an old screenshot. Keep your activation messages and
+credentials private. This route requests a hosted installation; the local Docker
+route below is separate.
+
+After setup, request a real response, configure a fictional organization with
+sending paused, and verify your settings persist through the documented restart
+path for your installation. Do not enable live reminders until the account,
+calendar scope and sending authority have been checked. An enabled installation
+link alone does not prove a successful new-user install; remaining acceptance is
+tracked in [issue #16](https://github.com/jjjhenriksen/good-company/issues/16).
+
 ## 1. Requirements
 
 Python 3.11+, Git, Docker with Linux/amd64 support and Compose 2.24+, sufficient

@@ -20,3 +20,22 @@ inspected the still and sampled the video every three seconds. No credentials,
 private account details or real membership records were observed; there is no
 audio. The media manifest records the captured runtime rather than presenting
 it as the newest public image.
+
+
+## Published 68-second replacement — September 27, 2026
+
+The owner authorized posting the expanded edit after clarifying the 60-second
+minimum. [The replacement demo](https://www.youtube.com/watch?v=gebZejxCrk8) is
+unlisted on J Henriksen (@jhenriksen7367). Its local duration is 68.333 seconds;
+YouTube displays approximately 1:08–1:09 depending on the player. Upload and HD
+processing completed with no copyright-check issues. Anonymous oEmbed returned
+the correct title/channel; the watch page and Index embed reference the new ID.
+
+The edit adds explanatory panels, opening/closing text and an eight-second reading
+hold to the same reviewed footage. Original capture provenance remains in the
+manifest; the original 36-second artifact is retained for comparison. No new live
+provider operation or organizer approval is claimed.
+
+The Index media-only update preserved its name, description, source/install links,
+screenshot, owner and admission timestamps. Local reporting identity and
+configuration hashes were unchanged; no new usage report or install was created.
