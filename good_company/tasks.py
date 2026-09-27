@@ -357,3 +357,11 @@ class WorkCoordinator(Coordinator):
                 'distribution': {'recorded_volunteers': len(counts), 'assigned_total': sum(counts),
                                  'minimum': min(counts, default=0), 'maximum': max(counts, default=0)},
                 'scope': 'Trusted owner report. Descriptive assignment counts include completed work; not attendance, reliability, personal worth or a fairness guarantee. Different eligibility and availability affect distribution.'}
+
+    def add_shift(self, shift, authority, now=None):
+        from .shifts import add_shift
+        return add_shift(self, shift, authority, now)
+
+    def shift_status(self, shift_id):
+        from .shifts import status
+        return status(self, shift_id)
