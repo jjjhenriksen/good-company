@@ -51,6 +51,15 @@ records the registry digest in the workflow summary. A successful image
 build is still not runtime or texting verification. For a first GHCR push, make
 the package public in GitHub settings before asking Plow to pull it.
 
+The Docker context uses exact file entries in `.dockerignore`. Add new runtime
+files explicitly; do not replace them with directory exceptions, which also admit
+unexpected local descendants. Run `python3 scripts/check_build_context.py` from a
+Git checkout after changing runtime files or either Dockerfile. It copies only
+fictional canaries into a scratch build and checks Docker's actual exclusions
+against the tracked COPY inputs. CI and the image workflow run this check before
+building or publishing. It verifies context boundaries, not the contents of an
+intentionally admitted source file.
+
 ## Register complete media
 
 Once real media URLs and a public repository exist, run the inherited client

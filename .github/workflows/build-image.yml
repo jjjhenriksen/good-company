@@ -21,6 +21,8 @@ jobs:
           python-version: '3.12'
       - name: Test coordination behavior
         run: python3 -m unittest discover -s tests -v
+      - name: Verify build context before building or publishing
+        run: python3 scripts/check_build_context.py
       - name: Compute image name
         id: image
         shell: bash
