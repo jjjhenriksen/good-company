@@ -111,3 +111,8 @@ Do not modify the Plow boot-owned configuration or persona files at runtime.
 Store durable coordination state in GOOD_COMPANY_DB, at /var/lib/good-company/state.sqlite.
 Read configured organization settings with `good-company profile`; retrieval searches
 source documents and does not report setup. Never infer missing setup from empty retrieval.
+
+For dashboard access, runtime diagnosis or restart help, first read the deployed
+runtime guidance in community-operations. Inspect the actual deployment before
+giving commands or URLs. Generic OpenClaw defaults do not describe this Plow image;
+do not present a loopback address inside the hosted agent as a link on the owner's Mac.

@@ -143,3 +143,51 @@ local installations, credentials and volumes were not modified.
 The separate hosted test remains available for continuation. A hosted model reply,
 setup persistence, new phone/account activation and the actual Index texting flow
 remain unverified. Issue #16 stays open; a host status is not full install acceptance.
+
+## Hosted messaging and paused setup — September 27, 2026, 16:59–17:05 UTC
+
+The same v0.1.1 public-image agent was inspected after the Mac was unlocked.
+Plow Latch's Agents page showed Good Company as Ready on its assigned line.
+Its Message control opened that exact line in Messages. A single test request was
+marked Delivered, and the received answer was `GOOD_COMPANY_HOSTED_OK`.
+The authenticated Plow conversation API independently returned the matching
+inbound/outbound records; the model reply arrived at 16:59:52 UTC. This establishes
+an actual hosted model response and channel delivery on the existing owner's
+account, not new-account activation or participant identity acceptance.
+
+A second natural-language request authorized only a fictional, paused setup in
+`/var/lib/good-company/hosted-acceptance.sqlite`, with reserved `example.invalid`
+addresses and no Google access or schedules. The received reply at 17:01:58 UTC
+reported the requested profile/remit, `enabled: false`, empty event/reminder/task
+queues and unverified calendar/mail/scheduler connections. A subsequent read-only
+inspection request returned these agent-reported sorted-JSON setting hashes:
+
+- profile: `9e28b20890cabf066fcc83e4deb31f198fa7b37aec28f1260dc6938ecd3580de`
+- autonomy: `6c259ef3cdc0712a61dcf7a331c63eaceb3e0dc1fde8de11f0992d5bd61477d7`
+
+These are received agent reports. Direct independent database inspection and
+persistence across a hosted restart have not been established. No hosted restart,
+software update, service installation, authentication change or calendar/email
+acceptance run was performed in this check.
+
+### Support guidance correction found in this run
+
+Asked for this hosted installation's owner dashboard and restart method, the agent
+initially answered with generic OpenClaw port 18789 and systemd-oriented guidance.
+A follow-up requesting actual configuration/supervisor inspection reported port
+3000, loopback binding, trusted-proxy authentication, `exe-init` as PID 1 and no
+`systemctl`. The pinned Plow base's `boot/config.ts` independently confirms the
+3000/loopback/trusted-proxy configuration. Generic OpenClaw instructions were not
+adequate evidence of the deployed control path.
+
+The shipped persona and community-operations skill now require deployment
+inspection, distinguish hosted loopback from the owner's Mac, and refuse to
+substitute software updates, service repair or process termination for a verified
+restart procedure. INSTALL.md documents the observed Latch Message route and
+explicitly leaves hosted restart acceptance pending when no supported control is
+available. This is a source guidance correction; a fresh image containing it and
+a live regression of its first answer remain to be verified.
+
+Remaining: independent saved-state inspection, verified hosted restart/persistence,
+new phone/account activation and the actual Index texting installation flow.
+Issue #16 remains open.

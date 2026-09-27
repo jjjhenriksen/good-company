@@ -14,9 +14,20 @@ phone number copied from an old screenshot. Keep your activation messages and
 credentials private. This route requests a hosted installation; the local Docker
 route below is separate.
 
-After setup, request a real response, configure a fictional organization with
-sending paused, and verify your settings persist through the documented restart
-path for your installation. Do not enable live reminders until the account,
+After setup, request a real response and configure a fictional organization with
+sending paused. In Plow Latch, open **Agents**, select your Good Company installation
+and use **Message** to reach its assigned line. Verify settings persistence using
+a restart procedure supplied by Plow for that hosted installation. A hosted
+restart procedure has not yet been verified here; leave that check pending when
+no supported control is available. The Compose commands below apply only to local
+previews. Do not use a software update or service reinstallation as a restart test.
+
+The hosted gateway's loopback address is inside its host, not on your computer.
+Use an owner-dashboard link supplied by Plow when available; do not open the generic
+OpenClaw port or change authentication to reach the hosted gateway. A reply on the
+assigned line is useful evidence even when owner-dashboard access is unavailable.
+
+Do not enable live reminders until the account,
 calendar scope and sending authority have been checked. An enabled installation
 link alone does not prove a successful new-user install; remaining acceptance is
 tracked in [issue #16](https://github.com/jjjhenriksen/good-company/issues/16).
