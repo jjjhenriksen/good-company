@@ -36,6 +36,10 @@ class ParticipantService:
         coordinator.db = sqlite3.connect(path.as_uri() + '?mode=ro', uri=True)
         coordinator.db.row_factory = sqlite3.Row
         try:
+            # The issuer binds this optional address to the credential. Request
+            # JSON cannot select another participant's communication preferences.
+            if identity.get('address'):
+                return coordinator.accessible_evidence(question=question, address=identity['address'], on=request.get('on'))
             return coordinator.retrieve(question, audience='volunteer', on=request.get('on'))
         finally:
             coordinator.db.close()

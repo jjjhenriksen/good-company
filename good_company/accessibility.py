@@ -36,5 +36,33 @@ def evidence(coordinator, question, address, on=None, now=None):
         if format=='structured_plain_text':
             item['presentation']={'source':item['source'],'section':item['section'],
                                   'original_conditions':item['original'],'reviewed_translation':item.get('translated')}
-    return dict(result,language=language,format=format,
+    return dict(result,language=language,format=format,text=render(result,language,format),
                 limits='Reviewed evidence only; original source, conditions, dates and gaps remain authoritative. Automatic translated outbound notices are not supported.')
+
+
+def render(result, language, format):
+    """Linear plain text excerpts, not an invented answer or rewritten rule."""
+    spanish = language == 'es'
+    if not result['evidence']:
+        return ('No encontré una fuente aplicable. Pide al coordinador una fuente actualizada.' if spanish
+                else 'I could not find an applicable source. Ask the coordinator for a current source.')
+    lines = [('Extractos de las fuentes' if spanish else 'Source excerpts')]
+    if result.get('gaps'):
+        lines.append('Hay información pendiente de revisión; confirma los requisitos con el coordinador.' if spanish
+                     else 'Some source information needs review; confirm requirements with the coordinator.')
+    for index, item in enumerate(result['evidence'], 1):
+        citation = str(item['source']) + ' — ' + str(item['section'])
+        if format == 'structured_plain_text':
+            lines += ['', ('Fuente' if spanish else 'Source') + f' {index}: ' + citation]
+        else:
+            lines += ['', citation]
+        if item.get('updated'):
+            lines.append(('Actualización: ' if spanish else 'Updated: ') + item['updated'])
+        if item.get('stale') or item.get('review_status') == 'legacy_metadata_unknown':
+            lines.append('Confirma que esta fuente sigue vigente.' if spanish else 'Confirm that this source is still current.')
+        if item.get('translation_status') == 'reviewed':
+            lines += ['Traducción revisada:', item['translated']]
+        elif spanish:
+            lines.append('No hay traducción revisada. Se conserva el texto original.')
+        lines += [('Texto original y condiciones:' if spanish else 'Original text and conditions:'), item['original']]
+    return '\n'.join(lines)
