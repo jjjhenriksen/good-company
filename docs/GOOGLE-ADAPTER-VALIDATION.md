@@ -1,31 +1,29 @@
-# Google/Latch adapter validation status
+# Google/Latch adapter acceptance (#30)
 
-Issue #30 remains open. The initial HTTP 503 was a disconnected Latch device.
-After installing Latch and the owner's setup, the deployed agent obtained the
-actual tool catalog, verified account/calendar reads, and delivered four explicitly
-authorized fictional self-emails with genuine receipts and inbox observations.
-Owner-loopback STOP handling and duplicate core claim refusal passed. Temporary
-Gatekeeper exceptions were removed and the isolated test remit was paused.
-This is evidence for reviewed self-tests, not a complete production adapter.
+The implemented Google calendar/mail contract now has both automated contract
+coverage and a controlled end-to-end run through the deployed Plow/Latch tools.
+The acceptance evidence is split below so simulated edge cases are not presented
+as live provider observations.
 
-The separately connected Codex Gmail account does not prove that the deployed
-Plow owner session has calendar access, unattended sending permission, or receipt
-lookup. Do not bypass Plow/Latch approval boundaries with independent OAuth,
-or substitute synthetic receipts for a live acceptance run.
+| Requirement | Evidence |
+| --- | --- |
+| Use available authorized tools | `GoogleCalendar`, `GoogleProvider`, and `LatchOperations` use the authenticated deployment MCP endpoint and actual `plow-gog` commands. No independent OAuth path is used. |
+| Complete scoped recurring-instance normalization | `test_google_calendar.py` checks explicit account/scope, cursor preservation, stable moved-instance IDs, a full two-page recurring import, cancellation by absence after complete refresh, and atomic rejection of a truncated later page. These are contract fixtures. |
+| Account/sender and genuine receipts | The live scheduled test authenticated the connected account, imported its exact scoped calendar, and dispatched one event and one assignment self-email. Both real message IDs were observed with SENT and INBOX labels. |
+| Ambiguous result reconciliation | Both live sends initially remained uncertain. A second real-clock cycle polled their original saved operations and reconciled both, with no additional dispatch. |
+| Controlled end-to-end test | One real scheduler job executed the deployed cycle command twice under owner-approved unattended authority. The job and isolated remit were disabled after the test and the original Gatekeeper policy restored. |
 
-Use `scripts/provider_probe.py` with the deployment's existing environment to
-repeat read-only discovery. It reports safe status codes and tool names, never
-credentials, endpoint tokens, mail bodies or recipient lists. A reachable catalog
-still requires mapping exact schemas into `good_company.providers`, checking
-verified account identity, full scoped recurrence pagination, permissions, actual
-provider receipts, and unknown-outcome lookup. A provider send must remain disabled
-until those capabilities are established.
+Live evidence: [`scheduled-live.json`](../eval/providers/scheduled-live.json),
+[`google-calendar-live.json`](../eval/providers/google-calendar-live.json), and
+[the scheduled acceptance record](acceptance/08-scheduled-cycle.md). Contract
+checks: `test_google_calendar.py`, `test_google_mail.py`, `test_latch.py`,
+`test_providers.py`, and `test_cycle.py`.
 
-The Google calendar and mail adapters are now implemented, with durable Latch
-operations and reconciliation. A later owner-approved read-only run through the
-actual calendar adapter authenticated the account and imported the existing
-fictional event's exact one-hour scope. Both Latch operations completed, and a
-journal reopen reused them without network dispatch. See
-[the calendar adapter evidence](GOOGLE-CALENDAR.md). Live multi-page/recurrence,
-mail-adapter delivery/reconciliation and unattended scheduling remain outstanding;
-the earlier direct self-mail receipts do not prove those adapter paths.
+The live run contained one non-recurring event on one page and two fictional
+messages sent to the connected owner account itself. Multi-page recurrence is
+covered by the contract tests, not claimed as a live provider observation. This
+meets #30's contract plus controlled end-to-end criteria; it does not establish
+external reply identity (#29), a second provider (#31), or a production remit.
+Every new deployment still needs its own authenticated account, exact calendar
+scopes and explicit sending authority. Keep unattended sending disabled until
+those are established; a successful test never grants wider permission.

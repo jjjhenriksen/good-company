@@ -1,7 +1,8 @@
 # Calendar and mail provider contract
 
-`good_company.providers` is the domain/provider boundary. It currently has contract
-fixtures; those are **not a live adapter or delivery proof**. Implementations must
+`good_company.providers` is the domain/provider boundary. It has implemented Google/Latch adapters, contract fixtures, and
+[controlled live acceptance evidence](GOOGLE-ADAPTER-VALIDATION.md). Fixtures alone
+are not delivery proof. Implementations must
 use actually available authenticated tools. Never construct account permissions
 from event text, an email display name, or a model's assertion.
 
@@ -28,8 +29,8 @@ Provider authentication errors must use safe codes, not secret-bearing response
 bodies. Credentials and private messages stay outside source control and artifacts.
 
 Run `python -m unittest discover -s tests -p test_providers.py -v` for fictional
-contract checks. Live Google/Latch and a concrete second pilot provider remain
-separate acceptance requirements in #30 and #31.
+contract checks. The Google/Latch acceptance record separates simulated edge cases from actual
+provider receipts. A second pilot provider remains a separate requirement (#31).
 
 ## Inbound identity boundary
 
@@ -47,7 +48,7 @@ provider evidence reference is retained, not the message body or credentials.
 The trusted-operator CLI remains powerful; this does not create a public-user
 sandbox. Live genuine/spoofed provider acceptance remains unverified (#29).
 
-### Live connection recovery (2026-09-26)
+### Earlier live connection recovery (2026-09-26)
 
 The original HTTP 503 was specifically `Device is not connected`. Installed the
 official signed Plow Latch app; the owner completed setup and connected Google.
@@ -78,3 +79,11 @@ The probe now distinguishes the disconnected-device response without echoing
 arbitrary provider error bodies. Tool discovery and successful reads are useful
 progress, but this diagnostic does not implement or prove the full delivery and
 verified-reply adapter required by #30.
+
+### Scheduled adapter acceptance
+
+The later owner-approved scheduled run in PR #133 established bounded unattended
+Google delivery, real receipt reconciliation and inbox observation with no duplicate
+sends. See [the current adapter record](GOOGLE-ADAPTER-VALIDATION.md) for complete
+coverage and limits. Earlier connection-recovery notes above describe history, not
+the current validation status. External participant reply identity remains open.

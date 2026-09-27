@@ -55,9 +55,10 @@ preserved in the private journal, without retry. Structured account completions
 are supported without pretending they have a child-process exit code; ordinary
 calendar command output still requires an actual zero exit code and valid JSON.
 
-Issue #30 remains open for live recurrence/pagination acceptance, mail sending and genuine
-receipt reconciliation. Issues #8/#9 still require the complete scheduled and
-lifecycle tests. This adapter does not establish those outcomes by itself.
+The combined [Google adapter acceptance record](GOOGLE-ADAPTER-VALIDATION.md)
+now includes contract coverage for multi-page recurring imports and live scheduled
+mail delivery/reconciliation. Live calendar evidence remains single-page and
+non-recurring; the lifecycle matrix in #9 is separate.
 
 ## Owner context for imported events
 
