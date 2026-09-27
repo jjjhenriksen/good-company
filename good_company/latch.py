@@ -5,6 +5,7 @@ contain mail or calendar data. No retry here ever dispatches a command twice.
 """
 import hashlib
 import json
+import os
 import sqlite3
 from datetime import datetime, timezone
 import urllib.parse
@@ -122,6 +123,13 @@ class LatchOperations:
     """
     def __init__(self, database, call):
         self.call = call
+        # Restrict new and legacy files before SQLite can persist private results.
+        # Do not change the process umask or permissions of a shared parent folder.
+        fd = os.open(database, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            os.fchmod(fd, 0o600)
+        finally:
+            os.close(fd)
         self.db = sqlite3.connect(database, timeout=30)
         self.db.row_factory = sqlite3.Row
         self.db.execute('''CREATE TABLE IF NOT EXISTS latch_operations(
