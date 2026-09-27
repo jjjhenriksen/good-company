@@ -1,6 +1,6 @@
 """Verified provider replies for reserved shift offers, RSVPs and waitlists."""
 import json
-from .core import digest, stamp, iso
+from .core import digest, stamp, iso, required_time
 from .providers import authenticated_account, ProviderError
 from .replies import VerifiedReply
 
@@ -32,7 +32,7 @@ def promote_waitlist(coordinator, task_id, now):
         return None
     task = json.loads(row[0])
     if (not task.get('signup_required') or task['category'] not in policy['allowed_task_categories']
-            or stamp(task['start']) <= now):
+            or required_time(task['start'], 'task start') <= now):
         return None
     if db.execute("SELECT 1 FROM assignments WHERE task_id=? AND status IN ('assigned','offered')", (task_id,)).fetchone():
         return None
@@ -73,7 +73,7 @@ def apply(coordinator, provider, message_id, now=None):
         row=db.execute("SELECT payload FROM tasks WHERE id=? AND status='open'",(reply.target_id,)).fetchone()
         if not row:raise ProviderError('slot_not_open')
         task=json.loads(row[0]);task_id=task['id']
-        if not task.get('signup_required') or task['category'] not in policy['allowed_task_categories'] or stamp(task['start'])<=now:
+        if not task.get('signup_required') or task['category'] not in policy['allowed_task_categories'] or required_time(task['start'], 'task start')<=now:
             raise ProviderError('slot_outside_signup_scope')
         wait_key='waitlist:'+task_id
         row=db.execute('SELECT value FROM settings WHERE key=?',(wait_key,)).fetchone()

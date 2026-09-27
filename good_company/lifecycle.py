@@ -1,6 +1,6 @@
 """Narrow trusted-owner data lifecycle operations that retain send tombstones."""
 import json
-from .core import required, stamp, iso
+from .core import required, required_time, stamp, iso
 
 
 def export_summary(c, authority):
@@ -33,7 +33,7 @@ def delete_source(c, source, authority, now=None):
 
 def retain_delivery_history(c, before, authority, now=None):
     required(authority, 'owner retention authority')
-    cutoff, now = stamp(before), stamp(now)
+    cutoff, now = required_time(before, 'retention cutoff'), stamp(now)
     if cutoff >= now:
         raise ValueError('Retention cutoff must be in the past.')
     tables = {r[0] for r in c.db.execute("SELECT name FROM sqlite_master WHERE type='table'")}

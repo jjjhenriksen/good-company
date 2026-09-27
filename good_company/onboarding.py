@@ -1,6 +1,6 @@
 """Owner-session setup. Connected tools establish identity; this stores the remit."""
 import json
-from .core import digest, required, stamp
+from .core import digest, required, required_time, stamp
 from .tasks import WorkCoordinator
 from .corrections import CorrectionCoordinator
 
@@ -70,7 +70,7 @@ class SetupCoordinator(CorrectionCoordinator):
         if status not in ('verified', 'unavailable', 'unknown', 'missing_credentials'):
             raise ValueError('Unknown connection status.')
         required(evidence, 'private observation reference')
-        now, checked = stamp(now), stamp(checked_at)
+        now, checked = stamp(now), required_time(checked_at, 'connection observation time')
         if checked > now or now - checked > timedelta(minutes=15):
             raise ValueError('Record a current observation, no more than 15 minutes old.')
         value = {'status': status, 'checked_at': checked.isoformat(),

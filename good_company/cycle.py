@@ -4,7 +4,7 @@ import fcntl
 import json
 import os
 
-from .core import digest, iso, stamp
+from .core import digest, iso, stamp, required_time
 from .providers import Delivery, ProviderError, authenticated_account, import_complete_calendar
 
 
@@ -37,7 +37,7 @@ def run_cycle(coordinator, provider, cycle_id, start, end, now=None):
     """
     if not isinstance(cycle_id, str) or not cycle_id.strip() or len(cycle_id) > 128:
         raise ProviderError('invalid_cycle_id')
-    start, end = iso(start), iso(end)
+    start, end = iso(required_time(start, 'window start')), iso(required_time(end, 'window end'))
     if not 0 < (stamp(end) - stamp(start)).total_seconds() <= 93 * 86400:
         raise ProviderError('invalid_cycle_window')
     with cycle_lock(coordinator) as locked:
