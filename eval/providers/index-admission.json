@@ -1,0 +1,44 @@
+{
+  "agent_id": "good-company",
+  "repo": "https://github.com/jjjhenriksen/good-company",
+  "install_url": "https://github.com/jjjhenriksen/good-company/blob/main/INSTALL.md",
+  "blessed_at": "2026-09-27T14:04:54.455Z",
+  "deployable_at": "2026-09-27T14:04:54.180Z",
+  "media": {
+    "video": {
+      "provider": "youtube",
+      "id": "8tSQjGKXOJc",
+      "title": "Good Company"
+    },
+    "images": [
+      {
+        "url": "https://raw.githubusercontent.com/jjjhenriksen/good-company/b64fd87e2e3c2d9e809bea2490fb922b5991d00c/docs/media/actual-agent.png",
+        "caption": ""
+      }
+    ]
+  },
+  "installs": {
+    "attempted": 2,
+    "succeeded": 2,
+    "rate": 100
+  },
+  "observed_at": "2026-09-27T14:32:30.422765+00:00",
+  "observed_page": "https://aiworthusing.com/agent-index/good-company",
+  "api_url": "https://agent-index-server.vercel.app/v1/agent?agent_id=good-company&lang=en",
+  "browser_observations": {
+    "verification_label": "Verified by AI Worth Using \u00b7 Sep 2026",
+    "text_this_agent_link_available": true,
+    "local_install_link_available": true,
+    "youtube_embed_id": "8tSQjGKXOJc",
+    "screenshot_link_present": true,
+    "token_usage_model": "z-ai/glm-5.2",
+    "active_users": 2,
+    "active_days": 2
+  },
+  "limits": [
+    "No setup SMS was sent and no fresh one-click installation was performed.",
+    "Displayed aggregate installation statistics do not establish issue #16 acceptance.",
+    "The public response does not identify the admitted image digest or the organizer-reviewed commit.",
+    "No new public release, runtime replacement or organizer message was made."
+  ]
+}
