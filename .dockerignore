@@ -2,6 +2,7 @@
 # remain excluded even when their filenames are unfamiliar.
 **
 !Dockerfile
+!LICENSE
 !good_company/
 !good_company/*.py
 !prompt/
