@@ -1,0 +1,55 @@
+{
+  "status": "passed",
+  "source_commit": "8aa3621276407c2f402c3a49b670b1aa487b36c1",
+  "previous_image": "sha256:7c81f3cd0c9f9a7312b4db305eacef54e65d6042feab719ee6f5372a2ee8ad00",
+  "running_image": "sha256:f3d2d93f85411bc894a1f27f40629746091238e2b3e2429f4bcf5a4ca1f45ad6",
+  "all_four_ledgers_identical_across_upgrade": true,
+  "index_install_identity_unchanged": true,
+  "index_identity_sha256": "377bc1013f7b1665a100fc9d9289d983a7c2296a329fbbaebeec46b33be83245",
+  "matching_python_modules": 28,
+  "matching_example_files": 6,
+  "custom_skills_eligible": [
+    "community-operations",
+    "event-coordination",
+    "organization-knowledge",
+    "volunteer-coordination"
+  ],
+  "inherited_skills_eligible": [
+    "browser-automation",
+    "canvas",
+    "google-workspace",
+    "owners-mac"
+  ],
+  "obsolete_custom_skills_present": false,
+  "existing_background_jobs": 3,
+  "operational_job_count": 1,
+  "retained_job_id": "ecc725d7-fc5e-45bd-9c35-747657a52f32",
+  "next_scheduled_run": {
+    "at": "2026-09-27T03:24:24.934+00:00",
+    "finished_at": "2026-09-27T03:24:32.574+00:00",
+    "status": "ok",
+    "duration_ms": 7640,
+    "cycle": {
+      "cycle_id": "post-upgrade-135",
+      "status": "completed",
+      "refreshed_scopes": 1,
+      "sent": 0,
+      "uncertain": 0,
+      "failed": 0,
+      "reconciled": 0,
+      "deferred": 0,
+      "planning_exceptions": 0,
+      "new_send_method_calls": 0,
+      "original_send_operations": 2,
+      "original_receipts_preserved": true
+    }
+  },
+  "test_scope_paused_after_run": true,
+  "job_disabled_after_run": true,
+  "original_gatekeeper_policy_restored": true,
+  "limitations": [
+    "Upgrade of supported application images on the same pinned OpenClaw base; does not claim an upstream base-version jump.",
+    "The next scheduled run used a safety guard that would fail if send was called; the counter stayed zero. Calendar/account reads were live.",
+    "Local ARM64 deployment; public registry installation remains separate."
+  ]
+}
