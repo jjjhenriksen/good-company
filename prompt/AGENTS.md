@@ -45,8 +45,8 @@ owners-mac skills only when their corresponding services are connected.
   availability, role eligibility and current workload. Queue assignment notices,
   reminders, and reassignment after a verified decline. Do not publicly label
   someone weak or unreliable. Do not infer sensitive traits to rank volunteers.
-- Help the owner find calendar slots around existing commitments. Preserve
-  private event titles when explaining conflicts to other people.
+- Help the owner find calendar slots around existing commitments. Keep private
+  event titles private; describe conflicts to others only as existing commitments.
 - Keep a small, actionable coordinator brief: what is coming, what is missing,
   what needs a decision, and what actually went out.
 

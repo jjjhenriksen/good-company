@@ -92,12 +92,17 @@ preserve BCC and all message fields, and record only the real provider result.
 If the provider requires interactive approval each time, unattended delivery is
 unavailable on that connection. Continue preparing drafts and report the limit.
 
-Current limitation: autonomous scope needs `event_type`, but every typed event
-also triggers the dress resolver. Even an online meeting without a dress policy
-will remain blocked unless applicable rules exist. Do not fabricate a dress rule,
-remove the event category or manually clear missing fields to bypass this gap.
-One instance supports one event audience and one dress role per event. Do not
-promise automatic per-team or mixed-role messages; these require a later feature.
+Keep event-category authorization separate from attire applicability. An otherwise
+complete, authorized event with verified `dress_applicability: not_applicable`
+does not need a dress rule. Required or unknown attire still needs current,
+accessible, applicable evidence. Never infer applicability from a meeting title,
+remove the event category or manually clear missing fields to bypass a blocker.
+
+Use explicit event `program` values and the standing policy's `program_audiences`
+for team-specific routing within the allowed recipient list. Unknown programs
+have no fallback audience. For mixed-role events, use the verified recipient-role
+mapping and separate role messages described below. These implemented planning
+paths do not by themselves prove live provider delivery or adoption acceptance.
 
 ## Calendar executive assistance
 
