@@ -65,11 +65,13 @@ for every send; an applicable Gatekeeper decision is. Existing policy does not
 establish a standing Good Company unattended-send remit. Keep
 `Account.unattended_send` false until that capability is genuinely established.
 Do not bypass Latch, alter a denied request to evade review, or treat success on
-one send as blanket authorization. The denied reply was not retried.
+one send as blanket authorization. The denied reply was not retried until the owner explicitly requested a narrow policy repair. Exact-send and exact-reply-ID read exceptions then allowed the test; both were removed afterward and the original enabled Gatekeeper policy was verified.
 
-Actual self-test results: three Gmail acceptance IDs, received-message evidence,
+Actual self-test results: four Gmail acceptance IDs, received-message evidence,
 one private transparent calendar fixture without guests, and refused second
-claims for the core event and task notices. These are reviewed self-tests; they
+claims for the core event and task notices. The owner-loopback STOP reply cancelled
+two queued notices, rejected replay and blocked a later correction in the isolated
+test database. The test remit was paused after completion. These are reviewed self-tests; they
 do not prove scheduled unattended delivery or external-participant reply identity.
 
 The probe now distinguishes the disconnected-device response without echoing
