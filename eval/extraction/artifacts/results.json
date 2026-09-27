@@ -1,0 +1,92 @@
+{
+  "fixtures": 3,
+  "checks": [
+    {
+      "method": "digital_layout",
+      "fixture": "food-bank",
+      "row_association_correct": 2,
+      "rows": 2,
+      "exception_recovered": true,
+      "privacy_label_recovered": true,
+      "page_location_recovered": true
+    },
+    {
+      "method": "digital_layout",
+      "fixture": "arts",
+      "row_association_correct": 2,
+      "rows": 2,
+      "exception_recovered": true,
+      "privacy_label_recovered": true,
+      "page_location_recovered": true
+    },
+    {
+      "method": "digital_layout",
+      "fixture": "board",
+      "row_association_correct": 2,
+      "rows": 2,
+      "exception_recovered": true,
+      "privacy_label_recovered": true,
+      "page_location_recovered": true
+    },
+    {
+      "method": "scan_without_ocr",
+      "fixture": "food-bank",
+      "row_association_correct": 0,
+      "rows": 2,
+      "exception_recovered": false,
+      "privacy_label_recovered": false,
+      "page_location_recovered": false
+    },
+    {
+      "method": "scan_without_ocr",
+      "fixture": "arts",
+      "row_association_correct": 0,
+      "rows": 2,
+      "exception_recovered": false,
+      "privacy_label_recovered": false,
+      "page_location_recovered": false
+    },
+    {
+      "method": "scan_without_ocr",
+      "fixture": "board",
+      "row_association_correct": 0,
+      "rows": 2,
+      "exception_recovered": false,
+      "privacy_label_recovered": false,
+      "page_location_recovered": false
+    },
+    {
+      "method": "scan_ocr",
+      "fixture": "food-bank",
+      "row_association_correct": 2,
+      "rows": 2,
+      "exception_recovered": true,
+      "privacy_label_recovered": true,
+      "page_location_recovered": true
+    },
+    {
+      "method": "scan_ocr",
+      "fixture": "arts",
+      "row_association_correct": 2,
+      "rows": 2,
+      "exception_recovered": true,
+      "privacy_label_recovered": true,
+      "page_location_recovered": true
+    },
+    {
+      "method": "scan_ocr",
+      "fixture": "board",
+      "row_association_correct": 2,
+      "rows": 2,
+      "exception_recovered": true,
+      "privacy_label_recovered": true,
+      "page_location_recovered": true
+    }
+  ],
+  "scope": "Fictional clean 150-DPI scans only. Row association, date/role/exception and privacy-label recovery; not a claim of arbitrary PDF accuracy.",
+  "privacy": "Audience is supplied in fixtures.json; extracted labels never grant access.",
+  "versions": {
+    "poppler": "pdftotext version 26.04.0",
+    "tesseract": "tesseract 5.5.2"
+  }
+}
