@@ -6,7 +6,7 @@ import json
 import re
 from datetime import timedelta
 from zoneinfo import ZoneInfo
-from .core import Coordinator, required, stamp, iso, digest
+from .core import Coordinator, required, required_time, stamp, iso, digest
 
 
 class WorkCoordinator(Coordinator):
@@ -31,7 +31,7 @@ class WorkCoordinator(Coordinator):
             if not isinstance(v.get(key), list):
                 raise ValueError(f'{key} must be a list.')
         for interval in v['availability']:
-            if stamp(interval['start']) >= stamp(interval['end']):
+            if required_time(interval['start'], 'start time') >= required_time(interval['end'], 'end time'):
                 raise ValueError('Availability end must follow start.')
         credentials = v.get('credentials', [])
         if not isinstance(credentials, list):
@@ -41,7 +41,7 @@ class WorkCoordinator(Coordinator):
                 raise ValueError('Each credential must be an object.')
             for key in ('name', 'evidence', 'issuer'):
                 required(credential.get(key), 'credential ' + key)
-            if not stamp(credential['valid_from']) < stamp(credential['valid_until']):
+            if not required_time(credential['valid_from'], 'valid_from time') < required_time(credential['valid_until'], 'valid_until time'):
                 raise ValueError('Credential validity must have a positive interval.')
             if not isinstance(credential.get('categories'), list) or not credential['categories'] or any(not isinstance(c, str) or not c.strip() or c == '*' for c in credential['categories']):
                 raise ValueError('Credential categories must be explicit task categories.')
@@ -55,7 +55,7 @@ class WorkCoordinator(Coordinator):
         t = dict(task)
         for key in ('id', 'title', 'category'):
             required(t.get(key), key)
-        if not stamp(t['start']) < stamp(t['end']):
+        if not required_time(t['start'], 'start time') < required_time(t['end'], 'end time'):
             raise ValueError('Task end must follow start.')
         if not isinstance(t.get('eligible_roles'), list) or not t['eligible_roles']:
             raise ValueError('Supply the roles eligible for this task.')
@@ -107,7 +107,7 @@ class WorkCoordinator(Coordinator):
             proposed = None
             if not cancelled:
                 shift = stamp(event['start']) - stamp(task['event_start'])
-                proposed = {'start': iso(stamp(task['start']) + shift), 'end': iso(stamp(task['end']) + shift)}
+                proposed = {'start': iso(required_time(task['start'], 'start time') + shift), 'end': iso(required_time(task['end'], 'end time') + shift)}
             attempts = self.db.execute("""SELECT n.id,n.status,n.receipt FROM task_notices n
               JOIN assignments a ON a.id=n.assignment_id WHERE a.task_id=?
               AND n.status IN ('sending','sent','uncertain','failed')""", (row['id'],)).fetchall()
@@ -129,8 +129,8 @@ class WorkCoordinator(Coordinator):
     def _credential_gaps(self, v, t):
         return [name for name in t.get('required_credentials', [])
                 if not any(c['name'] == name and t['category'] in c['categories']
-                           and stamp(c['valid_from']) <= stamp(t['start'])
-                           and stamp(c['valid_until']) >= stamp(t['end'])
+                           and required_time(c['valid_from'], 'valid_from time') <= required_time(t['start'], 'start time')
+                           and required_time(c['valid_until'], 'valid_until time') >= required_time(t['end'], 'end time')
                            for c in v.get('credentials', []))]
 
     def _eligible(self, v, t, policy):
@@ -149,9 +149,9 @@ class WorkCoordinator(Coordinator):
             return False
         if len(workload) >= v['max_open_tasks']:
             return False
-        if not any(stamp(w['start']) <= stamp(t['start']) and stamp(w['end']) >= stamp(t['end']) for w in v['availability']):
+        if not any(required_time(w['start'], 'start time') <= required_time(t['start'], 'start time') and required_time(w['end'], 'end time') >= required_time(t['end'], 'end time') for w in v['availability']):
             return False
-        return not any(stamp(w['start']) < stamp(t['end']) and stamp(w['end']) > stamp(t['start']) for w in workload)
+        return not any(required_time(w['start'], 'start time') < required_time(t['end'], 'end time') and required_time(w['end'], 'end time') > required_time(t['start'], 'start time') for w in workload)
 
     def _notice(self, assignment_id, t, v, kind, due, policy):
         aid = digest([assignment_id, kind])[:24]
@@ -193,13 +193,13 @@ class WorkCoordinator(Coordinator):
                     self.db.execute("UPDATE task_notices SET status='cancelled' WHERE id=?", (notice['id'],))
                     self.log('task_notice_cadence_revoked', notice['id'], {}, now)
             volunteers = [json.loads(r[0]) for r in self.db.execute('SELECT payload FROM volunteers ORDER BY id')]
-            tasks = sorted([json.loads(r[0]) for r in self.db.execute("SELECT payload FROM tasks WHERE status='open'")], key=lambda t: (stamp(t['start']), t['id']))
+            tasks = sorted([json.loads(r[0]) for r in self.db.execute("SELECT payload FROM tasks WHERE status='open'")], key=lambda t: (required_time(t['start'], 'start time'), t['id']))
             for t in tasks:
                 if not self._event_current(t):
                     self._retire_pending(t['id'])
                     exceptions.append({'task_id': t['id'], 'reason': 'Linked event changed; review task_impacts and verified availability.'})
                     continue
-                if stamp(t['start']) <= now:
+                if required_time(t['start'], 'start time') <= now:
                     self._retire_pending(t['id'])
                     continue
                 if t['category'] not in policy['allowed_task_categories']:
@@ -263,7 +263,7 @@ class WorkCoordinator(Coordinator):
                 for hours in policy.get('task_reminder_hours', [24]):
                     if type(hours) is not int or not 1 <= hours <= 168:
                         raise ValueError('Task reminder cadence must use 1–168 whole hours.')
-                    due = stamp(t['start']) - timedelta(hours=hours)
+                    due = required_time(t['start'], 'start time') - timedelta(hours=hours)
                     if due > now or (existing and due >= now - timedelta(minutes=15)):
                         self._notice(assignment_id, t, v, f'{hours}h', due, policy)
         return {'assigned': made, 'exceptions': exceptions}
@@ -293,7 +293,7 @@ class WorkCoordinator(Coordinator):
             v = json.loads(self.db.execute('SELECT payload FROM volunteers WHERE id=?', (assignment['volunteer_id'],)).fetchone()[0])
             expected_status = 'offered' if notice['kind'] == 'offer' else 'assigned'
             if (assignment['status'] != expected_status or task['status'] != 'open'
-                    or now >= stamp(t['start']) or (notice['kind'] == 'offer' and not t.get('signup_required'))):
+                    or now >= required_time(t['start'], 'start time') or (notice['kind'] == 'offer' and not t.get('signup_required'))):
                 raise ValueError('Assignment is inactive or already started.')
             if assignment['policy_hash'] != digest(policy) or t['category'] not in policy['allowed_task_categories'] or not self._eligible(v, t, policy):
                 raise ValueError('Reconcile assignment with current standing instructions and roster.')
@@ -339,7 +339,7 @@ class WorkCoordinator(Coordinator):
         overdue = []
         for row in self.db.execute("SELECT id,payload FROM tasks WHERE status='open'"):
             task = json.loads(row['payload'])
-            if stamp(task['end']) < now:
+            if required_time(task['end'], 'end time') < now:
                 assignment_count = self.db.execute("SELECT count(*) FROM assignments WHERE task_id=? AND status='assigned'", (row['id'],)).fetchone()[0]
                 overdue.append({'task_id': row['id'], 'title': task['title'], 'ended_at': task['end'],
                                 'active_assignments': assignment_count, 'status': 'overdue_unresolved',

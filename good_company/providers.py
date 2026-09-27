@@ -5,7 +5,7 @@ The fixtures implement this protocol; they are never evidence of live delivery.
 from dataclasses import dataclass
 from typing import Protocol
 from uuid import uuid4
-from .core import required, stamp, iso
+from .core import required, required_time, stamp, iso
 
 
 class ProviderError(ValueError):
@@ -58,6 +58,7 @@ def authenticated_account(provider):
 
 
 def import_complete_calendar(coordinator, provider, scope, start, end, now=None):
+    start, end = iso(required_time(start, 'window start')), iso(required_time(end, 'window end'))
     account = authenticated_account(provider)
     if not account.calendar_read or scope not in account.calendar_scopes:
         raise ProviderError('calendar_permission_denied')
@@ -65,14 +66,13 @@ def import_complete_calendar(coordinator, provider, scope, start, end, now=None)
     if not policy or scope not in policy['calendar_scopes']:
         raise ProviderError('calendar_outside_standing_scope')
     fixed_now = stamp(now) if now is not None else None
-    start, end = iso(start), iso(end)
     events, cursors, cursor, checked = [], set(), None, None
     for _ in range(1000):
         page = provider.calendar_page(scope, start, end, cursor)
         if page.scope != scope or not page.expanded or not page.complete_page:
             raise ProviderError('incomplete_or_unscoped_calendar')
         try:
-            observed = stamp(required(page.checked_at, 'calendar observation time'))
+            observed = required_time(page.checked_at, 'calendar observation time')
         except (ValueError, TypeError):
             raise ProviderError('invalid_calendar_observation') from None
         if observed > (fixed_now or stamp()):

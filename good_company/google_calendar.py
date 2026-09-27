@@ -6,7 +6,7 @@ from datetime import date, datetime, time, timedelta
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
-from .core import iso, stamp
+from .core import iso, stamp, required_time
 from .providers import Account, CalendarPage, ProviderError
 
 
@@ -75,7 +75,7 @@ class GoogleCalendar:
     def calendar_page(self, scope, start, end, cursor=None):
         if scope not in self.scopes:
             raise ProviderError('google_calendar_outside_scope')
-        start, end = iso(start), iso(end)
+        start, end = iso(required_time(start, 'window start')), iso(required_time(end, 'window end'))
         if stamp(start) >= stamp(end):
             raise ProviderError('invalid_calendar_window')
         argv = ['plow-gog', 'calendar', 'events', self.scopes[scope],
@@ -178,7 +178,7 @@ class GoogleCalendar:
                 if date.fromisoformat(start) >= date.fromisoformat(end):
                     raise ValueError()
             else:
-                start, end = iso(first['dateTime']), iso(last['dateTime'])
+                start, end = iso(required_time(first['dateTime'], 'event start')), iso(required_time(last['dateTime'], 'event end'))
                 if stamp(start) >= stamp(end):
                     raise ValueError()
         except (KeyError, ValueError, TypeError):

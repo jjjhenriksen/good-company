@@ -40,6 +40,11 @@ def required(value, label):
     return value.strip()
 
 
+def required_time(value, label):
+    """Parse required time evidence without the optional execution-clock default."""
+    return stamp(value if isinstance(value, datetime) else required(value, label))
+
+
 class Coordinator:
     def __init__(self, path):
         path = Path(path)
@@ -296,7 +301,7 @@ class Coordinator:
         """Replace one document atomically; preserve headings and line citations."""
         from .knowledge import validate_metadata
         validate_metadata(metadata)
-        required(source, 'source'); required(title, 'title'); stamp(updated)
+        required(source, 'source'); required(title, 'title'); required_time(updated, 'source update time')
         if audience not in ('volunteer', 'coordinator'):
             raise ValueError('audience must be volunteer or coordinator.')
         if len(text) > 1_000_000:
@@ -473,8 +478,8 @@ class Coordinator:
         calendar = required(snapshot.get('calendar'), 'calendar')
         if snapshot.get('complete') is not True:
             raise ValueError('Only complete calendar snapshots may replace events.')
-        start, end = stamp(snapshot['window_start']), stamp(snapshot['window_end'])
-        checked = stamp(required(snapshot.get('checked_at'), 'calendar observation time'))
+        start, end = required_time(snapshot['window_start'], 'window start'), required_time(snapshot['window_end'], 'window end')
+        checked = required_time(snapshot.get('checked_at'), 'calendar observation time')
         if not start < end or end - start > timedelta(days=93):
             raise ValueError('Snapshot window must be positive and at most 93 days.')
         if checked > now + timedelta(minutes=1):
@@ -504,7 +509,7 @@ class Coordinator:
                 else:
                     e = s + timedelta(days=1)
             else:
-                s, e = stamp(event['start']), stamp(event['end'])
+                s, e = required_time(event['start'], 'event start'), required_time(event['end'], 'event end')
             if not s < e or not start <= s < end:
                 raise ValueError(f'Event {uid} has an invalid or out-of-window time.')
             if event.get('status', 'confirmed') not in ('confirmed', 'tentative', 'cancelled'):
@@ -806,10 +811,13 @@ class Coordinator:
         return {'id': rid, 'status': outcome, 'receipt': provider_id}
 
     def conflicts(self, proposed, busy):
-        start, end = stamp(proposed['start']), stamp(proposed['end'])
+        start, end = required_time(proposed['start'], 'proposed start'), required_time(proposed['end'], 'proposed end')
         if not start < end:
             raise ValueError('Proposed end must follow start.')
-        overlap = [b for b in busy if stamp(b['start']) < end and stamp(b['end']) > start]
+        intervals = [(required_time(b['start'], 'busy start'), required_time(b['end'], 'busy end')) for b in busy]
+        if any(first >= last for first, last in intervals):
+            raise ValueError('Busy interval end must follow start.')
+        overlap = [(first, last) for first, last in intervals if first < end and last > start]
         # Private event names never appear in a shared scheduling response.
         return {'available': not overlap, 'conflicts': len(overlap),
                 'message': 'There is an existing commitment.' if overlap else 'No overlap in the supplied busy intervals.',
