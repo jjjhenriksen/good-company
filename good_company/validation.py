@@ -13,6 +13,11 @@ def validate_unique_recipients(addresses):
         raise ValueError('Duplicate recipient identities are not allowed.')
 
 
+def validate_signup_mode(task):
+    if type(task.get('signup_required', False)) is not bool:
+        raise ValueError('signup_required must be boolean; review and replace the invalid task.')
+
+
 def validate_request(request):
     if not isinstance(request, dict):
         raise RequestError('Request must be a JSON object.')
@@ -22,7 +27,7 @@ def validate_request(request):
                     'reminder_recipients', 'to', 'bcc', 'detail_sources', 'required_credentials', 'channels', 'categories', 'sources', 'missing'}
     integer_lists = {'reminder_days', 'cadence_days', 'task_reminder_hours'}
     object_lists = {'events', 'rules', 'availability', 'busy'}
-    booleans = {'enabled', 'apply', 'complete', 'all_day', 'mixed_role_audience', 'accepts_delegation'}
+    booleans = {'enabled', 'apply', 'complete', 'all_day', 'mixed_role_audience', 'accepts_delegation', 'signup_required'}
     scalars = {'organization', 'timezone', 'greeting', 'signoff', 'audience', 'sender', 'source', 'title', 'updated',
                'authority', 'question', 'calendar', 'window_start', 'window_end', 'checked_at', 'id', 'start', 'end',
                'status', 'event_type', 'dress_code_role', 'dress_applicability', 'program', 'location', 'attire',
