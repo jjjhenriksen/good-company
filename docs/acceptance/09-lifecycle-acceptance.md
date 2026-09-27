@@ -1,6 +1,8 @@
 # Live lifecycle matrix (#9)
 
-Status: blocked by #8 and deployed connected-tool HTTP 503. Unit tests already
+Status: full acceptance still depends on #8. Latch is now connected; four
+authorized self-emails and owner-loopback STOP handling succeeded. External
+participant identity, full lifecycle cases and unattended scheduling remain open. Unit tests already
 exercise state transitions; they cannot substitute for the following live results.
 Use fictional records and an independently verified owner-controlled test inbox.
 
