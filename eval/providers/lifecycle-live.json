@@ -1,0 +1,103 @@
+{
+  "status": "partial",
+  "source_commit": "3c526d916f2f066f32aab8e8d0fe15bef81b4991",
+  "image": "sha256:e5ff89e8e3b6c53b31670d76f6c6d283c74b7b06a5590a1d070c27aff5a96751",
+  "observed_utc": {
+    "first": "2026-09-27T03:41:40.802582+00:00",
+    "last": "2026-09-27T03:47:27.119114+00:00"
+  },
+  "authority": {
+    "owner_approved_two_self_emails_and_one_existing_fictional_event": true,
+    "email_send_count": 2,
+    "attachments": 0,
+    "external_recipients": 0,
+    "all_six_lifecycle_ledgers_paused": true,
+    "gatekeeper_enabled": true,
+    "original_gatekeeper_policy_restored": true
+  },
+  "replies": [
+    {
+      "action": "decline",
+      "receipt_sha256": "847907f2076267f3dbde3a1fd2bbb6b3a5a29cc14ceb6a2d04af28dc6fa59d24",
+      "thread_matches_receipt": true,
+      "sent_and_inbox_labels": true,
+      "exact_owner_loopback_addresses": true,
+      "body_matches_approved_action": true,
+      "applied_once_while_paused": true,
+      "assignment_status": "declined",
+      "task_status": "open",
+      "pending_assignment_notices": 0,
+      "spoof_fixture_rejected_without_state_change": true,
+      "replay_rejected_without_state_change": true,
+      "general_external_sender_identity_proven": false
+    },
+    {
+      "action": "complete",
+      "receipt_sha256": "8a41763dd65edc607251335e4d45ee9f2358d44784b6590173f7e18b9f5dd4d3",
+      "thread_matches_receipt": true,
+      "sent_and_inbox_labels": true,
+      "exact_owner_loopback_addresses": true,
+      "body_matches_approved_action": true,
+      "applied_once_while_paused": true,
+      "assignment_status": "assigned",
+      "task_status": "completed",
+      "pending_assignment_notices": 0,
+      "spoof_fixture_rejected_without_state_change": true,
+      "replay_rejected_without_state_change": true,
+      "general_external_sender_identity_proven": false
+    }
+  ],
+  "source_change": [
+    {
+      "case": "before-change",
+      "old_unattempted_status": "superseded",
+      "current_location_in_new_payload": true,
+      "provider_citation_preserved": true,
+      "new_send_calls": 0
+    },
+    {
+      "case": "after-change",
+      "attempted_payload_and_receipt_unchanged": true,
+      "sent_payload_sha256": "268a8c9ee09743c29c79b5d8263a462331ba29017b1780960cee669ce4e6bbcc",
+      "receipt_sha256": "985d5b8847dab0aff12db8b34a7272bb85ff9c5545908a76b8f427bb0d0bbfe0",
+      "new_routine_notice_count": 0,
+      "explicit_correction_review_required": true,
+      "new_send_calls": 0
+    }
+  ],
+  "pause_before": {
+    "enabled": false,
+    "provider_send_calls": 0,
+    "claim_refused": true
+  },
+  "pause_after": {
+    "kind": "controlled_lost_acknowledgement_replay_of_real_scheduled_receipt",
+    "ledger_fault_simulated": true,
+    "real_provider_receipt_preserved": true,
+    "reconciled_while_paused": true,
+    "attempted_payload_unchanged": true,
+    "new_provider_operations": 0,
+    "new_send_refused": true,
+    "fresh_network_reconciliation": false
+  },
+  "calendar": {
+    "event_id_sha256": "502e335ee0cd1283d16de9cdf0f8bd9b3b50018fdc17aecdf26865dfc94a118a",
+    "complete_snapshot_before_and_after": true,
+    "location_change_observed": true,
+    "original_status_times_privacy_and_guest_list_preserved": true,
+    "original_location_restored": false,
+    "clear_location_command_exit_code": 0,
+    "clear_location_readback": "temporary_location_still_present",
+    "cancellation_exercised": false,
+    "provider_cli": "gog v0.36.0",
+    "remaining_action": "Clear only the fictional fixture location through an authenticated Google Calendar UI, then complete the approved cancellation and restoration test."
+  },
+  "limits": [
+    "Owner loopback identity uses the actual authorized send receipt plus authenticated SENT and INBOX readback. It is not general external sender authentication.",
+    "Spoofed input is a controlled unverified-provider fixture, not an external forged email sent to the account.",
+    "Pause-after uses a cloned ledger with a simulated lost acknowledgement and the real saved provider receipt. It adds no fresh network reconciliation.",
+    "Prior genuine scheduler ambiguity and reconciliation are recorded separately in scheduled-live.json.",
+    "No cancellation was attempted because the installed provider command has no restore/status-update operation.",
+    "Google Calendar browser sign-in is required to finish cleanup: the advertised empty-location update silently preserved the temporary location."
+  ]
+}
