@@ -83,10 +83,19 @@ def apply(coordinator, provider, message_id, now=None):
             if not coordinator._eligible(actor,task,policy):raise ProviderError('signup_ineligible_or_no_personal_capacity')
             if reservation and reservation['volunteer_id']==actor['id']:raise ProviderError('already_reserved_or_confirmed')
             if db.execute('SELECT 1 FROM assignments WHERE task_id=? AND volunteer_id=?',(task_id,actor['id'])).fetchone():raise ProviderError('previous_slot_outcome_requires_owner_review')
-            if reservation:
-                if actor['id'] not in waiting:waiting.append(actor['id'])
-                state='waitlisted'
-            else:_reserve(coordinator,task_id,actor,policy,now);state='offered'
+            if actor['id'] not in waiting:
+                waiting.append(actor['id'])
+            state = 'waitlisted'
+            if not reservation:
+                # A paused decline may leave a vacancy before the next cycle.
+                # New signups join behind existing eligible waitlisted people.
+                db.execute('INSERT OR REPLACE INTO settings VALUES(?,?)', (wait_key, json.dumps(waiting)))
+                assignment_id = promote_waitlist(coordinator, task_id, now)
+                waiting = json.loads(db.execute('SELECT value FROM settings WHERE key=?', (wait_key,)).fetchone()[0])
+                if assignment_id:
+                    offered = db.execute('SELECT volunteer_id FROM assignments WHERE id=?', (assignment_id,)).fetchone()[0]
+                    if offered == actor['id']:
+                        state = 'offered'
         elif reply.action=='accept_offer':
             if not reservation or reservation['volunteer_id']!=actor['id'] or reservation['status']!='offered':raise ProviderError('offer_not_owned_by_sender')
             if not coordinator._eligible(actor,task,policy):raise ProviderError('offer_no_longer_eligible')
