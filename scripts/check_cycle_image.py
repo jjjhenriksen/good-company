@@ -26,7 +26,19 @@ with tempfile.TemporaryDirectory() as directory:
         capture_output=True, text=True, check=True)
     assert json.loads(result.stdout) == {'status': 'paused', 'cycle_id': 'packaging-check'}
     assert not (root / 'latch.sqlite').exists(), 'Paused entrypoint opened provider journal'
+    subprocess.run(['good-company-availability', '--help'], cwd=root, env=env,
+                   capture_output=True, text=True, check=True)
+    (root / 'availability.json').write_text(json.dumps({'journal': 'availability.sqlite',
+        'account': 'owner@example.invalid', 'scopes': {'selected': 'calendar@example.invalid'}}))
+    result = subprocess.run(['good-company-availability', '--config', str(root / 'availability.json'),
+        '--check-id', 'packaging-check', '--scope', 'outside',
+        '--start', '2026-09-28T17:00:00Z', '--end', '2026-09-28T18:00:00Z'],
+        cwd=root, env=env, capture_output=True, text=True)
+    assert result.returncode == 2
+    assert json.loads(result.stdout) == {'status': 'unavailable', 'reason': 'google_calendar_outside_scope'}
+    assert not (root / 'availability.sqlite').exists(), 'Out-of-scope check opened provider journal'
 print('Installed scheduler command returns paused without credentials or PYTHONPATH.')
+print('Installed availability command rejects unknown scope without a provider call.')
 '''
 
 

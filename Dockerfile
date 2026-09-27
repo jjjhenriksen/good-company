@@ -7,7 +7,8 @@ COPY scripts/start_runtime.py /opt/good-company/start_runtime.py
 COPY scripts/runtime_preflight.py /opt/good-company/runtime_preflight.py
 COPY scripts/good-company /usr/local/bin/good-company
 COPY scripts/good-company-cycle /usr/local/bin/good-company-cycle
-RUN chmod 0755 /usr/local/bin/good-company /usr/local/bin/good-company-cycle && mkdir -p /var/lib/good-company && chown node:node /var/lib/good-company
+COPY scripts/good-company-availability /usr/local/bin/good-company-availability
+RUN chmod 0755 /usr/local/bin/good-company /usr/local/bin/good-company-cycle /usr/local/bin/good-company-availability && mkdir -p /var/lib/good-company && chown node:node /var/lib/good-company
 COPY prompt/AGENTS.md /opt/plow/prompt/AGENTS.md
 COPY skills/ /opt/plow/skills/
 COPY examples/ /opt/good-company/examples/
