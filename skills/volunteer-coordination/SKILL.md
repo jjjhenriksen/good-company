@@ -108,3 +108,11 @@ non-overlap and workload capacity across shifts. Repeat identical setup is safe.
 Use `shift-status` for filled and unfilled capacity. Allocation is not an accepted
 signup or attendance. Declines use the exact assignment ID; replacement still
 passes every task eligibility check. Never silently weaken staffing requirements.
+## Overdue work
+
+Use `overdue-tasks {}` to surface open tasks whose window has ended. Repeated
+checks are read-only and never infer completion or release capacity. Use
+`follow-up-task` with a verified reference, note and explicit outcome: still_open,
+completed or cancelled. The latter two use the existing lifecycle transition and
+stop unsent notices. Keep follow-up notes private; do not infer reliability from
+missing outcomes or missed windows.
