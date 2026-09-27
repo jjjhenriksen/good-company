@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 from dataclasses import replace
 import test_tasks as base
 from test_core import NOW
@@ -48,3 +49,45 @@ class ReplyTests(unittest.TestCase):
         apply_verified_reply(self.c, p, 'fixture-message', now=NOW)
         self.assertFalse(self.c.contact_allowed('alex@example.invalid'))
         self.assertTrue(self.c.contact_allowed('sam@example.invalid'))
+
+    def test_unrelated_mailbox_cannot_read_or_apply_reply(self):
+        p = self.provider()
+        for action in ('decline', 'complete', 'stop', 'preferences'):
+            with self.subTest(action=action):
+                p.reply = replace(p.reply, action=action)
+                p.identity = replace(p.identity, sender='other-owner@example.invalid')
+                before = list(self.c.db.iterdump())
+                with patch.object(p, 'verified_reply', side_effect=AssertionError('wrong mailbox read')):
+                    with self.assertRaisesRegex(ProviderError, 'reply_account_outside_remit'):
+                        apply_verified_reply(self.c, p, 'fixture-message', now=NOW)
+                self.assertEqual(list(self.c.db.iterdump()), before)
+
+    def test_missing_remit_cannot_accept_reply(self):
+        p = self.provider(action='stop')
+        with self.c.db:
+            self.c.db.execute("DELETE FROM settings WHERE key='autonomy'")
+        with self.assertRaisesRegex(ProviderError, 'reply_account_outside_remit'):
+            apply_verified_reply(self.c, p, 'fixture-message', now=NOW)
+        self.assertTrue(self.c.contact_allowed('alex@example.invalid'))
+
+    def test_account_change_during_provider_read_cannot_mutate_state(self):
+        p = self.provider(action='stop')
+        def change_remit(message_id):
+            policy = self.c.autonomy()
+            policy['sender'] = 'new-owner@example.invalid'
+            self.c.configure_autonomy(policy, 'fixture account change', now=NOW)
+            return p.reply
+        with patch.object(p, 'verified_reply', side_effect=change_remit):
+            with self.assertRaisesRegex(ProviderError, 'reply_account_outside_remit'):
+                apply_verified_reply(self.c, p, 'fixture-message', now=NOW)
+        self.assertTrue(self.c.contact_allowed('alex@example.invalid'))
+        self.assertEqual(self.c.db.execute('SELECT count(*) FROM processed_replies').fetchone()[0], 0)
+
+    def test_verified_stop_still_works_when_sending_is_paused(self):
+        p = self.provider(action='stop')
+        p.identity = replace(p.identity, sender=p.identity.sender.upper())
+        policy = self.c.autonomy()
+        policy['enabled'] = False
+        self.c.configure_autonomy(policy, 'pause fixture', now=NOW)
+        self.assertEqual(apply_verified_reply(self.c, p, 'fixture-message', now=NOW)['status'], 'applied')
+        self.assertFalse(self.c.contact_allowed('alex@example.invalid'))
