@@ -13,6 +13,46 @@ def _check_account(coordinator, account):
     return policy
 
 
+def _reserve(coordinator, task_id, person, policy, now):
+    assignment_id = digest([task_id, person['id']])[:24]
+    if coordinator.db.execute('SELECT 1 FROM assignments WHERE id=?', (assignment_id,)).fetchone():
+        return None
+    coordinator.db.execute("INSERT INTO assignments VALUES(?,?,?,'offered',?)",
+                           (assignment_id, task_id, person['id'], digest(policy)))
+    coordinator.log('shift_offer_reserved', task_id, {'assignment_id': assignment_id}, now)
+    return assignment_id
+
+
+def promote_waitlist(coordinator, task_id, now):
+    """Reserve one eligible replacement inside the caller's write transaction."""
+    db = coordinator.db
+    policy = coordinator.autonomy()
+    row = db.execute("SELECT payload FROM tasks WHERE id=? AND status='open'", (task_id,)).fetchone()
+    if not row or not policy or not policy['enabled']:
+        return None
+    task = json.loads(row[0])
+    if (not task.get('signup_required') or task['category'] not in policy['allowed_task_categories']
+            or stamp(task['start']) <= now):
+        return None
+    if db.execute("SELECT 1 FROM assignments WHERE task_id=? AND status IN ('assigned','offered')", (task_id,)).fetchone():
+        return None
+    wait_key = 'waitlist:' + task_id
+    row = db.execute('SELECT value FROM settings WHERE key=?', (wait_key,)).fetchone()
+    waiting = json.loads(row[0]) if row else []
+    for candidate_id in waiting:
+        row = db.execute('SELECT payload FROM volunteers WHERE id=?', (candidate_id,)).fetchone()
+        if not row:
+            continue
+        candidate = json.loads(row[0])
+        if coordinator._eligible(candidate, task, policy):
+            assignment_id = _reserve(coordinator, task_id, candidate, policy, now)
+            if assignment_id:
+                waiting.remove(candidate_id)
+                db.execute('INSERT OR REPLACE INTO settings VALUES(?,?)', (wait_key, json.dumps(waiting)))
+                return assignment_id
+    return None
+
+
 def apply(coordinator, provider, message_id, now=None):
     account=authenticated_account(provider)
     _check_account(coordinator, account)
@@ -39,12 +79,6 @@ def apply(coordinator, provider, message_id, now=None):
         row=db.execute('SELECT value FROM settings WHERE key=?',(wait_key,)).fetchone()
         waiting=json.loads(row[0]) if row else []
         reservation=db.execute("SELECT * FROM assignments WHERE task_id=? AND status IN ('assigned','offered')",(task_id,)).fetchone()
-        def reserve(person):
-            assignment_id=digest([task_id,person['id']])[:24]
-            if db.execute('SELECT 1 FROM assignments WHERE id=?',(assignment_id,)).fetchone():return None
-            db.execute("INSERT INTO assignments VALUES(?,?,?,'offered',?)",(assignment_id,task_id,person['id'],digest(policy)))
-            coordinator.log('shift_offer_reserved',task_id,{'assignment_id':assignment_id},now)
-            return assignment_id
         if reply.action=='signup':
             if not coordinator._eligible(actor,task,policy):raise ProviderError('signup_ineligible_or_no_personal_capacity')
             if reservation and reservation['volunteer_id']==actor['id']:raise ProviderError('already_reserved_or_confirmed')
@@ -52,7 +86,7 @@ def apply(coordinator, provider, message_id, now=None):
             if reservation:
                 if actor['id'] not in waiting:waiting.append(actor['id'])
                 state='waitlisted'
-            else:reserve(actor);state='offered'
+            else:_reserve(coordinator,task_id,actor,policy,now);state='offered'
         elif reply.action=='accept_offer':
             if not reservation or reservation['volunteer_id']!=actor['id'] or reservation['status']!='offered':raise ProviderError('offer_not_owned_by_sender')
             if not coordinator._eligible(actor,task,policy):raise ProviderError('offer_no_longer_eligible')
@@ -63,13 +97,11 @@ def apply(coordinator, provider, message_id, now=None):
             if reservation and reservation['volunteer_id']==actor['id']:
                 db.execute("UPDATE assignments SET status='declined' WHERE id=?",(reservation['id'],))
                 coordinator._retire_pending(task_id)
-                for candidate_id in list(waiting):
-                    candidate=next((v for v in people if v['id']==candidate_id),None)
-                    if candidate and coordinator._eligible(candidate,task,policy) and reserve(candidate):
-                        waiting.remove(candidate_id);break
             elif actor['id'] in waiting:waiting.remove(actor['id'])
             else:raise ProviderError('no_owned_offer_or_waitlist_entry')
             state='declined'
         db.execute('INSERT OR REPLACE INTO settings VALUES(?,?)',(wait_key,json.dumps(waiting)))
+        if reply.action == 'decline_offer':
+            promote_waitlist(coordinator, task_id, now)
         db.execute('INSERT INTO settings VALUES(?,?)',(receipt,json.dumps({'status':state,'at':iso(now),'evidence':reply.evidence})))
     return {'status':state,'task_id':reply.target_id,'scope':'Offer/RSVP state only; no provider message or attendance is asserted.'}
