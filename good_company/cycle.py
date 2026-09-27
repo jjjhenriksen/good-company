@@ -46,14 +46,27 @@ def run_cycle(coordinator, provider, cycle_id, start, end, now=None):
         policy = coordinator.autonomy()
         if not policy or not policy.get('enabled'):
             return {'status': 'paused', 'cycle_id': cycle_id}
+        db = coordinator.db
+        attempt_started = iso(stamp(now))
+
+        def observe(status, planning_exceptions=0):
+            observed = stamp(now)
+            coordinator.log('cycle_observed', digest(cycle_id)[:24],
+                            {'status': status, 'started_at': attempt_started,
+                             'finished_at': None if status == 'running' else iso(observed),
+                             'planning_exceptions': planning_exceptions}, observed)
+
+        with db:
+            observe('running')
         try:
             account = authenticated_account(provider)
         except ProviderError:
+            with db:
+                observe('blocked')
             return {'status': 'blocked', 'cycle_id': cycle_id, 'reason': 'provider_identity_unavailable'}
         fingerprint = digest([start, end, policy, coordinator.profile(), account.provider,
                               account.account_id, account.sender, sorted(account.calendar_scopes),
                               getattr(provider, 'scopes', None)])
-        db = coordinator.db
         db.execute('''CREATE TABLE IF NOT EXISTS operational_cycles(
             id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, status TEXT NOT NULL,
             started_at TEXT NOT NULL, finished_at TEXT, summary TEXT)''')
@@ -62,9 +75,14 @@ def run_cycle(coordinator, provider, cycle_id, start, end, now=None):
                        (cycle_id, fingerprint, 'running', iso(stamp(now))))
         row = db.execute('SELECT * FROM operational_cycles WHERE id=?', (cycle_id,)).fetchone()
         if row['fingerprint'] != fingerprint:
+            with db:
+                observe('blocked')
             raise ProviderError('cycle_configuration_changed')
         if row['status'] == 'completed':
-            return json.loads(row['summary']) | {'replayed': True}
+            saved = json.loads(row['summary'])
+            with db:
+                observe('completed', saved.get('planning_exceptions', 0))
+            return saved | {'replayed': True}
         summary = {'cycle_id': cycle_id, 'status': 'running', 'refreshed_scopes': 0,
                    'sent': 0, 'uncertain': 0, 'failed': 0, 'reconciled': 0, 'deferred': 0,
                    'planning_exceptions': 0}
@@ -76,6 +94,7 @@ def run_cycle(coordinator, provider, cycle_id, start, end, now=None):
             with db:
                 db.execute('UPDATE operational_cycles SET status=?,finished_at=?,summary=? WHERE id=?',
                            (status, iso(stamp(now)), json.dumps(summary), cycle_id))
+                observe(status, summary['planning_exceptions'])
             return summary
 
         try:

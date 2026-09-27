@@ -130,10 +130,15 @@ class SetupCoordinator(CorrectionCoordinator):
                 latest_cycle = {'status': row['status'], 'started_at': row['started_at'],
                                 'finished_at': row['finished_at'],
                                 'planning_exceptions': summary.get('planning_exceptions', 0)}
-                if row['status'] != 'completed':
-                    reasons.append('Resolve the latest blocked or incomplete operational cycle.')
-                if latest_cycle['planning_exceptions']:
-                    reasons.append('Review the latest operational cycle planning exceptions.')
+        observation = self.db.execute("SELECT at,detail FROM audit WHERE action='cycle_observed' ORDER BY id DESC LIMIT 1").fetchone()
+        latest_at = latest_cycle['finished_at'] or latest_cycle['started_at']
+        if observation and (not latest_at or stamp(observation['at']) >= stamp(latest_at)):
+            detail = json.loads(observation['detail'])
+            latest_cycle = {key: detail[key] for key in latest_cycle}
+        if latest_cycle['status'] not in ('unobserved', 'completed'):
+            reasons.append('Resolve the latest blocked or incomplete operational cycle.')
+        if latest_cycle['planning_exceptions']:
+            reasons.append('Review the latest operational cycle planning exceptions.')
         return {'ready': not reasons, 'reasons': reasons, 'connections': connections,
                 'latest_cycle': latest_cycle,
                 'sources': source_state,
