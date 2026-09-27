@@ -1,7 +1,7 @@
 # Working-agent recording plan (#13)
 
 Status: blocked by #9's genuine provider lifecycle proof. No usable published video
-or actual-agent screenshot has been claimed by this draft. The native real-model
+or actual-agent screenshot has been claimed by this recording plan. The native real-model
 setup and retrieval runs provide a working opening segment, not delivery evidence.
 
 Record one continuous concise sequence using fictional data:
