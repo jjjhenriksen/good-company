@@ -159,10 +159,17 @@ class WorkCoordinator(Coordinator):
         profile = self.profile()
         date = date_text(t['start'], profile) + ' at ' + time_text(t['start'], profile)
         task_term = term(profile, 'task')
-        prefix = 'Your ' + task_term if kind == 'assignment' else task_term.capitalize() + ' reminder'
+        if kind == 'offer':
+            prefix = task_term.capitalize() + ' offer'
+            instructions = ('A place is reserved for you. Reply to accept or decline. '
+                            'Your participation is confirmed only after your acceptance is verified.')
+        else:
+            prefix = 'Your ' + task_term if kind == 'assignment' else task_term.capitalize() + ' reminder'
+            instructions = ('This is within the work you agreed to help with. '
+                            'If your availability has changed, reply and I will find another arrangement.')
         message = {'sender': policy['sender'], 'to': [v['email']], 'bcc': [],
                    'subject': f'{prefix}: {t["title"]}',
-                   'body': f'Hi {v["name"]},\n\n{t["title"]}\nWhen: {date}\n\nThis is within the work you agreed to help with. If your availability has changed, reply and I will find another arrangement.\n\n{self.profile()["signoff"]}'}
+                   'body': f'Hi {v["name"]},\n\n{t["title"]}\nWhen: {date}\n\n{instructions}\n\n{profile["signoff"]}'}
         self.db.execute("""INSERT INTO task_notices VALUES(?,?,?,?,'pending',?,NULL)
           ON CONFLICT(id) DO UPDATE SET message=excluded.message,status='pending'
           WHERE task_notices.status IN ('pending','cancelled')""",
@@ -180,7 +187,7 @@ class WorkCoordinator(Coordinator):
             policy = self.autonomy()
             if not policy or not policy['enabled']:
                 return {'assigned': [], 'exceptions': [{'reason': 'Configure standing delegation instructions first.'}]}
-            allowed_kinds = {'assignment'} | {f'{h}h' for h in policy.get('task_reminder_hours', [24])}
+            allowed_kinds = {'assignment', 'offer'} | {f'{h}h' for h in policy.get('task_reminder_hours', [24])}
             for notice in self.db.execute("SELECT id,kind FROM task_notices WHERE status='pending'").fetchall():
                 if notice['kind'] not in allowed_kinds:
                     self.db.execute("UPDATE task_notices SET status='cancelled' WHERE id=?", (notice['id'],))
@@ -205,8 +212,18 @@ class WorkCoordinator(Coordinator):
                     # Resume only its opt-in offers, never automatic assignment.
                     from .signups import promote_waitlist
                     promote_waitlist(self, t['id'], now)
+                    offer = self.db.execute("SELECT * FROM assignments WHERE task_id=? AND status='offered'", (t['id'],)).fetchone()
+                    if offer:
+                        v = next((v for v in volunteers if v['id'] == offer['volunteer_id']), None)
+                        if not v or not self._eligible(v, t, policy):
+                            self._retire_pending(t['id'])
+                            exceptions.append({'task_id': t['id'], 'reason': 'An existing offer needs reconciliation after availability or role changed.'})
+                            continue
+                        self.db.execute('UPDATE assignments SET policy_hash=? WHERE id=?', (digest(policy), offer['id']))
+                        self._notice(offer['id'], t, v, 'offer', now, policy)
                     continue
                 if existing:
+                    self.db.execute("UPDATE task_notices SET status='cancelled' WHERE assignment_id=? AND kind='offer' AND status='pending'", (existing['id'],))
                     v = next((v for v in volunteers if v['id'] == existing['volunteer_id']), None)
                     if not v or not self._eligible(v, t, policy):
                         self._retire_pending(t['id'])
@@ -267,14 +284,16 @@ class WorkCoordinator(Coordinator):
             notice = self.db.execute('SELECT * FROM task_notices WHERE id=?', (notice_id,)).fetchone()
             if not notice or notice['status'] != 'pending' or stamp(notice['due']) > now:
                 raise ValueError('Notice is not due or is already claimed.')
-            allowed_kinds = {'assignment'} | {f'{h}h' for h in policy.get('task_reminder_hours', [24])}
+            allowed_kinds = {'assignment', 'offer'} | {f'{h}h' for h in policy.get('task_reminder_hours', [24])}
             if notice['kind'] not in allowed_kinds:
                 raise ValueError('Notice cadence is no longer authorized.')
             assignment = self.db.execute('SELECT * FROM assignments WHERE id=?', (notice['assignment_id'],)).fetchone()
             task = self.db.execute('SELECT * FROM tasks WHERE id=?', (assignment['task_id'],)).fetchone()
             t = json.loads(task['payload'])
             v = json.loads(self.db.execute('SELECT payload FROM volunteers WHERE id=?', (assignment['volunteer_id'],)).fetchone()[0])
-            if assignment['status'] != 'assigned' or task['status'] != 'open' or now >= stamp(t['start']):
+            expected_status = 'offered' if notice['kind'] == 'offer' else 'assigned'
+            if (assignment['status'] != expected_status or task['status'] != 'open'
+                    or now >= stamp(t['start']) or (notice['kind'] == 'offer' and not t.get('signup_required'))):
                 raise ValueError('Assignment is inactive or already started.')
             if assignment['policy_hash'] != digest(policy) or t['category'] not in policy['allowed_task_categories'] or not self._eligible(v, t, policy):
                 raise ValueError('Reconcile assignment with current standing instructions and roster.')

@@ -135,6 +135,13 @@ signups.apply with independently verified signup, accept_offer or decline_offer
 replies. An offer reserves capacity (and personal workload); only an owned verified
 RSVP confirms it. Waiting participants remain unconfirmed. Declines reopen only
 the targeted slot and reserve the next still-eligible waitlisted participant.
+The normal delegation cycle queues a distinct offer notice for that reservation.
+It uses task-claim/task-receipt and the existing delivery cycle, subject to current
+eligibility, consent, quiet hours and the shared communication budget. Sending an
+offer does not confirm participation. Verified acceptance cancels an unsent offer
+and permits a separate assignment notice; attempted offers retain their receipts
+or reconciliation state and are never sent again. Ineligible reservations require
+operator reconciliation rather than automatic reassignment.
 Replays and spoofed identities are rejected. Pending offers do not expire silently;
 the operator must reconcile stalled offers. No CLI takes a caller-supplied verified
 flag. Live provider intake and offer delivery remain unverified and must not be

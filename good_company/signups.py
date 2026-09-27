@@ -91,6 +91,7 @@ def apply(coordinator, provider, message_id, now=None):
             if not reservation or reservation['volunteer_id']!=actor['id'] or reservation['status']!='offered':raise ProviderError('offer_not_owned_by_sender')
             if not coordinator._eligible(actor,task,policy):raise ProviderError('offer_no_longer_eligible')
             db.execute("UPDATE assignments SET status='assigned',policy_hash=? WHERE id=?",(digest(policy),reservation['id']))
+            coordinator._retire_pending(task_id)
             coordinator.log('shift_rsvp_confirmed',task_id,{'assignment_id':reservation['id'],'evidence':reply.evidence},now)
             state='confirmed'
         else:
