@@ -105,7 +105,7 @@ class Coordinator:
 
     def configure_autonomy(self, policy, authority, now=None):
         """Set standing operating instructions once; no per-reminder approval."""
-        from .validation import validate_settings_fields
+        from .validation import validate_settings_fields, validate_unique_recipients
         validate_settings_fields(policy, 'policy')
         required(authority, 'standing-instruction reference')
         if type(policy.get('enabled')) is not bool:
@@ -114,6 +114,8 @@ class Coordinator:
                     'allowed_recipients', 'reminder_recipients', 'cadence_days'):
             if not isinstance(policy.get(key), list):
                 raise ValueError(f'{key} must be a list.')
+        for key in ('allowed_recipients', 'reminder_recipients'):
+            validate_unique_recipients(policy[key])
         for address in [policy.get('sender')] + policy['allowed_recipients']:
             if not isinstance(address, str) or not re.fullmatch(r'[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+', address):
                 raise ValueError('The sender and recipients must be verified email addresses.')
@@ -128,6 +130,7 @@ class Coordinator:
                 raise ValueError('Use explicit program names.')
             if not isinstance(recipients, list) or any(not isinstance(r, str) for r in recipients):
                 raise ValueError('Program recipients must be a list of verified addresses.')
+            validate_unique_recipients(recipients)
             if not set(recipients) <= set(policy['allowed_recipients']):
                 raise ValueError('Program recipients must be within the standing recipient list.')
         if not set(policy['reminder_recipients']) <= set(policy['allowed_recipients']):
@@ -185,6 +188,8 @@ class Coordinator:
         return {'updated': True, 'consent_enabled': self.contact_allowed(address)}
 
     def _check_contacts(self, message, now):
+        from .validation import validate_unique_recipients
+        validate_unique_recipients(message.get('to', []) + message.get('bcc', []))
         for address in message.get('to', []) + message.get('bcc', []):
             if not self.contact_allowed(address):
                 raise ValueError('A recipient has withdrawn communication consent.')
@@ -710,6 +715,7 @@ class Coordinator:
         return [self.reminder(row['id']) for row in self.db.execute('SELECT id FROM reminders ORDER BY due,id')]
 
     def edit(self, rid, message, now=None):
+        from .validation import validate_unique_recipients
         required(message.get('subject'), 'subject'); required(message.get('body'), 'body')
         if any(c in message['subject'] for c in '\r\n'):
             raise ValueError('Subject cannot contain line breaks.')
@@ -719,6 +725,7 @@ class Coordinator:
         for address in message['to'] + message['bcc']:
             if not isinstance(address, str) or not re.fullmatch(r'[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+', address):
                 raise ValueError('Recipients must be explicit email addresses, not display names or aliases.')
+        validate_unique_recipients(message['to'] + message['bcc'])
         with self.db:
             result = self.db.execute("UPDATE reminders SET message=?,status='draft',approval=NULL WHERE id=? AND status IN ('draft','approved')", (json.dumps(message), rid))
             if result.rowcount != 1:
