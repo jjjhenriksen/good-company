@@ -3,7 +3,7 @@ services:
   agent:
     platform: linux/amd64
     build: .
-    env_file: ./plow-credentials
+    env_file: ${PLOW_CREDENTIAL_FILE:-./plow-credentials}
     environment:
       # Preview does not claim a public listing. Set AGENT_ID=good-company to publish.
       AGENT_ID: ${AGENT_ID:-}

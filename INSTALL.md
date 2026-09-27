@@ -6,7 +6,7 @@ Python 3.11+, Git, Docker with Linux/amd64 support and Compose 2.24+, sufficient
 free disk space for the OpenClaw image, and a phone for Plow activation.
 For live Google email/calendar access, connect the owner's Mac through Latch.
 
-Try `python3 scripts/demo.py` first; it needs no account or Docker image.
+After cloning below, try `python3 scripts/demo.py`; it needs no account or Docker image.
 
 ## 2. Get the source and Plow CLI
 
@@ -21,6 +21,18 @@ cd good-company
 Use a Python interpreter that reports version 3.11 or newer. Some Macs still
 resolve `python3` to the system Python 3.9; select the supported interpreter
 explicitly for all local commands in that case.
+
+Create and activate a local Python environment before invoking the Plow CLI.
+Its executable uses `python3` from PATH, so activation also makes it use the
+supported interpreter. If needed, replace `python3` on the first line with your
+installed `python3.13` (or another Python 3.11+ executable).
+
+```sh
+python3 -m venv .venv
+. .venv/bin/activate
+python3 -c 'import sys; assert sys.version_info >= (3, 11), "Python 3.11+ required"'
+python3 scripts/demo.py
+```
 
 Use the official [plow-agents repository](https://github.com/plow-pbc/plow-agents).
 Keep that checkout beside, not inside, Good Company's Docker build context.
@@ -38,19 +50,20 @@ shown as `free`; do not assume `ln_p1` will remain free.
 
 ## 3. Run a private preview
 
-Before allocating a Plow line, create the environment file required by Compose
-if it does not exist. This preserves any existing credentials:
+Before allocating a Plow line, build and check runtime compatibility without
+credentials. The temporary `/dev/null` override applies only to these two
+commands; it does not create or overwrite `plow-credentials`:
 
 ```sh
-if [ ! -e plow-credentials ]; then (umask 077; touch plow-credentials); fi
+PLOW_CREDENTIAL_FILE=/dev/null docker compose build agent
+PLOW_CREDENTIAL_FILE=/dev/null docker compose run --rm --no-deps --entrypoint python3 agent /opt/good-company/runtime_preflight.py
 ```
 
-Then build and check runtime compatibility:
-
-```sh
-docker compose build agent
-docker compose run --rm --no-deps --entrypoint python3 agent /opt/good-company/runtime_preflight.py
-```
+Do not create an empty `plow-credentials` file: Plow refuses to mint credentials
+over any existing file. If an earlier version of this guide left an empty file,
+remove only that empty placeholder before minting. Preserve any nonempty file;
+it may belong to an existing installation. Do not revoke a working agent to fix
+a preflight placeholder.
 
 A passing result only checks syscall support. An `openat2`
 `Function not implemented` failure means this Linux emulation cannot run the pinned
@@ -60,14 +73,14 @@ For the tested native Apple Silicon preview, add `-f compose.arm64.yml` to the
 Compose command after `-f compose.yml`. For example:
 
 ```sh
-docker compose -f compose.yml -f compose.arm64.yml build agent
-docker compose -f compose.yml -f compose.arm64.yml run --rm --no-deps --entrypoint python3 agent /opt/good-company/runtime_preflight.py
+PLOW_CREDENTIAL_FILE=/dev/null docker compose -f compose.yml -f compose.arm64.yml build agent
+PLOW_CREDENTIAL_FILE=/dev/null docker compose -f compose.yml -f compose.arm64.yml run --rm --no-deps --entrypoint python3 agent /opt/good-company/runtime_preflight.py
 ```
 
 Use the same file pair for startup, logs, stop and restart. Mint the selected Plow
 line's credential with `plow-agents mint LINE_ID`, then start this native Compose
-configuration directly; the generic `deploy --local` command uses the default
-AMD64 file. The native path passed boot, actual model-response and restart-state
+configuration directly using the native startup commands below. The native path
+passed boot, actual model-response and restart-state
 checks. Scoped Google calendar/mail, actual delivery and lifecycle checks are
 recorded in [the acceptance evidence](docs/acceptance/09-lifecycle-acceptance.md);
 a new installation must verify its own account and authority.
@@ -75,7 +88,11 @@ The initial Apple Silicon x86-emulation attempt hit this failure; see
 [the runtime evidence](docs/RUNTIME-VALIDATION.md).
 
 
-From this project directory, replacing LINE_ID with that free line:
+Choose exactly one startup path from this project directory, replacing LINE_ID
+with that free line. Keep the Python environment activated. Do not export the
+preflight `/dev/null` override for startup: these commands need the minted file.
+
+**Compatible Linux AMD64 host:**
 
 ```sh
 plow-agents deploy --local --line LINE_ID
@@ -83,7 +100,22 @@ docker compose ps
 docker compose logs --tail 100 agent
 ```
 
-Compose builds Linux/amd64 and uses separate named volumes for OpenClaw runtime
+**Native Apple Silicon:**
+
+```sh
+plow-agents mint LINE_ID
+docker compose -f compose.yml -f compose.arm64.yml up -d
+docker compose -f compose.yml -f compose.arm64.yml ps
+docker compose -f compose.yml -f compose.arm64.yml logs --tail 100 agent
+```
+
+The generic `deploy --local` command mints credentials and starts the default
+AMD64 Compose file; do not run it after the native mint step. For an existing
+credential file, use the matching Compose startup command to resume the existing
+agent instead of minting again.
+
+Default Compose builds Linux/amd64; the override builds native ARM64. Both use
+separate named volumes for OpenClaw runtime
 state and Good Company coordination data. This keeps the app database outside
 OpenClaw's protected managed-state directory while preserving it across restarts. The dashboard is
 [localhost:3007](http://localhost:3007). It is loopback-only and grants local
