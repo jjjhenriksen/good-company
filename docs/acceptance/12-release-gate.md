@@ -1,9 +1,32 @@
 # Public release gate (#12)
 
-Status: blocked by live delivery/lifecycle acceptance (#9). Current repository
-visibility is PRIVATE and the license is MIT (verified 2026-09-26). Native local
-runtime evidence exists in RUNTIME-VALIDATION.md; a local image ID is not a public
-registry manifest. No public source/image release has been performed.
+Status: lifecycle dependency #9 passed and closed in PR #142; runtime dependency
+#11 is also closed. Publication remains pending. The MIT repository is private
+as of this review on 2026-09-26. Native runtime evidence and provider acceptance
+are recorded separately; a local image ID is not a public registry manifest.
+
+## Content review before publication
+
+Reviewed candidate: `ce2c1b6e967edfd4e3b5436720103a97bc9f1c7c`.
+
+- Scanned all 192 tracked files and 479 historical blobs for known private test
+  account details, private keys, GitHub tokens and owner-machine paths; no matches.
+  The tree also passed the configured literal API-secret patterns. These are
+  heuristic scans, not a guarantee against every possible encoded secret.
+- Scanned GitHub issue/PR bodies, issue comments and review comments for the same
+  private-account, key, GitHub-token and local-path indicators; no matches.
+  Existing author attribution and Git commit identities remain part of the source.
+- Inspected the actual Docker build context from the exact tracked tree. Runtime
+  code, skills and fictional examples enter the context; private local credentials
+  and acceptance databases do not. The image inherits the pinned base layers and
+  preserves their notices, with Good Company's MIT LICENSE copied into the image.
+- Visually reviewed all six pages of the two bundled fictional PDFs and the agent
+  screenshot. Reviewed video metadata and frames sampled every three seconds:
+  fictional scenarios, no audio stream, no observed private account or credential.
+  This is a sampled video review, not a frame-by-frame attestation.
+- The 383 behavior tests and packaged-image smoke checks remain mandatory before
+  any registry push. The final release record must identify the published commit,
+  build run and registry digest, rather than substituting this candidate review.
 
 Release sequence:
 1. Freeze a commit after required tests and connected lifecycle/readiness acceptance.
@@ -20,4 +43,4 @@ Release sequence:
 
 Never publish a fixture receipt as live validation or change visibility merely to
 make downstream checkboxes appear complete. This plan makes the release evidence
-boundary reviewable while provider-dependent acceptance remains unresolved.
+boundary reviewable while public-access and fresh-install acceptance remain unresolved.
