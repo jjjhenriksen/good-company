@@ -3,6 +3,7 @@ import json
 from .core import digest, stamp, iso, required_time
 from .providers import authenticated_account, ProviderError
 from .replies import VerifiedReply
+from .validation import validate_signup_mode
 
 
 def _check_account(coordinator, account):
@@ -31,6 +32,7 @@ def promote_waitlist(coordinator, task_id, now):
     if not row or not policy or not policy['enabled']:
         return None
     task = json.loads(row[0])
+    validate_signup_mode(task)
     if (not task.get('signup_required') or task['category'] not in policy['allowed_task_categories']
             or required_time(task['start'], 'task start') <= now):
         return None
@@ -73,6 +75,7 @@ def apply(coordinator, provider, message_id, now=None):
         row=db.execute("SELECT payload FROM tasks WHERE id=? AND status='open'",(reply.target_id,)).fetchone()
         if not row:raise ProviderError('slot_not_open')
         task=json.loads(row[0]);task_id=task['id']
+        validate_signup_mode(task)
         if not task.get('signup_required') or task['category'] not in policy['allowed_task_categories'] or required_time(task['start'], 'task start')<=now:
             raise ProviderError('slot_outside_signup_scope')
         wait_key='waitlist:'+task_id

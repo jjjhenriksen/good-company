@@ -7,6 +7,7 @@ import re
 from datetime import timedelta
 from zoneinfo import ZoneInfo
 from .core import Coordinator, required, required_time, stamp, iso, digest
+from .validation import validate_signup_mode
 
 
 class WorkCoordinator(Coordinator):
@@ -53,6 +54,7 @@ class WorkCoordinator(Coordinator):
     def add_task(self, task, authority, now=None):
         required(authority, 'todo-list authority reference')
         t = dict(task)
+        validate_signup_mode(t)
         for key in ('id', 'title', 'category'):
             required(t.get(key), key)
         if not required_time(t['start'], 'start time') < required_time(t['end'], 'end time'):
@@ -195,6 +197,12 @@ class WorkCoordinator(Coordinator):
             volunteers = [json.loads(r[0]) for r in self.db.execute('SELECT payload FROM volunteers ORDER BY id')]
             tasks = sorted([json.loads(r[0]) for r in self.db.execute("SELECT payload FROM tasks WHERE status='open'")], key=lambda t: (required_time(t['start'], 'start time'), t['id']))
             for t in tasks:
+                try:
+                    validate_signup_mode(t)
+                except ValueError as error:
+                    self._retire_pending(t['id'])
+                    exceptions.append({'task_id': t['id'], 'reason': str(error)})
+                    continue
                 if not self._event_current(t):
                     self._retire_pending(t['id'])
                     exceptions.append({'task_id': t['id'], 'reason': 'Linked event changed; review task_impacts and verified availability.'})
@@ -290,6 +298,7 @@ class WorkCoordinator(Coordinator):
             assignment = self.db.execute('SELECT * FROM assignments WHERE id=?', (notice['assignment_id'],)).fetchone()
             task = self.db.execute('SELECT * FROM tasks WHERE id=?', (assignment['task_id'],)).fetchone()
             t = json.loads(task['payload'])
+            validate_signup_mode(t)
             v = json.loads(self.db.execute('SELECT payload FROM volunteers WHERE id=?', (assignment['volunteer_id'],)).fetchone()[0])
             expected_status = 'offered' if notice['kind'] == 'offer' else 'assigned'
             if (assignment['status'] != expected_status or task['status'] != 'open'
