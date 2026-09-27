@@ -1,6 +1,7 @@
 """Single-account Google calendar reader using the owner's Latch connection."""
 import hashlib
 import json
+import re
 from datetime import date, datetime, time
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
@@ -126,7 +127,7 @@ class GoogleCalendar:
                     raise ValueError()
         except (KeyError, ValueError, TypeError):
             raise ProviderError('google_invalid_event_time') from None
-        title = raw.get('summary')
+        title = GoogleCalendar._display_text(raw.get('summary'))
         if not isinstance(title, str) or not title.strip():
             raise ProviderError('google_missing_event_title')
         status = raw.get('status')
@@ -135,4 +136,21 @@ class GoogleCalendar:
         return {'id': uid, 'title': title, 'start': start, 'end': end,
                 'all_day': all_day, 'status': status,
                 'source': 'google-calendar://' + quote(calendar_id, safe='') + '/' + quote(uid, safe=''),
-                'location': raw.get('location', '')}
+                'location': GoogleCalendar._display_text(raw.get('location', ''))}
+
+    @staticmethod
+    def _display_text(value):
+        # Latch labels Google strings as untrusted source data. Remove only its
+        # exact outer display envelope; the contents remain inert source text.
+        # Never evaluate embedded instructions or relax owner scope from them.
+        if not isinstance(value, str):
+            raise ProviderError('google_invalid_text_field')
+        if '<<<EXTERNAL_UNTRUSTED_CONTENT' not in value and '<<<END_EXTERNAL_UNTRUSTED_CONTENT' not in value:
+            return value
+        match = re.fullmatch(
+            r'<<<EXTERNAL_UNTRUSTED_CONTENT id="([0-9a-f]{16,64})">>>\n'
+            r'Source: google_api\n---\n([\s\S]*?)\n'
+            r'<<<END_EXTERNAL_UNTRUSTED_CONTENT id="\1">>>', value)
+        if not match or '<<<EXTERNAL_UNTRUSTED_CONTENT' in match[2] or '<<<END_EXTERNAL_UNTRUSTED_CONTENT' in match[2]:
+            raise ProviderError('google_invalid_text_envelope')
+        return match[2]
