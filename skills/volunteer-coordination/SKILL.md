@@ -108,3 +108,32 @@ RSVP or sent notice is never outcome evidence. Correct with expected_revision fr
 the last result; stale corrections fail. `participation-history` retains original
 and corrected values privately. This is an operator attestation, not a public
 participant form or independent validation of the source's truth.
+
+
+## Staffed shifts
+
+Use `add-shift` with id, title, capacity and explicit `slots`. Every slot contains
+the normal task fields (including roles/ANY-or-ALL, skills and qualifications);
+capacity must equal its slot count. Slots become immutable tasks with IDs
+`shift-id:slot-id`. Existing atomic allocation enforces one volunteer per slot,
+non-overlap and workload capacity across shifts. Repeat identical setup is safe.
+Use `shift-status` for filled and unfilled capacity. Allocation is not an accepted
+signup or attendance. Declines use the exact assignment ID; replacement still
+passes every task eligibility check. Never silently weaken staffing requirements.
+## Overdue work
+
+Use `overdue-tasks {}` to surface open tasks whose window has ended. Repeated
+checks are read-only and never infer completion or release capacity. Use
+`follow-up-task` with a verified reference, note and explicit outcome: still_open,
+completed or cancelled. The latter two use the existing lifecycle transition and
+stop unsent notices. Keep follow-up notes private; do not infer reliability from
+missing outcomes or missed windows.
+
+`allocation-report` gives the trusted coordinator recorded selection reasons and
+aggregate workload distribution; optionally filter decisions by task_id. Hard
+eligibility checks precede ranking. The recorded ordering uses stated preferred
+fit, category preference, current workload and a stable tie-break. Historical
+choices without evidence are marked unknown. Counts describe assignments, not
+participation, reliability or personal worth. Do not share comparative skill/fit
+assessments in participant messages. Unequal availability can justify unequal
+counts; investigate opportunity and requirements before claiming unfairness.

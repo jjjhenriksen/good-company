@@ -159,6 +159,13 @@ backlog and surface time-sensitive corrections to the owner rather than silently
 dropping them or sending an extra digest outside the budget. Changes to the limit
 require the owner's standing authority. There is no automatic urgency bypass.
 
+Profiles may include `locale` (`en-US` or `en-GB`) and `terminology`, mapping
+coordinator, participant, volunteer, event and task to the organization's chosen
+single-line terms. Persist these in onboarding/configure and use them in conversation;
+task notice subjects use the configured task term. Omitted fields preserve the
+existing English default without changing authority. Dates include the year;
+times include timezone and UTC offset to disambiguate DST. Other locales/languages
+are unsupported until reviewed wording exists; do not invent translated rules.
 ## Operational health
 
 Use `health {}` after the recurring loop. It reports missing/paused authority,

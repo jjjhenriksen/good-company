@@ -12,18 +12,7 @@ from .core import Coordinator, required, stamp, iso, digest
 class WorkCoordinator(Coordinator):
     def __init__(self, path):
         super().__init__(path)
-        self.db.executescript('''
-        CREATE TABLE IF NOT EXISTS volunteers(id TEXT PRIMARY KEY, payload TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, payload TEXT NOT NULL, status TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS assignments(
-          id TEXT PRIMARY KEY, task_id TEXT NOT NULL, volunteer_id TEXT NOT NULL,
-          status TEXT NOT NULL, policy_hash TEXT NOT NULL,
-          UNIQUE(task_id, volunteer_id));
-        CREATE TABLE IF NOT EXISTS task_notices(
-          id TEXT PRIMARY KEY, assignment_id TEXT NOT NULL, kind TEXT NOT NULL,
-          due TEXT NOT NULL, status TEXT NOT NULL, message TEXT NOT NULL, receipt TEXT,
-          UNIQUE(assignment_id, kind));
-        ''')
+
 
     def set_volunteer(self, volunteer, authority, now=None):
         required(authority, 'roster source or authorization reference')
@@ -166,8 +155,11 @@ class WorkCoordinator(Coordinator):
 
     def _notice(self, assignment_id, t, v, kind, due, policy):
         aid = digest([assignment_id, kind])[:24]
-        date = stamp(t['start']).astimezone(ZoneInfo(self.profile()['timezone'])).strftime('%A, %B %-d at %-I:%M %p %Z')
-        prefix = 'Your task' if kind == 'assignment' else 'Task reminder'
+        from .localization import date_text, time_text, term
+        profile = self.profile()
+        date = date_text(t['start'], profile) + ' at ' + time_text(t['start'], profile)
+        task_term = term(profile, 'task')
+        prefix = 'Your ' + task_term if kind == 'assignment' else task_term.capitalize() + ' reminder'
         message = {'sender': policy['sender'], 'to': [v['email']], 'bcc': [],
                    'subject': f'{prefix}: {t["title"]}',
                    'body': f'Hi {v["name"]},\n\n{t["title"]}\nWhen: {date}\n\nThis is within the work you agreed to help with. If your availability has changed, reply and I will find another arrangement.\n\n{self.profile()["signoff"]}'}
@@ -233,10 +225,15 @@ class WorkCoordinator(Coordinator):
                         preference = int(t['category'] in v['preferred_categories'])
                         return (-matches, -preference, len(self._workload(v['id'])), v['id'])
                     v = sorted(candidates, key=rank)[0]
+                    selection = {'eligible_candidates': len(candidates),
+                                 'preferred_fit_points': sum(v['skills'].get(skill, 0) for skill in t['preferred_skills']),
+                                 'preferred_category': t['category'] in v['preferred_categories'],
+                                 'open_work_before': len(self._workload(v['id'])),
+                                 'order': 'Eligible first; preferred task fit, recorded category preference, lower open workload, then stable ID.'}
                     assignment_id = digest([t['id'], v['id']])[:24]
                     self.db.execute("INSERT INTO assignments VALUES(?,?,?,'assigned',?)", (assignment_id, t['id'], v['id'], digest(policy)))
                     self._notice(assignment_id, t, v, 'assignment', now, policy)
-                    self.log('task_delegated', t['id'], {'assignment_id': assignment_id, 'volunteer_id': v['id']}, now)
+                    self.log('task_delegated', t['id'], {'assignment_id': assignment_id, 'volunteer_id': v['id'], 'selection': selection}, now)
                     made.append({'task_id': t['id'], 'volunteer_id': v['id'], 'assignment_id': assignment_id,
                                  'reason': 'Matches the stated skills, role, availability and workload limits.',
                                  'delivery': 'queued, not yet sent'})
@@ -307,6 +304,30 @@ class WorkCoordinator(Coordinator):
             self.log('task_declined', assignment_id, {'authority': authority}, stamp(now))
         return {'assignment_id': assignment_id, 'status': 'declined', 'next': 'Run delegate to find another eligible volunteer.'}
 
+    def overdue_tasks(self, now=None):
+        now = stamp(now)
+        overdue = []
+        for row in self.db.execute("SELECT id,payload FROM tasks WHERE status='open'"):
+            task = json.loads(row['payload'])
+            if stamp(task['end']) < now:
+                assignment_count = self.db.execute("SELECT count(*) FROM assignments WHERE task_id=? AND status='assigned'", (row['id'],)).fetchone()[0]
+                overdue.append({'task_id': row['id'], 'title': task['title'], 'ended_at': task['end'],
+                                'active_assignments': assignment_count, 'status': 'overdue_unresolved',
+                                'next': 'Verify completion, cancel, or record follow-up; capacity remains reserved until an explicit lifecycle transition.'})
+        return {'overdue': sorted(overdue, key=lambda item: (item['ended_at'], item['task_id']))}
+
+    def follow_up_task(self, task_id, outcome, authority, note, now=None):
+        required(authority, 'verified follow-up reference'); required(note, 'follow-up outcome note')
+        if outcome not in ('still_open', 'completed', 'cancelled'):
+            raise ValueError('Choose still_open, completed, or cancelled; never infer completion.')
+        if outcome in ('completed', 'cancelled'):
+            return self.close_task(task_id, outcome, authority, now=now)
+        with self.db:
+            if not self.db.execute("SELECT 1 FROM tasks WHERE id=? AND status='open'", (task_id,)).fetchone():
+                raise ValueError('No open task with that ID.')
+            self.log('task_follow_up', task_id, {'outcome': outcome, 'authority': authority, 'note': note}, stamp(now))
+        return {'task_id': task_id, 'status': 'open', 'capacity_released': False}
+
     def close_task(self, task_id, status, authority, now=None):
         if status not in ('completed', 'cancelled'):
             raise ValueError('Choose completed or cancelled.')
@@ -330,3 +351,29 @@ class WorkCoordinator(Coordinator):
     def weekly_brief(self, week_start):
         from .reporting import weekly
         return weekly(self, week_start)
+
+    def allocation_report(self, task_id=None):
+        rows = self.db.execute("SELECT at,object_id,detail FROM audit WHERE action='task_delegated' ORDER BY id").fetchall()
+        decisions = []
+        for row in rows:
+            if task_id is not None and row['object_id'] != task_id:
+                continue
+            detail = json.loads(row['detail'])
+            decisions.append({'task_id': row['object_id'], 'at': row['at'],
+                              'assignment_id': detail['assignment_id'],
+                              'selection': detail.get('selection'),
+                              'explanation': 'Historical selection evidence unavailable.' if not detail.get('selection') else detail['selection']['order']})
+        counts = [self.db.execute("SELECT count(*) FROM assignments WHERE volunteer_id=? AND status='assigned'", (row[0],)).fetchone()[0]
+                  for row in self.db.execute('SELECT id FROM volunteers')]
+        return {'decisions': decisions,
+                'distribution': {'recorded_volunteers': len(counts), 'assigned_total': sum(counts),
+                                 'minimum': min(counts, default=0), 'maximum': max(counts, default=0)},
+                'scope': 'Trusted owner report. Descriptive assignment counts include completed work; not attendance, reliability, personal worth or a fairness guarantee. Different eligibility and availability affect distribution.'}
+
+    def add_shift(self, shift, authority, now=None):
+        from .shifts import add_shift
+        return add_shift(self, shift, authority, now)
+
+    def shift_status(self, shift_id):
+        from .shifts import status
+        return status(self, shift_id)
