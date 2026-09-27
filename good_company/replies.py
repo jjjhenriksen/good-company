@@ -20,8 +20,18 @@ class VerifiedReply:
     preferences: dict | None = None
 
 
+def _check_reply_account(coordinator, account):
+    # Authentication alone does not put a mailbox inside this organization's
+    # remit. Paused sending still permits verified stop/completion responses.
+    policy = coordinator.autonomy()
+    if (not policy or not isinstance(account.sender, str)
+            or account.sender.casefold() != policy['sender'].casefold()):
+        raise ProviderError('reply_account_outside_remit')
+
+
 def apply_verified_reply(coordinator, provider, message_id, now=None):
     account = authenticated_account(provider)
+    _check_reply_account(coordinator, account)
     required(message_id, 'provider message ID')
     # This method is supplied by the provider integration, not an arbitrary JSON
     # field or a sender address extracted by the model.
@@ -39,6 +49,8 @@ def apply_verified_reply(coordinator, provider, message_id, now=None):
     reply_id = digest([account.provider, account.account_id, message_id])
     with db:
         db.execute('BEGIN IMMEDIATE')
+        # The owner may have changed accounts while the provider read was pending.
+        _check_reply_account(coordinator, account)
         if db.execute('SELECT 1 FROM processed_replies WHERE id=?', (reply_id,)).fetchone():
             raise ProviderError('reply_already_processed_or_needs_reconciliation')
         volunteers = [json.loads(row[0]) for row in db.execute('SELECT payload FROM volunteers')]
