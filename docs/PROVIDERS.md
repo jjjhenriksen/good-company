@@ -47,12 +47,24 @@ provider evidence reference is retained, not the message body or credentials.
 The trusted-operator CLI remains powerful; this does not create a public-user
 sandbox. Live genuine/spoofed provider acceptance remains unverified (#29).
 
-### Observed connection blocker (2026-09-26)
+### Live connection recovery (2026-09-26)
 
-The deployed MCP endpoint returns HTTP 503 with the specific status `Device is not
-connected`. The official signed Plow Latch app has now been installed on the test
-Mac and reaches its phone-verification screen. The authenticated Plow account has
-zero connected Google accounts. Phone verification and the intended Google account
-connection remain necessary before tool-schema verification or unattended delivery
-can be claimed. The probe reports this recovery path without echoing arbitrary
-provider response bodies. No live mail has been sent by this check.
+The original HTTP 503 was specifically `Device is not connected`. Installed the
+official signed Plow Latch app; the owner completed setup and connected Google.
+The deployed agent now discovers 15 MCP tools. Its actual `plow-gog accounts`
+call completed through Latch, followed by a calendar listing and a bounded timed
+calendar read with an empty complete result and no next-page cursor. The account
+owns its primary calendar. Private account/calendar identifiers remain outside
+this repository.
+
+The live Google Workspace skill establishes an important capability boundary:
+Latch shows each send for approval, and varying sends always ask. This does not
+establish unattended-send permission. Keep `Account.unattended_send` false until
+an actual supported unattended authorization exists. Do not bypass Latch or
+pretend manual approval proves unattended operation. No live email has yet been
+sent; the owner has been asked to authorize a bounded fictional self-test.
+
+The probe now distinguishes the disconnected-device response without echoing
+arbitrary provider error bodies. Tool discovery and successful reads are useful
+progress, but this draft still does not implement or prove the full delivery and
+verified-reply adapter required by #30.
