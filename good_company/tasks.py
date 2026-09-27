@@ -155,8 +155,11 @@ class WorkCoordinator(Coordinator):
 
     def _notice(self, assignment_id, t, v, kind, due, policy):
         aid = digest([assignment_id, kind])[:24]
-        date = stamp(t['start']).astimezone(ZoneInfo(self.profile()['timezone'])).strftime('%A, %B %-d at %-I:%M %p %Z')
-        prefix = 'Your task' if kind == 'assignment' else 'Task reminder'
+        from .localization import date_text, time_text, term
+        profile = self.profile()
+        date = date_text(t['start'], profile) + ' at ' + time_text(t['start'], profile)
+        task_term = term(profile, 'task')
+        prefix = 'Your ' + task_term if kind == 'assignment' else task_term.capitalize() + ' reminder'
         message = {'sender': policy['sender'], 'to': [v['email']], 'bcc': [],
                    'subject': f'{prefix}: {t["title"]}',
                    'body': f'Hi {v["name"]},\n\n{t["title"]}\nWhen: {date}\n\nThis is within the work you agreed to help with. If your availability has changed, reply and I will find another arrangement.\n\n{self.profile()["signoff"]}'}

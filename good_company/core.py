@@ -59,6 +59,8 @@ class Coordinator:
                         (iso(now), action, object_id, json.dumps(detail)))
 
     def configure(self, profile):
+        from .localization import validate_profile
+        validate_profile(profile)
         for key in ('organization', 'timezone', 'greeting', 'signoff', 'audience'):
             required(profile.get(key), key)
         ZoneInfo(profile['timezone'])
@@ -608,7 +610,8 @@ class Coordinator:
         return {'created': made, 'automatically_authorized': authorized, 'exceptions': exceptions}
 
     def _draft(self, event, profile, local, now):
-        when = local.strftime('%A, %B %-d')
+        from .localization import date_text, time_text
+        when = date_text(local, profile)
         lines = [profile['greeting'], '', f'Please see below for details for {event["title"].lower()}.', '',
                  f'{when} - {event["title"]}']
         missing = []
@@ -618,7 +621,7 @@ class Coordinator:
             lines.append('  - Time to be confirmed')
             missing.append('event time')
         else:
-            lines.append(f'  - {local.strftime("%-I:%M %p").lower()} ({profile["timezone"]})')
+            lines.append(f'  - {time_text(local, profile)} ({profile["timezone"]})')
         if event.get('location'):
             lines.append('  - ' + event['location'])
         else:
