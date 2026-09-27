@@ -127,6 +127,13 @@ calendar freshness, last scheduler observation and delivery counts. Queued means
 pending work; provider acceptance does not establish receipt by a person, and
 unknown delivery needs reconciliation.
 
+Source readiness uses the same current-version rules as retrieval. Overdue
+reviews, missing effective versions, overlapping applicable versions and legacy
+documents without review metadata require review, even after a recent import.
+Withdrawn documents are excluded from active-source counts. The aggregate report
+does not expose private source names, titles or reviewer references; a lack of
+optional supplied documents alone does not block setup.
+
 After actually checking the connected calendar/mail tools or observing a scheduler
 execution, use `record-connection` with component (`calendar`, `mail`, `scheduler`),
 status (`verified`, `unavailable`, `unknown`), checked_at and a private evidence
