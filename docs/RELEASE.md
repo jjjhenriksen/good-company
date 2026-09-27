@@ -51,6 +51,15 @@ records the registry digest in the workflow summary. A successful image
 build is still not runtime or texting verification. For a first GHCR push, make
 the package public in GitHub settings before asking Plow to pull it.
 
+Before publication, `python3 scripts/check_image_engine.py IMAGE` also verifies
+that every installed coordination module matches the selected checkout, then runs
+the full regression suite and both fictional demos inside the image. It mounts
+only tracked tests/support files, uses packaged examples, disables networking,
+and confines writes to temporary storage with a read-only root filesystem. The
+source engine and credentials are not mounted. This check runs automatically in
+the image workflow; it still does not establish live provider delivery or a model
+reply.
+
 The Docker context uses exact file entries in `.dockerignore`. Add new runtime
 files explicitly; do not replace them with directory exceptions, which also admit
 unexpected local descendants. Run `python3 scripts/check_build_context.py` from a
