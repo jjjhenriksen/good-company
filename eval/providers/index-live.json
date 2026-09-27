@@ -1,0 +1,37 @@
+{
+  "status": "passed",
+  "agent_id": "good-company",
+  "listing_url": "https://aiworthusing.com/agent-index/good-company",
+  "registration_result": "created",
+  "ownership_read_back": true,
+  "first_report": {
+    "http_status": 200,
+    "accepted": true,
+    "days": 2,
+    "rows": 2,
+    "tokens": 1881898
+  },
+  "reporter": {
+    "implementation": "inherited /opt/plow/boot/agent-index.js",
+    "interval_ms": 300000,
+    "enabled_with_agent_id": "good-company",
+    "persistent_state_home": "/var/lib/plow",
+    "observed_after_runtime_replacement": true
+  },
+  "post_restart_periodic_report": {
+    "observed_at": "2026-09-27T03:26:35.216622+00:00",
+    "tokens": 2567075,
+    "increase": 685177,
+    "matching_actual_model_run_id": "73bfe974-a4bd-4cc3-8db0-181c01df84e4",
+    "matching_actual_model_run_tokens": 685177,
+    "manual_report_after_restart": false
+  },
+  "install_identity_unchanged": true,
+  "index_identity_sha256": "377bc1013f7b1665a100fc9d9289d983a7c2296a329fbbaebeec46b33be83245",
+  "private_registration_state_unchanged": true,
+  "transmitted_measurements": "day-by-model token counts only",
+  "limits": [
+    "No public repository, image, video, screenshot or install URL registered yet.",
+    "Organizer verification and one-click admission remain separate from identity and usage reporting."
+  ]
+}
