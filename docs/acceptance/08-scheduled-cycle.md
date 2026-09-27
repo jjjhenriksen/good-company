@@ -1,14 +1,11 @@
 # Scheduled delivery acceptance (#8)
 
-Status: blocked on the deployed provider connection, not on Python tests.
+Status: connected reads and reviewed self-delivery work; scheduled unattended
+acceptance remains pending. Four owner-approved self-emails have genuine provider
+acceptance and inbox evidence. No operational Good Company scheduler job or
+standing production sending remit has been established.
 
-Observed 2026-09-26: native Plow gateway/model and installed tools work; connected
-MCP discovery returns HTTP 503 after restart. Read-only inspection found zero jobs
-named Good Company reminders. No operational scheduler or sending remit was
-created, and no messages were sent. A connected desktop Gmail account is not proof
-that the deployed runtime can use it unattended.
-
-When the connection recovers:
+Remaining completion procedure:
 1. Use the deployed provider to establish account ID, verified sender, exact calendar
    scopes and unattended-send permission. Preserve opaque evidence references only.
 2. Verify an owner-controlled test inbox through that provider before adding it to
