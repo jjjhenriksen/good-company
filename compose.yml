@@ -8,7 +8,7 @@ services:
       # Preview does not claim a public listing. Set AGENT_ID=good-company to publish.
       AGENT_ID: ${AGENT_ID:-}
     ports:
-      - "127.0.0.1:3007:3001"
+      - "127.0.0.1:${GOOD_COMPANY_DASHBOARD_PORT:-3007}:3001"
     volumes:
       - state:/var/lib/plow
       - coordination:/var/lib/good-company
@@ -17,6 +17,8 @@ services:
     image: caddy:2@sha256:14a9c00d4e833ebc2b65d36515b37bde3b73f0b323a2663aaafc88953d8c4e3f
     network_mode: service:agent
     depends_on: [agent]
+    environment:
+      GOOD_COMPANY_DASHBOARD_PORT: ${GOOD_COMPANY_DASHBOARD_PORT:-3007}
     volumes:
       - ./dev/Caddyfile:/etc/caddy/Caddyfile:ro
 volumes:

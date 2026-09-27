@@ -6,8 +6,8 @@
 	@foreign_origin {
 		header Origin *
 		not {
-			header Origin http://localhost:3007
-			header Origin http://127.0.0.1:3007
+			header Origin http://localhost:{$GOOD_COMPANY_DASHBOARD_PORT:3007}
+			header Origin http://127.0.0.1:{$GOOD_COMPANY_DASHBOARD_PORT:3007}
 		}
 	}
 	respond @foreign_origin 403
