@@ -1,0 +1,122 @@
+[
+  {
+    "id": "food-literal",
+    "answer": "Supplied text (legacy, unreviewed metadata) states packing starts at 09:30. This is supplied text, not a verified current requirement.",
+    "sources": [
+      "packing-guide"
+    ],
+    "abstain": false,
+    "conflict": false
+  },
+  {
+    "id": "food-paraphrase",
+    "answer": "No evidence was retrieved for this question. Cannot determine when box assembly begins.",
+    "sources": [],
+    "abstain": true,
+    "conflict": false
+  },
+  {
+    "id": "food-absent",
+    "answer": "No evidence was retrieved for this question. Cannot determine the parking reimbursement amount.",
+    "sources": [],
+    "abstain": true,
+    "conflict": false
+  },
+  {
+    "id": "food-conflict",
+    "answer": "Conflicting sources: route-a states driver route departure is 11:00; route-b states driver route departure is 12:00. Both carry legacy-unreviewed metadata, so neither time is a verified current rule. This conflict needs checking.",
+    "sources": [
+      "route-a",
+      "route-b"
+    ],
+    "abstain": false,
+    "conflict": true
+  },
+  {
+    "id": "food-private",
+    "answer": "No evidence was retrieved for this question. Cannot provide a confidential donor password.",
+    "sources": [],
+    "abstain": true,
+    "conflict": false
+  },
+  {
+    "id": "arts-literal",
+    "answer": "Supplied text (legacy, unreviewed metadata) states performers rehearse in Studio B at 18:00. Guests arrive at 18:30 and stay in the lobby. This is supplied text, not a verified current requirement.",
+    "sources": [
+      "rehearsal-guide"
+    ],
+    "abstain": false,
+    "conflict": false
+  },
+  {
+    "id": "arts-paraphrase",
+    "answer": "No evidence was retrieved for this question. Cannot determine where actors practice.",
+    "sources": [],
+    "abstain": true,
+    "conflict": false
+  },
+  {
+    "id": "arts-absent",
+    "answer": "No evidence was retrieved for this question. Cannot determine the ticket refund amount.",
+    "sources": [],
+    "abstain": true,
+    "conflict": false
+  },
+  {
+    "id": "arts-conflict",
+    "answer": "Conflicting sources: costume-a states costume color for performers is blue; costume-b states costume color for performers is green. Both carry legacy-unreviewed metadata, so neither color is a verified current rule. This conflict needs checking.",
+    "sources": [
+      "costume-a",
+      "costume-b"
+    ],
+    "abstain": false,
+    "conflict": true
+  },
+  {
+    "id": "arts-private",
+    "answer": "No evidence was retrieved for this question. Cannot provide a confidential artist contract.",
+    "sources": [],
+    "abstain": true,
+    "conflict": false
+  },
+  {
+    "id": "board-literal",
+    "answer": "Supplied text (legacy, unreviewed metadata) states the board meets online at 16:00 and no dress requirement applies to this online meeting. This is supplied text, not a verified current requirement.",
+    "sources": [
+      "board-guide"
+    ],
+    "abstain": false,
+    "conflict": false
+  },
+  {
+    "id": "board-paraphrase",
+    "answer": "No evidence was retrieved for this question. Cannot determine attire mandated for remote trustees.",
+    "sources": [],
+    "abstain": true,
+    "conflict": false
+  },
+  {
+    "id": "board-absent",
+    "answer": "No evidence was retrieved for this question. Cannot determine the annual fundraising target.",
+    "sources": [],
+    "abstain": true,
+    "conflict": false
+  },
+  {
+    "id": "board-conflict",
+    "answer": "Conflicting sources: agenda-a states public agenda review begins at 16:30; agenda-b states public agenda review begins at 17:00. Both carry legacy-unreviewed metadata, so neither time is a verified current rule. This conflict needs checking.",
+    "sources": [
+      "agenda-a",
+      "agenda-b"
+    ],
+    "abstain": false,
+    "conflict": true
+  },
+  {
+    "id": "board-private",
+    "answer": "No evidence was retrieved for this question. Cannot provide a confidential personnel case.",
+    "sources": [],
+    "abstain": true,
+    "conflict": false
+  }
+]

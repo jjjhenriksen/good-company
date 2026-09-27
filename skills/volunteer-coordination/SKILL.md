@@ -98,6 +98,18 @@ and adding an explicitly authorized replacement with a new ID, after verifying
 availability for the new window. Never rewrite attempted notices or infer new
 availability from old assignments. Impact reports are private operator output.
 
+## Verified participation
+
+Use `record-participation` only after the trusted coordinator verifies an actual
+outcome source. Supply activity_id, participant_id, program, on date, status,
+attended, minutes, source and authority. Confirmed records require observed
+attendance and minutes; missing/disputed records use null for both. An assignment,
+RSVP or sent notice is never outcome evidence. Correct with expected_revision from
+the last result; stale corrections fail. `participation-history` retains original
+and corrected values privately. This is an operator attestation, not a public
+participant form or independent validation of the source's truth.
+
+
 ## Staffed shifts
 
 Use `add-shift` with id, title, capacity and explicit `slots`. Every slot contains
@@ -127,3 +139,12 @@ Replays and spoofed identities are rejected. Pending offers do not expire silent
 the operator must reconcile stalled offers. No CLI takes a caller-supplied verified
 flag. Live provider intake and offer delivery remain unverified and must not be
 presented as working merely because contract fixtures pass.
+
+`allocation-report` gives the trusted coordinator recorded selection reasons and
+aggregate workload distribution; optionally filter decisions by task_id. Hard
+eligibility checks precede ranking. The recorded ordering uses stated preferred
+fit, category preference, current workload and a stable tie-break. Historical
+choices without evidence are marked unknown. Counts describe assignments, not
+participation, reliability or personal worth. Do not share comparative skill/fit
+assessments in participant messages. Unequal availability can justify unequal
+counts; investigate opportunity and requirements before claiming unfairness.
