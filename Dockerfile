@@ -2,6 +2,7 @@ FROM public.ecr.aws/e1h7x4a2/plow-cloud-agents:base-1e73c82c4b3e0c9f76935bc0cc45
 USER root
 COPY good_company/ /opt/good-company/good_company/
 COPY LICENSE /opt/good-company/LICENSE
+COPY third_party/ /opt/good-company/third_party/
 COPY scripts/start_runtime.py /opt/good-company/start_runtime.py
 COPY scripts/runtime_preflight.py /opt/good-company/runtime_preflight.py
 COPY scripts/good-company /usr/local/bin/good-company

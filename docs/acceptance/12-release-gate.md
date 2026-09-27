@@ -19,7 +19,10 @@ Reviewed candidate: `ce2c1b6e967edfd4e3b5436720103a97bc9f1c7c`.
 - Inspected the actual Docker build context from the exact tracked tree. Runtime
   code, skills and fictional examples enter the context; private local credentials
   and acceptance databases do not. The image inherits the pinned base layers and
-  preserves their notices, with Good Company's MIT LICENSE copied into the image.
+  preserves their existing notices, with Good Company's MIT LICENSE copied into
+  the image. Review found missing top-level inherited runtime notices; the release
+  adds exact OpenClaw, agentsview and Agent Index client notices under
+  `third_party/`, with immutable upstream references and package checks.
 - Visually reviewed all six pages of the two bundled fictional PDFs and the agent
   screenshot. Reviewed video metadata and frames sampled every three seconds:
   fictional scenarios, no audio stream, no observed private account or credential.

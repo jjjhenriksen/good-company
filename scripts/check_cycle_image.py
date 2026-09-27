@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Exercise the image's installed scheduler command without network or services."""
 import argparse
+import hashlib
+import json
 import subprocess
 from pathlib import Path
 
@@ -38,6 +40,19 @@ def main():
         text=True, capture_output=True, check=True).stdout
     if packaged_license != expected_license:
         raise SystemExit('The image must retain the exact project license notice.')
+    notice_root = Path(__file__).resolve().parents[1] / 'third_party'
+    expected_notices = {p.relative_to(notice_root).as_posix():
+        hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in notice_root.rglob('*') if p.is_file()}
+    notice_check = """import hashlib, json; from pathlib import Path
+root = Path('/opt/good-company/third_party')
+print(json.dumps({p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+    for p in root.rglob('*') if p.is_file()}))"""
+    actual_notices = subprocess.run(['docker', 'run', '--rm', '--network', 'none',
+        '--entrypoint', 'python3', args.image, '-c', notice_check],
+        text=True, capture_output=True, check=True).stdout
+    if json.loads(actual_notices) != expected_notices:
+        raise SystemExit('The image must retain every exact third-party notice.')
     subprocess.run(['docker', 'run', '--rm', '--network', 'none', '-i',
                     '--entrypoint', 'python3', args.image, '-'], input=SCRIPT,
                    text=True, check=True)
