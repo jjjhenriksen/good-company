@@ -18,28 +18,26 @@ Repository: [jjjhenriksen/good-company](https://github.com/jjjhenriksen/good-com
 - Base digest resolved from the public ECR registry on September 25, 2026.
 - Plow account login confirmed during the build. No credential is in this repo.
 
-## Required before publication
+## Readiness and remaining publication work
 
-- [x] Build the combined audit image and smoke-test its packaged CLI/database remotely (integration commit `3254ee9`; see AUDIT.md).
-- [ ] Boot the full runtime on a selected free Plow line and receive a real text reply.
-- [ ] Verify inherited Latch capabilities with the intended calendar/mail accounts.
-- [ ] Verify one complete scoped calendar import and a changed/cancelled occurrence.
-- [ ] Configure standing instructions for a test audience; verify an automatic reminder and receipt without per-message review.
-- [ ] Verify event/role-specific dress answers against supplied sources.
-- [ ] Verify skill-based assignment, notices, verified declines and reassignment.
-- [ ] Verify one scheduler run and no duplicate delivery on the next run.
-- [x] Claim the Index slug and verify reporting after genuine model activity and runtime replacement; see acceptance/14-index-usage.md.
-- [x] Create the source repository with MIT LICENSE and conventional feature commits.
-- [ ] Review the audit PRs and publish the currently private repository; record the exact release commit.
-- [ ] Record a demo video using fictional data and no credentials or private membership content.
-- [ ] Capture at least one image of the working agent; choose an optional logo.
-- [ ] Publish the image and make it publicly pullable.
-- [ ] Register video, screenshot and install URL on the Index.
-- [ ] Request verification and 1-click admission in Discord.
+- [x] Full runtime boot, genuine model reply and persistent state: RUNTIME-VALIDATION.md.
+- [x] Scoped Google account/calendar/mail acceptance and actual scheduled delivery: acceptance/08-scheduled-cycle.md and GOOGLE-ADAPTER-VALIDATION.md.
+- [x] Live source change, cancellation/restoration, owner-loopback decline/completion and pause checks: acceptance/09-lifecycle-acceptance.md. External participant identity remains issue #29.
+- [x] Genuine sourced role/dress answers: eval/adoption/youth/model-result.json.
+- [x] Conversational setup and preserved runtime/Index identity after upgrade: ONBOARDING-VALIDATION.md and acceptance/57-runtime-upgrade.md.
+- [x] Owned Index slug and automatic genuine usage reports: acceptance/14-index-usage.md.
+- [x] MIT source and recorded fictional demo/screenshot: media/README.md.
+- [x] Candidate source/history, build-context and media review: acceptance/12-release-gate.md.
+- [ ] Publish reviewed source and smoke-tested image; record exact commit and public registry digest.
+- [ ] Verify anonymous source/image access.
+- [ ] Register public video, screenshot and install references on the Index.
+- [ ] Obtain organizer verification and one-click admission.
+- [ ] Complete fresh-user published-install acceptance (issue #16).
 
-Do not check an item merely because a command was attempted. A source test, image
-build, running container, model reply, provider send, accepted usage report and
-public listing are distinct receipts.
+Live eligible reassignment and real pilot scenarios remain tracked in issues
+#29, #41 and #58–61; owner-loopback and fixture checks do not complete those.
+A source test, image build, running container, model reply, provider send,
+accepted usage report and public listing are distinct receipts.
 
 ## Build without using local Docker disk
 

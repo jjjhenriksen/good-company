@@ -10,7 +10,9 @@ Try `python3 scripts/demo.py` first; it needs no account or Docker image.
 
 ## 2. Get the source and Plow CLI
 
-The repository currently requires access; public publication is a release step.
+Public release status and the exact published image are recorded in
+[the release record](docs/acceptance/12-release-gate.md). Before publication,
+repository access is required.
 
 ```sh
 git clone https://github.com/jjjhenriksen/good-company.git
@@ -62,7 +64,9 @@ Use the same file pair for startup, logs, stop and restart. Mint the selected Pl
 line's credential with `plow-agents mint LINE_ID`, then start this native Compose
 configuration directly; the generic `deploy --local` command uses the default
 AMD64 file. The native path passed boot, actual model-response and restart-state
-checks; connected calendar/mail remains unverified.
+checks. Scoped Google calendar/mail, actual delivery and lifecycle checks are
+recorded in [the acceptance evidence](docs/acceptance/09-lifecycle-acceptance.md);
+a new installation must verify its own account and authority.
 The initial Apple Silicon x86-emulation attempt hit this failure; see
 [the runtime evidence](docs/RUNTIME-VALIDATION.md).
 
