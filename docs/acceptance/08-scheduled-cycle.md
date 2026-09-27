@@ -37,3 +37,12 @@ This replaces the initial disconnected-device blocker, but does not complete #8:
 no scheduled operational cycle or standing unattended-send remit was established.
 Manual/AI-reviewed self-test delivery is not unattended scheduled delivery. See
 PRs #117 and #118 for sanitized evidence and limits.
+
+## Packaged cycle command
+
+Both container variants install `good-company-cycle`, including its explicit Python
+module path for agent tool environments that omit `PYTHONPATH`. The wheel provides
+the same command. `scripts/check_cycle_image.py IMAGE` exercises an isolated paused
+cycle with networking disabled and no credentials; the image workflow runs this
+check for non-publishing builds. This verifies packaging and pause behavior only,
+not job installation, execution by the scheduler, or live provider delivery.
