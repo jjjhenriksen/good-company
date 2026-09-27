@@ -120,7 +120,22 @@ class SetupCoordinator(CorrectionCoordinator):
         exceptions = counts.get('draft', 0) + counts.get('failed', 0) + counts.get('uncertain', 0) + counts.get('sending', 0)
         if exceptions:
             reasons.append('Resolve draft, failed or uncertain notices.')
+        latest_cycle = {'status': 'unobserved', 'started_at': None, 'finished_at': None,
+                        'planning_exceptions': 0}
+        if self.db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='operational_cycles'").fetchone():
+            row = self.db.execute('''SELECT status,started_at,finished_at,summary FROM operational_cycles
+              ORDER BY coalesce(finished_at,started_at) DESC,rowid DESC LIMIT 1''').fetchone()
+            if row:
+                summary = json.loads(row['summary']) if row['summary'] else {}
+                latest_cycle = {'status': row['status'], 'started_at': row['started_at'],
+                                'finished_at': row['finished_at'],
+                                'planning_exceptions': summary.get('planning_exceptions', 0)}
+                if row['status'] != 'completed':
+                    reasons.append('Resolve the latest blocked or incomplete operational cycle.')
+                if latest_cycle['planning_exceptions']:
+                    reasons.append('Review the latest operational cycle planning exceptions.')
         return {'ready': not reasons, 'reasons': reasons, 'connections': connections,
+                'latest_cycle': latest_cycle,
                 'sources': source_state,
                 'calendar': {'fresh': fresh, 'last_complete_refresh': min(refreshes) if refreshes and all(refreshes) else None},
                 'delivery': {'queued': counts.get('draft', 0) + counts.get('approved', 0) + counts.get('pending', 0),

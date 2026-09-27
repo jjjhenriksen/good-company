@@ -10,6 +10,7 @@ def report(coordinator, now=None):
     health = {'ready': state['ready'], 'actions': state['reasons'],
               'connections': {key: value['status'] for key, value in state['connections'].items()},
               'calendar_fresh': state['calendar']['fresh'], 'sources': state['sources'],
+              'latest_cycle': {key: state['latest_cycle'][key] for key in ('status', 'planning_exceptions')},
               'delivery': state['delivery'], 'unresolved_exceptions': state['unresolved_exceptions']}
     fingerprint = digest({key: value for key, value in health.items() if key != 'delivery'} |
                          {'delivery_failures': {key: state['delivery'][key] for key in ('unknown', 'failed')}})
