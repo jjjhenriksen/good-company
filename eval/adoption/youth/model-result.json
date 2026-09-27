@@ -1,0 +1,138 @@
+{
+  "observed_at": "2026-09-27T01:48:26Z",
+  "run_id": "29495d18-a5d5-439d-b077-5f1a38fed7ed",
+  "provider": "plow",
+  "model": "z-ai/glm-5.2",
+  "runtime_image": "sha256:c8934bd9150844eedef6fb880c6dcdfeec65dbf681f8fc7997ed4a318a41d2cb",
+  "deployed_core_matches_commit": "29772d7",
+  "core_sha256": "3f114e7c65f5043465440a2d267ae3a46a7ec3f5259c8d46dc1ab7ac00f799bf",
+  "mode": "owner-operated real model and local tools with isolated fictional data",
+  "tool_calls": [
+    {
+      "case": "member",
+      "exit_code": 0,
+      "tool_status": "supported",
+      "model_status": "supported",
+      "citations_match_tool": true
+    },
+    {
+      "case": "adult",
+      "exit_code": 0,
+      "tool_status": "supported",
+      "model_status": "supported",
+      "citations_match_tool": true
+    },
+    {
+      "case": "expired",
+      "exit_code": 0,
+      "tool_status": "needs_source",
+      "model_status": "needs_source",
+      "citations_match_tool": true
+    },
+    {
+      "case": "withdrawn",
+      "exit_code": 0,
+      "tool_status": "needs_source",
+      "model_status": "needs_source",
+      "citations_match_tool": true
+    },
+    {
+      "case": "conflict",
+      "exit_code": 0,
+      "tool_status": "needs_review",
+      "model_status": "needs_review",
+      "citations_match_tool": true
+    },
+    {
+      "case": "private",
+      "exit_code": 0,
+      "tool_status": "needs_source",
+      "model_status": "needs_source",
+      "citations_match_tool": true
+    }
+  ],
+  "model_answer": {
+    "cases": [
+      {
+        "case": "member",
+        "status": "supported",
+        "answer": "Wear a blue workshop shirt and closed-toe shoes.",
+        "citations": [
+          {
+            "source": "fictional://youth-workshop-guide",
+            "section": "Workshop guide, section 2",
+            "version": "Fictional September 2026",
+            "issuing_body": "Fictional Harbor Youth Workshop",
+            "effective_from": "2026-09-01",
+            "review_by": "2026-10-31"
+          }
+        ]
+      },
+      {
+        "case": "adult",
+        "status": "supported",
+        "answer": "Wear a green helper vest and closed-toe shoes.",
+        "citations": [
+          {
+            "source": "fictional://youth-workshop-guide",
+            "section": "Workshop guide, section 3",
+            "version": "Fictional September 2026",
+            "issuing_body": "Fictional Harbor Youth Workshop",
+            "effective_from": "2026-09-01",
+            "review_by": "2026-10-31"
+          }
+        ]
+      },
+      {
+        "case": "expired",
+        "status": "needs_source",
+        "answer": "No current, accessible dress rule covers this event and role. Check with the coordinator.",
+        "citations": []
+      },
+      {
+        "case": "withdrawn",
+        "status": "needs_source",
+        "answer": "No current, accessible dress rule covers this event and role. Check with the coordinator.",
+        "citations": []
+      },
+      {
+        "case": "conflict",
+        "status": "needs_review",
+        "answer": "Applicable dress rules disagree and source precedence has not been established. Ask the coordinator to resolve this; do not assert a final outfit.",
+        "citations": [
+          {
+            "source": "fictional://conflicting-guide",
+            "section": "Workshop guide, section 2",
+            "version": "Fictional September 2026",
+            "issuing_body": "Fictional Harbor Youth Workshop",
+            "effective_from": "2026-09-01",
+            "review_by": "2026-10-31"
+          },
+          {
+            "source": "fictional://youth-workshop-guide",
+            "section": "Workshop guide, section 2",
+            "version": "Fictional September 2026",
+            "issuing_body": "Fictional Harbor Youth Workshop",
+            "effective_from": "2026-09-01",
+            "review_by": "2026-10-31"
+          }
+        ]
+      },
+      {
+        "case": "private",
+        "status": "needs_source",
+        "answer": "No current, accessible dress rule covers this event and role. Check with the coordinator.",
+        "citations": []
+      }
+    ]
+  },
+  "synthetic_private_canary_absent": true,
+  "participant_login_exercised": false,
+  "mailbox_delivery_exercised": false,
+  "messages_sent": 0,
+  "complete_issue_acceptance": false,
+  "remaining": [
+    "Run the authorized mailbox portion after provider permission is resolved.",
+    "If participant login is exercised, retain authenticated-boundary evidence for that run."
+  ]
+}
