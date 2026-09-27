@@ -14,6 +14,7 @@ RUN curl -fsSL --max-time 120 -o /tmp/agentsview.tgz \
 COPY good_company/ /opt/good-company/good_company/
 COPY LICENSE /opt/good-company/LICENSE
 COPY third_party/ /opt/good-company/third_party/
+COPY third_party/agent-index-client/agent_index_client.py /opt/plow/agent-index-client.py
 COPY scripts/start_runtime.py /opt/good-company/start_runtime.py
 COPY scripts/runtime_preflight.py /opt/good-company/runtime_preflight.py
 COPY scripts/good-company /usr/local/bin/good-company

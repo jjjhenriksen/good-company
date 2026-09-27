@@ -1,12 +1,12 @@
 [
   {
     "file": "agent-index-client/LICENSE",
-    "source": "https://github.com/plow-pbc/agent-index-client/blob/edf196031803e204cdbcd81ce574e1f54fd75f65/LICENSE",
+    "source": "https://github.com/plow-pbc/agent-index-client/blob/7d42f568faecfbbdea9ff0f16d66d43f68dce02f/LICENSE",
     "sha256": "c95bae1d1ce0235ecccd3560b772ec1efb97f348a79f0fbe0a634f0c2ccefe2c"
   },
   {
     "file": "agent-index-client/NOTICE",
-    "source": "https://github.com/plow-pbc/agent-index-client/blob/edf196031803e204cdbcd81ce574e1f54fd75f65/NOTICE",
+    "source": "https://github.com/plow-pbc/agent-index-client/blob/7d42f568faecfbbdea9ff0f16d66d43f68dce02f/NOTICE",
     "sha256": "081d1b9fbb2e80533b2cab706955fbfe4d43729370499a8893d3798066ae0e00"
   },
   {
@@ -23,5 +23,10 @@
     "file": "openclaw/THIRD_PARTY_NOTICES.md",
     "source": "https://github.com/openclaw/openclaw/blob/eb377ac59e6c9fd6c7705028034812becf00271b/THIRD_PARTY_NOTICES.md",
     "sha256": "c1d1bbc550feee74853eba104e347341569cbbbe37a9f77659993ca0766277d5"
+  },
+  {
+    "file": "agent-index-client/agent_index_client.py",
+    "source": "https://github.com/plow-pbc/agent-index-client/blob/7d42f568faecfbbdea9ff0f16d66d43f68dce02f/standalone/agent_index_client.py",
+    "sha256": "05d1d3d671d453ca69bfd1dd832aabe8c4c89bb65e427e7f9a36f721aa7ec72a"
   }
 ]

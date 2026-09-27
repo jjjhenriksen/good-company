@@ -57,3 +57,5 @@
 !third_party/manifest.json
 !third_party/openclaw/LICENSE
 !third_party/openclaw/THIRD_PARTY_NOTICES.md
+
+!third_party/agent-index-client/agent_index_client.py
