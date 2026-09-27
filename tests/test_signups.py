@@ -90,7 +90,10 @@ class SignupTests(ShiftTests):
         self.assertEqual(self.c.shift_status('packing')['filled'], 0)
         self.c.delegate(now=NOW)
         self.assertEqual(self.c.shift_status('packing')['reserved_offers'], 1)
-        self.assertEqual(self.c.task_queue(), [])
+        notices = self.c.task_queue()
+        self.assertEqual(len(notices), 1)
+        self.assertEqual(notices[0]['kind'], 'offer')
+        self.assertEqual(notices[0]['message']['to'], ['sam@example.invalid'])
 
     def test_resume_does_not_offer_to_waitlisted_person_who_opted_out(self):
         assignment = self.confirmed_with_waitlist()
