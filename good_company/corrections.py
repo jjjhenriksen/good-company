@@ -103,7 +103,7 @@ class CorrectionCoordinator(WorkCoordinator):
             self._record_contacts('correction', correction_id, message, now)
             self.db.execute("UPDATE corrections SET status='sending' WHERE id=?", (correction_id,))
             self.log('correction_claim', correction_id, {}, now)
-        return {'id': correction_id, 'message': message, 'instruction': 'Send these exact fields once; record a real provider receipt. Unknown outcomes require reconciliation.'}
+        return {'id': correction_id, 'message': message, 'instruction': 'Send this exact content to these recipients once. BCC-only groups may use private individual copies without adding recipients. Record every provider receipt. Unknown outcomes require reconciliation.'}
 
     def correction_receipt(self, correction_id, outcome, provider_id, now=None):
         if outcome not in ('sent', 'failed', 'uncertain'):
