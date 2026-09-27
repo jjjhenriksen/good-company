@@ -474,7 +474,7 @@ class Coordinator:
         if snapshot.get('complete') is not True:
             raise ValueError('Only complete calendar snapshots may replace events.')
         start, end = stamp(snapshot['window_start']), stamp(snapshot['window_end'])
-        checked = stamp(snapshot['checked_at'])
+        checked = stamp(required(snapshot.get('checked_at'), 'calendar observation time'))
         if not start < end or end - start > timedelta(days=93):
             raise ValueError('Snapshot window must be positive and at most 93 days.')
         if checked > now + timedelta(minutes=1):

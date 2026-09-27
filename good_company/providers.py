@@ -71,7 +71,10 @@ def import_complete_calendar(coordinator, provider, scope, start, end, now=None)
         page = provider.calendar_page(scope, start, end, cursor)
         if page.scope != scope or not page.expanded or not page.complete_page:
             raise ProviderError('incomplete_or_unscoped_calendar')
-        observed = stamp(page.checked_at)
+        try:
+            observed = stamp(required(page.checked_at, 'calendar observation time'))
+        except (ValueError, TypeError):
+            raise ProviderError('invalid_calendar_observation') from None
         if observed > (fixed_now or stamp()):
             raise ProviderError('future_calendar_observation')
         checked = min(checked, observed) if checked else observed
