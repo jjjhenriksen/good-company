@@ -42,7 +42,7 @@ reminders, and finds a replacement after a verified decline.
 
 The public release passed 383 behavior tests on Python 3.11–3.13, packaged-image
 checks and an anonymous image pull. See the [exact commit and immutable image](docs/acceptance/12-release-gate.md)
-and [working-agent demo](https://www.youtube.com/watch?v=8tSQjGKXOJc).
+and [working-agent demo](https://www.youtube.com/watch?v=gebZejxCrk8).
 
 The native runtime has produced genuine model/tool replies, scoped Google reads,
 scheduled self-email delivery and preserved state across upgrades. The
@@ -50,7 +50,8 @@ scheduled self-email delivery and preserved state across upgrades. The
 change/cancellation/restoration and owner-loopback replies, with explicit fixture
 and fault-replay boundaries. The operational test job is disabled and its remit
 paused after acceptance. External participant identity, real pilot scenarios,
-organizer admission and fresh-user installation remain open issues.
+and fresh-user installation remain open issues. Organizer admission is
+[verified separately](docs/acceptance/15-index-admission.md).
 
 ## Try it without credentials
 

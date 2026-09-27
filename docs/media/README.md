@@ -1,9 +1,16 @@
 # Actual agent demo
 
-[Watch on YouTube](https://www.youtube.com/watch?v=8tSQjGKXOJc) ·
-[Download the 36-second original](real-agent-demo.mp4)
+[Watch on YouTube](https://www.youtube.com/watch?v=gebZejxCrk8) ·
+[Download the 68-second demo](good-company-demo-68-seconds.mp4) ·
+[Original capture](real-agent-demo.mp4)
 
 ![Actual agent answering fictional source questions](actual-agent.png)
+
+The published edit is 68.333 seconds, meeting the supplied 60-second minimum.
+It adds explanatory panels, an introduction, a closing and an eight-second reading
+hold to the original captures described below. It remains silent. YouTube processing
+and copyright checks completed; the Index video ID was read back after updating.
+This records publication, not organizer approval.
 
 Captured from the running Plow/OpenClaw agent on September 26, 2026 (Los Angeles),
 using GLM 5.2. These are two joined, silent browser screenshot sequences sampled

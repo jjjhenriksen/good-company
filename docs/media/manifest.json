@@ -5,7 +5,7 @@
   "model": "GLM 5.2",
   "source_frames": 32,
   "audio": false,
-  "duration_seconds": 36.291667,
+  "duration_seconds": 68.333333,
   "new_messages_sent": 0,
   "segments": [
     {
@@ -27,6 +27,19 @@
     "real-agent-demo.mp4": {
       "bytes": 1044423,
       "sha256": "613de8af940e5f2346f61702ee1b2003104bcb19dc451168c29d9e73fa5f8780"
+    },
+    "good-company-demo-68-seconds.mp4": {
+      "bytes": 1781696,
+      "sha256": "934d21a17d1e3fd0096a86d726bb38854a4d3130c38a85a6742950cc52235abb"
     }
-  }
+  },
+  "original_duration_seconds": 36.291667,
+  "published_video": {
+    "provider": "youtube",
+    "id": "gebZejxCrk8",
+    "url": "https://www.youtube.com/watch?v=gebZejxCrk8",
+    "channel": "J Henriksen (@jhenriksen7367)",
+    "visibility": "unlisted"
+  },
+  "edited_demo": "Original captures with explanatory panels, introduction, closing, and an eight-second reading hold; no new runtime or delivery capture."
 }
