@@ -1,4 +1,5 @@
 from dataclasses import replace
+import json
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from test_shifts import ShiftTests
@@ -13,6 +14,58 @@ from good_company.providers import ProviderError
 
 
 class SignupTests(ShiftTests):
+    def resumed_vacancy(self):
+        assignment = self.confirmed_with_waitlist()
+        policy = self.c.autonomy()
+        policy['enabled'] = False
+        self.c.configure_autonomy(policy, 'owner paused', now=NOW)
+        self.c.decline_task(assignment, 'alex', 'verified fixture', now=NOW)
+        policy['enabled'] = True
+        policy['allowed_recipients'] += ['lee@example.invalid', 'pat@example.invalid']
+        self.c.configure_autonomy(policy, 'owner resumed', now=NOW)
+        for person in ('lee', 'pat'):
+            self.c.set_volunteer(volunteer(person), 'fictional roster', now=NOW)
+
+    def waiting(self):
+        return json.loads(self.c.db.execute("SELECT value FROM settings WHERE key='waitlist:packing:one'").fetchone()[0])
+
+    def test_new_signup_respects_existing_waitlist_after_resume(self):
+        self.resumed_vacancy()
+        result = apply(self.c, self.reply('lee', 'signup', 'new'), 'new', now=NOW)
+        self.assertEqual(result['status'], 'waitlisted')
+        self.assertEqual(self.c.db.execute("SELECT volunteer_id FROM assignments WHERE status='offered'").fetchone()[0], 'sam')
+        self.assertEqual(self.waiting(), ['lee'])
+        self.assertEqual(self.c.shift_status('packing')['filled'], 0)
+
+    def test_waitlisted_person_retries_without_leaving_stale_entry(self):
+        self.resumed_vacancy()
+        result = apply(self.c, self.reply('sam', 'signup', 'retry'), 'retry', now=NOW)
+        self.assertEqual(result['status'], 'offered')
+        self.assertEqual(self.waiting(), [])
+
+    def test_new_signup_skips_currently_ineligible_waitlisted_person(self):
+        self.resumed_vacancy()
+        self.c.set_contact_consent('sam@example.invalid', False, 'verified stop', now=NOW)
+        result = apply(self.c, self.reply('lee', 'signup', 'eligible'), 'eligible', now=NOW)
+        self.assertEqual(result['status'], 'offered')
+        self.assertEqual(self.waiting(), ['sam'])
+        self.assertEqual(self.c.db.execute("SELECT volunteer_id FROM assignments WHERE status='offered'").fetchone()[0], 'lee')
+
+    def test_concurrent_new_signups_preserve_existing_waitlist_priority(self):
+        self.resumed_vacancy()
+        path = Path(self.tmp.name) / 'tasks.sqlite'
+        def signup(person):
+            c = WorkCoordinator(path)
+            try:
+                return apply(c, self.reply(person, 'signup', person), person, now=NOW)['status']
+            finally:
+                c.db.close()
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            self.assertEqual(list(pool.map(signup, ['lee', 'pat'])), ['waitlisted', 'waitlisted'])
+        self.assertEqual(self.c.db.execute("SELECT volunteer_id FROM assignments WHERE status='offered'").fetchone()[0], 'sam')
+        self.assertEqual(set(self.waiting()), {'lee', 'pat'})
+        self.assertEqual(self.c.shift_status('packing')['reserved_offers'], 1)
+
     def confirmed_with_waitlist(self):
         self.prepare()
         for person in ['alex', 'sam']:
