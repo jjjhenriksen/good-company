@@ -42,6 +42,33 @@ whole-project restart and a targeted agent restart with the correction. Package
 checks and this native source run are not a fresh public AMD64 image boot, new
 phone activation, SMS receipt or one-click admission. Those remain unverified.
 
+## Updated isolated installation — September 27, 2026, 07:12 UTC
+
+The same isolated source checkout was fast-forwarded to published main
+`80f10900bfb1cd5c3a46bb306e6b165debbc457f`, then rebuilt and started with the
+documented native Compose override, separate project and loopback port. This is
+an update of the fresh installation above, not another fresh account activation.
+
+- Native image: `sha256:615ae26640c3d2775994dc20c5b81b6669f0e20cf1edb618eab34f450faa8ce9`.
+- All 29 installed coordination modules matched the source files byte for byte.
+- The existing owner conversation reloaded, and GLM 5.2 returned the actual new
+  response `GOOD_COMPANY_UPDATED_INSTALL_OK` at 07:12:15 UTC. No tools or external
+  channel deliveries were requested or shown for that response.
+- A subsequent documented `restart agent` restarted the dependent proxy too.
+  HTTP 200 and matching network namespaces returned; both model replies and the
+  original setup conversation remained visible after browser reload.
+- Exact profile/remit and credential comparisons passed before and after restart.
+  Sending stayed paused, with zero jobs, connection attestations, events or notices.
+- The original separate installation retained its container identity, image and
+  start time. Only the isolated test project was updated, then stopped; its
+  credential and volumes were retained.
+
+The [build-only AMD64 run](https://github.com/jjjhenriksen/good-company/actions/runs/36302320179)
+for this exact source passed 450 tests, the real Docker context canary check, image
+construction and installed-package checks. Registry login and publication were
+skipped. The existing public release was not replaced, and the remaining phone,
+public AMD64 runtime and one-click acceptance boundaries above still apply.
+
 ## Guide corrections found during the clean-install audit
 
 On September 26, 2026, the documented empty `plow-credentials` preflight
