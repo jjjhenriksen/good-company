@@ -3,6 +3,8 @@
 **
 !Dockerfile
 !LICENSE
+!third_party/
+!third_party/**
 !good_company/
 !good_company/*.py
 !prompt/
