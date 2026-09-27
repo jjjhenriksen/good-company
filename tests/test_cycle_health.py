@@ -86,3 +86,54 @@ class CycleHealthTests(unittest.TestCase):
         self.assertFalse(state['ready'])
         self.assertEqual(state['latest_cycle']['status'], 'blocked')
         self.assertEqual(state['latest_cycle']['finished_at'], later.isoformat())
+
+    def test_identity_failure_before_journaling_is_visible_and_sanitized(self):
+        self.configured()
+        with patch.object(FixtureProvider, 'account', side_effect=ProviderError('PRIVATE-ACCOUNT-ERROR')):
+            result = self.cycle('PRIVATE-EARLY-FAILURE')
+        self.assertEqual(result['reason'], 'provider_identity_unavailable')
+        state = self.c.readiness(now=NOW)
+        self.assertFalse(state['ready'])
+        self.assertEqual(state['latest_cycle']['status'], 'blocked')
+        observations = [json.loads(row[0]) for row in self.c.db.execute("SELECT detail FROM audit WHERE action='cycle_observed'")]
+        self.assertEqual(observations[-1]['status'], 'blocked')
+        self.assertNotIn('PRIVATE-', json.dumps(observations) + json.dumps(state))
+
+    def test_failed_replay_keeps_completed_summary_and_later_replay_recovers(self):
+        self.configured()
+        original = self.cycle('same-cycle')
+        before = tuple(self.c.db.execute("SELECT * FROM operational_cycles WHERE id='same-cycle'").fetchone())
+        with patch.object(FixtureProvider, 'account', side_effect=ProviderError('private account error')):
+            self.cycle('same-cycle')
+        self.assertFalse(self.c.readiness(now=NOW)['ready'])
+        self.assertEqual(tuple(self.c.db.execute("SELECT * FROM operational_cycles WHERE id='same-cycle'").fetchone()), before)
+        replay = self.cycle('same-cycle')
+        self.assertTrue(replay['replayed'])
+        self.assertEqual({k: v for k, v in replay.items() if k != 'replayed'}, original)
+        self.assertTrue(self.c.readiness(now=NOW)['ready'])
+        self.assertEqual(tuple(self.c.db.execute("SELECT * FROM operational_cycles WHERE id='same-cycle'").fetchone()), before)
+
+    def test_early_failures_stay_quiet_and_success_reports_recovery(self):
+        self.configured()
+        self.c.health(now=NOW)
+        with patch.object(FixtureProvider, 'account', side_effect=ProviderError('private account error')):
+            self.cycle('failure-one')
+            self.assertTrue(self.c.health(now=NOW)['notify'])
+            self.cycle('failure-two')
+            self.assertFalse(self.c.health(now=NOW)['notify'])
+        self.cycle('successful-new-attempt')
+        self.assertTrue(self.c.health(now=NOW)['notify'])
+        self.assertFalse(self.c.health(now=NOW)['notify'])
+
+    def test_interrupted_retry_has_new_observation_without_erasing_old_result(self):
+        self.configured()
+        self.cycle('old-cycle', blocked=True)
+        previous = tuple(self.c.db.execute("SELECT * FROM operational_cycles WHERE id='old-cycle'").fetchone())
+        self.cycle('successful-cycle')
+        with patch.object(FixtureProvider, 'account', side_effect=RuntimeError('simulated interruption')):
+            with self.assertRaises(RuntimeError):
+                self.cycle('old-cycle')
+        state = self.c.readiness(now=NOW)
+        self.assertFalse(state['ready'])
+        self.assertEqual(state['latest_cycle']['status'], 'running')
+        self.assertEqual(tuple(self.c.db.execute("SELECT * FROM operational_cycles WHERE id='old-cycle'").fetchone()), previous)
