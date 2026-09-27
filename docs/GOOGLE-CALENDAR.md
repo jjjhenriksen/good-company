@@ -58,3 +58,23 @@ calendar command output still requires an actual zero exit code and valid JSON.
 Issue #30 remains open for live recurrence/pagination acceptance, mail sending and genuine
 receipt reconciliation. Issues #8/#9 still require the complete scheduled and
 lifecycle tests. This adapter does not establish those outcomes by itself.
+
+## Owner context for imported events
+
+Google event titles do not establish organization categories or dress requirements.
+The standing remit can now include optional `event_contexts`, keyed by the exact
+authorized domain calendar scope and provider instance ID. The agent records these
+from explicit owner instructions during setup; the owner need not edit JSON.
+Each context requires a participant-safe source reference and may supply
+`event_type`, `dress_applicability`, `program`, `dress_code_role`,
+`mixed_role_audience`, or a fallback `location`. Event type must already be allowed
+by the remit. No wildcard, inferred title match, recipient override, time override
+or cancellation override is supported.
+
+The core importer reapplies this cited context on each complete refresh. A location
+from the calendar takes precedence; owner context only fills an absent location.
+The calendar source remains attached, and the owner reference is added separately.
+Removing/changing the context invalidates pending approvals through the existing
+remit update; the next refresh rebuilds from provider facts. Withdrawing its source
+prevents automatic authorization. This mechanism supplies missing organizational
+context; it does not grant provider access or unattended-send permission.
