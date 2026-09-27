@@ -1,0 +1,5 @@
+[
+  {"id":"food-bank","title":"Fictional Food Bank Packing","audience":"volunteer","columns":["Role","Date","Start","Condition"],"rows":[["Qualified packer","2026-10-03","09:30","Valid food training"],["Driver","2026-10-03","11:00","Named route only"]],"exception":"Exception: packing is cancelled if the venue closes."},
+  {"id":"arts","title":"Fictional Arts Rehearsal","audience":"volunteer","columns":["Role","Date","Start","Condition"],"rows":[["Performer","2026-10-04","18:00","Studio B"],["Guest","2026-10-04","18:30","Lobby only"]],"exception":"Exception: guests cannot enter the rehearsal floor."},
+  {"id":"board","title":"Fictional Board Review","audience":"coordinator","columns":["Role","Date","Start","Condition"],"rows":[["Board member","2026-10-05","16:00","Private agenda"],["Observer","2026-10-05","16:30","Public session only"]],"exception":"Exception: personnel discussion is coordinator-only."}
+]
