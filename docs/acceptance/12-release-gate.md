@@ -61,3 +61,20 @@ the added notices matched immutable upstream source revisions.
 Never publish a fixture receipt as live validation or change visibility merely to
 make downstream checkboxes appear complete. This plan makes the release evidence
 boundary reviewable while public-access and fresh-install acceptance remain unresolved.
+
+## Preview v0.1.1 — September 27, 2026
+
+[Release v0.1.1](https://github.com/jjjhenriksen/good-company/releases/tag/v0.1.1)
+uses reviewed merged source `5fa457253781a5d95680d2e7a9bda31d0128b6f5` and public image
+`ghcr.io/jjjhenriksen/good-company@sha256:438548cc74a5fcc79323c4d1b20cffe6780220e8b4576b1a7dcd6d615c524ce8`.
+[Publication run 36332812906](https://github.com/jjjhenriksen/good-company/actions/runs/36332812906)
+passed all 479 installed-image tests, both demos, package integrity and Docker
+context checks, then pushed that tested image. Anonymous manifest/config reads
+verified its digest and Linux AMD64 platform. The compressed transcript reporter
+fix from PR #193 is included in this image.
+
+The owner promoted the new digest through the official Plow CLI; both Plow and
+Index updates were acknowledged. The public Index read omits the image field;
+the Plow readback independently confirmed the exact new digest. A separate hosted deployment reached `running` but full
+fresh-user acceptance is still incomplete; see [#16 evidence](16-fresh-install.md).
+No existing runtime was upgraded by promotion. The release remains a preview.
