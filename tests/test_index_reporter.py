@@ -1,6 +1,6 @@
 """Exercise the packaged upstream usage collector with isolated fictional stores."""
 import contextlib
-import importlib.util
+import types
 import io
 import json
 import os
@@ -26,9 +26,11 @@ def compressed_event(event):
 
 class IndexReporterTests(unittest.TestCase):
     def setUp(self):
-        spec = importlib.util.spec_from_file_location('fixture_index_client', CLIENT)
-        self.client = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(self.client)
+        # Compile without writing __pycache__ beside the vendored source: those
+        # generated files must not enter the exact third-party package manifest.
+        self.client = types.ModuleType('fixture_index_client')
+        self.client.__file__ = str(CLIENT)
+        exec(compile(CLIENT.read_bytes(), str(CLIENT), 'exec'), self.client.__dict__)
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
