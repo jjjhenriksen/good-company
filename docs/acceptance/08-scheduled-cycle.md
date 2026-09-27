@@ -24,3 +24,19 @@ When the connection recovers:
 Required evidence: release commit/image, account/scopes attestation, scheduler job
 and run IDs, two operation/receipt IDs, received-message observation, repeat-run
 send count. Missing values remain missing. Never synthesize provider receipts.
+
+## Live progress after owner authorization
+
+The owner completed Latch setup and authorized a bounded fictional self-test.
+The deployed agent then performed real account/calendar reads and four self-email
+sends with genuine Gmail acceptance and inbox observations. A core event reminder
+and task notice were claimed before dispatch, receipted, and refused on repeat
+claim. A real owner-loopback STOP reply cancelled two queued notices, rejected
+replay and blocked a later correction in the isolated test roster. Original
+Gatekeeper instructions were restored after exact-action exceptions; the isolated
+test remit was paused. Main organization authority remained unchanged.
+
+This replaces the initial disconnected-device blocker, but does not complete #8:
+no scheduled operational cycle or standing unattended-send remit was established.
+Manual/AI-reviewed self-test delivery is not unattended scheduled delivery. See
+PRs #117 and #118 for sanitized evidence and limits.
