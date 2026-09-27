@@ -75,6 +75,56 @@ class SignupTests(ShiftTests):
         self.assertEqual(status['reserved_offers'], 0)
         self.assertEqual(status['filled'], 0)
 
+    def test_resume_promotes_waitlist_without_automatic_confirmation(self):
+        assignment = self.confirmed_with_waitlist()
+        policy = self.c.autonomy()
+        policy['enabled'] = False
+        self.c.configure_autonomy(policy, 'owner paused', now=NOW)
+        self.c.decline_task(assignment, 'alex', 'verified fixture', now=NOW)
+        self.assertEqual(self.c.delegate(now=NOW)['assigned'], [])
+        self.assertEqual(self.c.shift_status('packing')['reserved_offers'], 0)
+        policy['enabled'] = True
+        self.c.configure_autonomy(policy, 'owner resumed', now=NOW)
+        self.assertEqual(self.c.delegate(now=NOW)['assigned'], [])
+        self.assertEqual(self.c.shift_status('packing')['reserved_offers'], 1)
+        self.assertEqual(self.c.shift_status('packing')['filled'], 0)
+        self.c.delegate(now=NOW)
+        self.assertEqual(self.c.shift_status('packing')['reserved_offers'], 1)
+        self.assertEqual(self.c.task_queue(), [])
+
+    def test_resume_does_not_offer_to_waitlisted_person_who_opted_out(self):
+        assignment = self.confirmed_with_waitlist()
+        policy = self.c.autonomy()
+        policy['enabled'] = False
+        self.c.configure_autonomy(policy, 'owner paused', now=NOW)
+        self.c.decline_task(assignment, 'alex', 'verified fixture', now=NOW)
+        self.c.set_contact_consent('sam@example.invalid', False, 'verified stop', now=NOW)
+        policy['enabled'] = True
+        self.c.configure_autonomy(policy, 'owner resumed', now=NOW)
+        self.c.delegate(now=NOW)
+        self.assertEqual(self.c.shift_status('packing')['reserved_offers'], 0)
+
+    def test_concurrent_resume_cycles_reserve_only_one_waitlist_offer(self):
+        assignment = self.confirmed_with_waitlist()
+        policy = self.c.autonomy()
+        policy['enabled'] = False
+        self.c.configure_autonomy(policy, 'owner paused', now=NOW)
+        self.c.decline_task(assignment, 'alex', 'verified fixture', now=NOW)
+        policy['enabled'] = True
+        self.c.configure_autonomy(policy, 'owner resumed', now=NOW)
+        path = Path(self.tmp.name) / 'tasks.sqlite'
+        def resume(_):
+            c = WorkCoordinator(path)
+            try:
+                return c.delegate(now=NOW)
+            finally:
+                c.db.close()
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            list(pool.map(resume, range(2)))
+        self.assertEqual(self.c.shift_status('packing')['reserved_offers'], 1)
+        self.assertEqual(self.c.shift_status('packing')['filled'], 0)
+        self.assertEqual(self.c.db.execute("SELECT count(*) FROM audit WHERE action='shift_offer_reserved'").fetchone()[0], 2)
+
     def reply(self,sender,action,message):
         p=ReplyProvider();p.reply=VerifiedReply(message,sender+'@example.invalid',True,'verified-fixture',action,'packing:one');return p
 

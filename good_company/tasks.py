@@ -201,6 +201,10 @@ class WorkCoordinator(Coordinator):
                     continue
                 existing = self.db.execute("SELECT * FROM assignments WHERE task_id=? AND status='assigned'", (t['id'],)).fetchone()
                 if not existing and t.get('signup_required'):
+                    # A decline while paused may leave an eligible waitlist behind.
+                    # Resume only its opt-in offers, never automatic assignment.
+                    from .signups import promote_waitlist
+                    promote_waitlist(self, t['id'], now)
                     continue
                 if existing:
                     v = next((v for v in volunteers if v['id'] == existing['volunteer_id']), None)
