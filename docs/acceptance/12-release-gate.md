@@ -19,5 +19,5 @@ Release sequence:
    record with commit, digest, CI and anonymous-access receipts.
 
 Never publish a fixture receipt as live validation or change visibility merely to
-make downstream checkboxes appear complete. This draft makes the release evidence
+make downstream checkboxes appear complete. This plan makes the release evidence
 boundary reviewable while provider-dependent acceptance remains unresolved.
