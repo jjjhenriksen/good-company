@@ -1,6 +1,8 @@
 # Fresh-user installation acceptance (#16)
 
-Status: incomplete. One-click acceptance awaits #15's organizer admission.
+Status: incomplete. [Organizer admission](15-index-admission.md) was observed on
+September 27 at 14:04 UTC; the listing now exposes its texting installation link.
+A fresh one-click installation has not been performed.
 The separate source installation below verifies native startup, a real model reply
 and persistent paused setup using an already authenticated account. It does not
 establish a new phone-login session or texting/one-click acceptance.
@@ -40,7 +42,8 @@ The restart fix uses explicit dependency restart propagation. Its credential-fre
 pinned-Caddy regression fails against the old configuration and passes both a
 whole-project restart and a targeted agent restart with the correction. Package
 checks and this native source run are not a fresh public AMD64 image boot, new
-phone activation, SMS receipt or one-click admission. Those remain unverified.
+phone activation, SMS receipt or completed one-click installation. Those remain
+unverified; the later admission evidence is recorded separately in #15.
 
 ## Updated isolated installation — September 27, 2026, 07:12 UTC
 

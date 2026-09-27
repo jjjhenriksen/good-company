@@ -31,7 +31,7 @@ Repository: [jjjhenriksen/good-company](https://github.com/jjjhenriksen/good-com
 - [x] Publish reviewed source and smoke-tested image; exact commit/digest in acceptance/12-release-gate.md.
 - [x] Verify anonymous source/image access and public-image package checks.
 - [x] Register public video, screenshot and install references on the Index.
-- [ ] Obtain organizer verification and one-click admission.
+- [x] Organizer verification and initial one-click admission observed September 27: acceptance/15-index-admission.md.
 - [ ] Complete fresh-user published-install acceptance (issue #16).
 
 Live eligible reassignment and real pilot scenarios remain tracked in issues
