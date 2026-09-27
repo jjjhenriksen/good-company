@@ -21,8 +21,14 @@ def delete_source(c, source, authority, now=None):
         c.db.execute('DELETE FROM knowledge WHERE source=?', (source,))
         c.db.execute('DELETE FROM dress_rules WHERE source=?', (source,))
         c.db.execute('DELETE FROM document_versions WHERE source=?', (source,))
+        # Translation records retain both original and translated source text,
+        # including versions that are no longer the current knowledge entry.
+        translations = c.db.execute("SELECT key,value FROM settings WHERE key LIKE 'translation:%'").fetchall()
+        for key, value in translations:
+            if json.loads(value)['source'] == source:
+                c.db.execute('DELETE FROM settings WHERE key=?', (key,))
         c.log('source_content_deleted', source, {'authority': authority}, stamp(now))
-    return {'deleted': True, 'scope': 'Stored source content and archived versions. Source tombstone, audit references and delivery history retained.'}
+    return {'deleted': True, 'scope': 'Logical deletion of stored source content, archived versions and reviewed translations. Source tombstone, audit references and delivery history retained. SQLite free pages and independent backups are not securely erased.'}
 
 
 def retain_delivery_history(c, before, authority, now=None):
