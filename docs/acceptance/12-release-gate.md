@@ -1,13 +1,27 @@
 # Public release gate (#12)
 
-Status: lifecycle dependency #9 passed and closed in PR #142; runtime dependency
-#11 is also closed. Publication remains pending. The MIT repository is private
-as of this review on 2026-09-26. Native runtime evidence and provider acceptance
-are recorded separately; a local image ID is not a public registry manifest.
+Status: passed public source and image acceptance on 2026-09-26 (Los Angeles).
+Lifecycle dependency #9 and runtime dependency #11 are complete.
+
+- Release commit: `b64fd87e2e3c2d9e809bea2490fb922b5991d00c`.
+- Public image (Linux AMD64): `ghcr.io/jjjhenriksen/good-company@sha256:dca7799e517f94d64865b387ac175ba57f188124fc8fb98b1b403b65c63d77b4`.
+- [Exact-commit CI](https://github.com/jjjhenriksen/good-company/actions/runs/36293277911): all three Python jobs passed, including 383 behavior tests, demos, wheel and proxy checks.
+- [Publish workflow](https://github.com/jjjhenriksen/good-company/actions/runs/36293287680): attempt 2 passed. The first attempt hit an upstream ECR HTTP 429 before building; retry retained the exact pinned base. The image passed installed-command, paused-cycle, skills/examples and exact license/notice checks before push.
+- Anonymous repository API, exact-commit LICENSE, Git read and clean source clone succeeded. The documented fictional demo passed in that clean clone.
+- Anonymous Docker pull of the digest succeeded using an empty auth configuration. The pulled image passed installed paused-cycle and exact license/notice checks without networking. The package page identifies it as Public.
+- Public screenshot and MP4 downloads matched their recorded hashes.
+
+See [machine-readable release evidence](../../eval/providers/public-release.json).
+The anonymous image smoke ran under Apple Silicon AMD64 emulation; it does not
+claim a full runtime boot. Genuine native runtime acceptance remains separately
+recorded. Fresh-user model/provider/state acceptance is #16, and organizer
+verification/one-click admission is #15.
 
 ## Content review before publication
 
-Reviewed candidate: `ce2c1b6e967edfd4e3b5436720103a97bc9f1c7c`.
+Reviewed candidate: `ce2c1b6e967edfd4e3b5436720103a97bc9f1c7c`. Final release refresh
+covered all 199 tracked files and 494 historical blobs with no heuristic matches;
+the added notices matched immutable upstream source revisions.
 
 - Scanned all 192 tracked files and 479 historical blobs for known private test
   account details, private keys, GitHub tokens and owner-machine paths; no matches.
@@ -31,7 +45,7 @@ Reviewed candidate: `ce2c1b6e967edfd4e3b5436720103a97bc9f1c7c`.
   any registry push. The final release record must identify the published commit,
   build run and registry digest, rather than substituting this candidate review.
 
-Release sequence:
+## Future release sequence
 1. Freeze a commit after required tests and connected lifecycle/readiness acceptance.
 2. Review the exact tracked tree and history for credentials and private pilot data;
    inspect binaries as well as text. Keep fictional fixtures clearly labelled.

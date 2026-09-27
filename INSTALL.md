@@ -10,9 +10,8 @@ Try `python3 scripts/demo.py` first; it needs no account or Docker image.
 
 ## 2. Get the source and Plow CLI
 
-Public release status and the exact published image are recorded in
-[the release record](docs/acceptance/12-release-gate.md). Before publication,
-repository access is required.
+The source is public. The exact published Linux AMD64 image and anonymous-access
+evidence are in [the release record](docs/acceptance/12-release-gate.md).
 
 ```sh
 git clone https://github.com/jjjhenriksen/good-company.git
@@ -39,16 +38,21 @@ shown as `free`; do not assume `ln_p1` will remain free.
 
 ## 3. Run a private preview
 
-Before allocating a Plow line, build and check runtime compatibility:
+Before allocating a Plow line, create the environment file required by Compose
+if it does not exist. This preserves any existing credentials:
+
+```sh
+if [ ! -e plow-credentials ]; then (umask 077; touch plow-credentials); fi
+```
+
+Then build and check runtime compatibility:
 
 ```sh
 docker compose build agent
 docker compose run --rm --no-deps --entrypoint python3 agent /opt/good-company/runtime_preflight.py
 ```
 
-Compose needs its environment file even for this check; before minting credentials,
-create an empty `plow-credentials` file if none exists (never overwrite an existing
-credential file). A passing result only checks syscall support. An `openat2`
+A passing result only checks syscall support. An `openat2`
 `Function not implemented` failure means this Linux emulation cannot run the pinned
 OpenClaw state filesystem. Use a compatible Linux host. Do not bypass filesystem
 containment, repeatedly reset the state volume, or count the build as a live boot.

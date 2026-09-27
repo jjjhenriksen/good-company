@@ -1,0 +1,33 @@
+{
+  "status": "passed_public_source_and_image",
+  "verified_at": "2026-09-27",
+  "source": {
+    "commit": "b64fd87e2e3c2d9e809bea2490fb922b5991d00c",
+    "anonymous_repository_api": "public",
+    "anonymous_exact_commit_license_sha256": "cfbe06b27351eb12d840f15f920a56550fbdf9639f6ae3cca8187c741442e113",
+    "anonymous_git_main": "b64fd87e2e3c2d9e809bea2490fb922b5991d00c"
+  },
+  "image": {
+    "image": "ghcr.io/jjjhenriksen/good-company@sha256:dca7799e517f94d64865b387ac175ba57f188124fc8fb98b1b403b65c63d77b4",
+    "architecture": "linux/amd64",
+    "docker_auths": {},
+    "pull_exit": 0,
+    "packaged_scheduler_and_notices_exit": 0,
+    "live_runtime_boot": false
+  },
+  "ci": "https://github.com/jjjhenriksen/good-company/actions/runs/36293277911",
+  "publish_run": "https://github.com/jjjhenriksen/good-company/actions/runs/36293287680",
+  "publish_attempt": 2,
+  "first_attempt": "Upstream public ECR returned HTTP 429; retry succeeded without changing the pinned base.",
+  "privacy_review": {
+    "tracked_files": 199,
+    "historical_blobs": 494,
+    "heuristic_findings": 0,
+    "pdf_pages_visually_reviewed": 6,
+    "video_review": "all 32 original frames OCR-reviewed during capture; visual samples and full decode recorded separately"
+  },
+  "limitations": [
+    "AMD64 public image was pulled and smoke-tested under Apple Silicon emulation; full runtime boot was not claimed.",
+    "Fresh-user model/provider/state acceptance and organizer admission remain separate."
+  ]
+}

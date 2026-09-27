@@ -1,0 +1,24 @@
+{
+  "agent": "good-company",
+  "registration_exit_code": 0,
+  "observed_page": "https://aiworthusing.com/agent-index/good-company",
+  "public_fields_verified_in_browser": [
+    "repo",
+    "image",
+    "install_url",
+    "youtube_embed"
+  ],
+  "repo": "https://github.com/jjjhenriksen/good-company",
+  "image": "https://raw.githubusercontent.com/jjjhenriksen/good-company/b64fd87e2e3c2d9e809bea2490fb922b5991d00c/docs/media/actual-agent.png",
+  "install_url": "https://github.com/jjjhenriksen/good-company/blob/main/INSTALL.md",
+  "observed_status": "Community submission",
+  "one_click_available": false,
+  "video_registered": true,
+  "limits": "Install success shown on listing measures instruction visits; not fresh installation acceptance.",
+  "video_id": "8tSQjGKXOJc",
+  "video_url": "https://www.youtube.com/watch?v=8tSQjGKXOJc",
+  "video_channel": "J Henriksen",
+  "video_channel_url": "https://www.youtube.com/@jhenriksen7367",
+  "video_visibility": "unlisted",
+  "anonymous_oembed_verified": true
+}
