@@ -57,7 +57,7 @@ def status(coordinator, shift_id):
         assigned=coordinator.db.execute("SELECT count(*) FROM assignments WHERE task_id=? AND status='assigned'",(task_id,)).fetchone()[0]
         offered=coordinator.db.execute("SELECT count(*) FROM assignments WHERE task_id=? AND status='offered'",(task_id,)).fetchone()[0]
         filled=task['status']=='open' and assigned==1
-        slots.append({'task_id':task_id,'status':task['status'],'filled':filled,'reserved_offer':bool(offered),
+        slots.append({'task_id':task_id,'status':task['status'],'filled':filled,'reserved_offer':task['status']=='open' and bool(offered),
                       'reason':None if filled or task['status']!='open' else 'Unfilled: allocation must satisfy recorded roles, qualifications, consent, availability and workload capacity.'})
     return {'shift_id':shift_id,'capacity':shift['capacity'],'filled':sum(s['filled'] for s in slots),
             'reserved_offers':sum(s['reserved_offer'] for s in slots),

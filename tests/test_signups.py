@@ -41,3 +41,14 @@ class SignupTests(ShiftTests):
         with self.assertRaises(ProviderError):apply(self.c,self.reply('sam','accept_offer','accept'),'accept',now=NOW)
         p=self.reply('alex','signup','spoof');p.reply=replace(p.reply,authenticated=False)
         with self.assertRaises(ProviderError):apply(self.c,p,'spoof',now=NOW)
+
+    def test_cancelled_slot_releases_reported_offer_capacity(self):
+        self.prepare()
+        apply(self.c,self.reply('alex','signup','signup'),'signup',now=NOW)
+        self.assertEqual(self.c.shift_status('packing')['reserved_offers'],1)
+        self.c.close_task('packing:one','cancelled','owner cancelled fixture',now=NOW)
+        status=self.c.shift_status('packing')
+        self.assertEqual(status['reserved_offers'],0)
+        self.assertEqual(status['filled'],0)
+        self.assertEqual(status['unfilled'],0)
+        self.assertFalse(status['slots'][0]['reserved_offer'])
