@@ -6,6 +6,13 @@ class RequestError(ValueError):
     pass
 
 
+def validate_unique_recipients(addresses):
+    if any(not isinstance(address, str) for address in addresses):
+        raise ValueError('Recipients must be email address strings.')
+    if len({address.casefold() for address in addresses}) != len(addresses):
+        raise ValueError('Duplicate recipient identities are not allowed.')
+
+
 def validate_request(request):
     if not isinstance(request, dict):
         raise RequestError('Request must be a JSON object.')
