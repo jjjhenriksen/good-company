@@ -109,6 +109,17 @@ the last result; stale corrections fail. `participation-history` retains origina
 and corrected values privately. This is an operator attestation, not a public
 participant form or independent validation of the source's truth.
 
+
+## Staffed shifts
+
+Use `add-shift` with id, title, capacity and explicit `slots`. Every slot contains
+the normal task fields (including roles/ANY-or-ALL, skills and qualifications);
+capacity must equal its slot count. Slots become immutable tasks with IDs
+`shift-id:slot-id`. Existing atomic allocation enforces one volunteer per slot,
+non-overlap and workload capacity across shifts. Repeat identical setup is safe.
+Use `shift-status` for filled and unfilled capacity. Allocation is not an accepted
+signup or attendance. Declines use the exact assignment ID; replacement still
+passes every task eligibility check. Never silently weaken staffing requirements.
 ## Overdue work
 
 Use `overdue-tasks {}` to surface open tasks whose window has ended. Repeated
