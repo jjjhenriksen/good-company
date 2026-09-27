@@ -51,3 +51,28 @@ class ParticipantTests(unittest.TestCase):
         self.assertEqual(self.request('arts',{'question':'Rehearsal','action':'configure'})[0],400)
         self.config['credentials'][0]['disabled']=True
         self.assertEqual(self.request('arts',{'question':'Rehearsal'})[0],403)
+
+    def test_saved_accessible_preferences_are_bound_to_server_identity(self):
+        c = Coordinator(self.config['organizations']['arts'])
+        try:
+            c.set_contact_preferences('performer@example.invalid', {
+                'timezone': 'Europe/Madrid', 'channels': ['email'], 'quiet_start': 21,
+                'quiet_end': 7, 'min_interval_hours': 2, 'language': 'es', 'format': 'structured_plain_text'
+            }, 'verified owner-session preference')
+            item = c.retrieve('Rehearsal')['evidence'][0]
+            c.register_translation(source=item['source'], section=item['section'], original=item['content'],
+                translated='Lugar de ensayo arts', language='es', authority='fixture bilingual reviewer')
+        finally:
+            c.db.close()
+        self.config['credentials'][0]['address'] = 'performer@example.invalid'
+        status, body = self.request('arts', {'question': 'Rehearsal'})
+        self.assertEqual(status, 200)
+        data = json.loads(body)
+        self.assertEqual(data['language'], 'es')
+        self.assertIn('Lugar de ensayo arts', data['text'])
+        self.assertIn('Rehearsal location arts', data['text'])
+        self.assertIn('arts-public', data['text'])
+        self.assertNotIn('SECRET', body)
+        self.assertNotIn('food-public', body)
+        self.assertEqual(self.request('arts', {'question': 'Rehearsal', 'address': 'other@example.invalid'})[0], 400)
+        self.assertEqual(self.request('arts', {'question': 'Rehearsal', 'language': 'en'})[0], 400)
