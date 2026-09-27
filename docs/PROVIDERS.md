@@ -46,3 +46,35 @@ check, state change and replay receipt share one transaction. Only an opaque
 provider evidence reference is retained, not the message body or credentials.
 The trusted-operator CLI remains powerful; this does not create a public-user
 sandbox. Live genuine/spoofed provider acceptance remains unverified (#29).
+
+### Live connection recovery (2026-09-26)
+
+The original HTTP 503 was specifically `Device is not connected`. Installed the
+official signed Plow Latch app; the owner completed setup and connected Google.
+The deployed agent now discovers 15 MCP tools. Its actual `plow-gog accounts`
+call completed through Latch, followed by a calendar listing and a bounded timed
+calendar read with an empty complete result and no next-page cursor. The account
+owns its primary calendar. Private account/calendar identifiers remain outside
+this repository.
+
+The live Google Workspace skill describes a per-command approval boundary.
+Observed behavior is more specific: the AI Gatekeeper reviewed and allowed three
+owner-authorized fictional self-emails, but denied the fictional STOP reply as
+outside its current family-errand scope. A human click is not necessarily required
+for every send; an applicable Gatekeeper decision is. Existing policy does not
+establish a standing Good Company unattended-send remit. Keep
+`Account.unattended_send` false until that capability is genuinely established.
+Do not bypass Latch, alter a denied request to evade review, or treat success on
+one send as blanket authorization. The denied reply was not retried until the owner explicitly requested a narrow policy repair. Exact-send and exact-reply-ID read exceptions then allowed the test; both were removed afterward and the original enabled Gatekeeper policy was verified.
+
+Actual self-test results: four Gmail acceptance IDs, received-message evidence,
+one private transparent calendar fixture without guests, and refused second
+claims for the core event and task notices. The owner-loopback STOP reply cancelled
+two queued notices, rejected replay and blocked a later correction in the isolated
+test database. The test remit was paused after completion. These are reviewed self-tests; they
+do not prove scheduled unattended delivery or external-participant reply identity.
+
+The probe now distinguishes the disconnected-device response without echoing
+arbitrary provider error bodies. Tool discovery and successful reads are useful
+progress, but this diagnostic does not implement or prove the full delivery and
+verified-reply adapter required by #30.
