@@ -1,0 +1,16 @@
+{
+  "stop_applied": true,
+  "pending_task_notices_cancelled": 2,
+  "consent_disabled_for_test_roster": true,
+  "reply_replay_refused": true,
+  "post_stop_correction_refused": true,
+  "external_participant_identity_proven": false,
+  "observed_at": "2026-09-26 America/Los_Angeles",
+  "source_commit": "29772d7",
+  "mode": "owner-controlled loopback mailbox, isolated acceptance database",
+  "stop_receipt_sha256": "d0fb5ea440e28ff49fd83c7e99028e3c85336e741c73fe647fb27c30d11ce089",
+  "gatekeeper_enabled_after_test": true,
+  "original_gatekeeper_instructions_restored": true,
+  "test_remit_paused": true,
+  "real_organization_preferences_changed": false
+}
