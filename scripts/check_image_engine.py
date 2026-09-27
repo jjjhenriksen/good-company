@@ -24,7 +24,9 @@ expected = json.loads(Path('/checks/expected_modules.json').read_text())
 actual = {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
           for p in root.rglob('*.py')}
 assert actual == expected, 'Installed modules differ from the selected source checkout'
-print(f'Verified {len(actual)} installed modules; no source engine mounted.', flush=True)
+reporter = Path('/opt/plow/agent-index-client.py')
+assert hashlib.sha256(reporter.read_bytes()).hexdigest() == Path('/checks/expected_reporter_sha256.txt').read_text(), 'Installed reporter differs from the pinned source'
+print(f'Verified {len(actual)} installed modules and the pinned reporter; no source engine mounted.', flush=True)
 suite = unittest.defaultTestLoader.discover('/checks/tests')
 result = unittest.TextTestRunner(verbosity=1).run(suite)
 if not result.wasSuccessful():
@@ -61,6 +63,8 @@ def main():
         # Fixtures come from the image too; no local credentials or source tree.
         (staging / 'examples').symlink_to('/opt/good-company/examples')
         (staging / 'expected_modules.json').write_text(json.dumps(expected))
+        (staging / 'expected_reporter_sha256.txt').write_text(hashlib.sha256(
+            (root / 'third_party/agent-index-client/agent_index_client.py').read_bytes()).hexdigest())
         # The image's unprivileged node user must be able to read the host mount.
         staging.chmod(0o755)
         subprocess.run(['docker', 'run', '--rm', '--network', 'none', '--read-only',
