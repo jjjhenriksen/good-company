@@ -1,8 +1,46 @@
 # Fresh-user installation acceptance (#16)
 
-Status: incomplete. One-click acceptance awaits #15's organizer admission;
-manual installation can be checked independently. The maintainer's private local
-ARM64 preview is evidence for #7, not a clean-user published install result.
+Status: incomplete. One-click acceptance awaits #15's organizer admission.
+The separate source installation below verifies native startup, a real model reply
+and persistent paused setup using an already authenticated account. It does not
+establish a new phone-login session or texting/one-click acceptance.
+
+## Isolated manual source installation — September 27, 2026 UTC
+
+Public clones of Good Company `3caa803bd2d4b7f59d2ab798614e64aff228d068` and the
+official Plow CLI `3033a59754067bb21b4b6b2844967db343ecf7bd` were used in a new
+private directory. Python 3.13.13 ran in a fresh virtual environment. The updated
+guide's separate project and loopback port 3017 avoided the existing installation.
+Both target state volumes and the credential file were absent before the run.
+The previously authenticated owner's Plow account was reused; no account token or
+existing agent credential was copied into the new checkout or image.
+
+| Check | Observed result |
+| --- | --- |
+| Fictional local demo and native preflight | Passed; Linux aarch64 syscall check reported ready. |
+| Fresh credential and volumes | A previously free line received a newly minted mode-0600 credential. Two separate named volumes were created. |
+| Native image | `sha256:5db06f3f29dac4cd6ff35e3a9507c35c950ca47df8ac32f5a8f898ea9fd0d09d`, built from the public source clone. |
+| Owner dashboard | HTTP 200 and authenticated local `dev-owner` session on port 3017. |
+| Genuine model response | The GLM 5.2 dashboard session returned `GOOD_COMPANY_FRESH_INSTALL_OK` at 06:28 UTC; channel delivery was not requested. |
+| Installed capabilities | All four Good Company skill files and the coordination command were present. |
+| Conversational setup | The model saved Fictional Fresh Install Check with the requested profile and `enabled: false` remit. Direct database comparison confirmed every supplied field. |
+| Outbound state | Zero scheduled jobs, connection attestations, calendar events or queued notices. Only reserved `example.invalid` addresses were configured. |
+| Initial restart | Saved settings and credential survived, but the proxy retained the old network namespace and the dashboard stopped responding. Tracked in #168. |
+| Restart with dependency fix | The proxy restarted after the agent, both shared the live namespace, HTTP 200 returned, and the conversation reloaded. Exact settings and credential comparisons passed; sending remained paused and queues empty. |
+| Existing installation | Its container identity, image and start time were unchanged. Its credentials and volumes were not reused. |
+
+The direct gateway CLI attempt returned `unauthorized`; the documented local owner
+dashboard supplied the intended authentication context and produced the actual
+response. No authentication policy was relaxed. The model's setup used local
+commands only; two exploratory empty-input schema probes failed harmlessly before
+the successful onboarding command. No Google connection, real recipient message,
+schedule or verified connection attestation was created.
+
+The restart fix uses explicit dependency restart propagation. Its credential-free
+pinned-Caddy regression fails against the old configuration and passes both a
+whole-project restart and a targeted agent restart with the correction. Package
+checks and this native source run are not a fresh public AMD64 image boot, new
+phone activation, SMS receipt or one-click admission. Those remain unverified.
 
 ## Guide corrections found during the clean-install audit
 
