@@ -113,3 +113,16 @@ class CycleTests(unittest.TestCase):
              patch('good_company.cycle_cli.LatchMCP', side_effect=AssertionError('must not connect')):
             self.assertEqual(main(), 2)
             self.assertEqual(json.loads(output.getvalue())['status'], 'blocked')
+
+    def test_cycle_uses_owner_context_for_unclassified_provider_event(self):
+        policy = self.c.autonomy()
+        event = dict(self.p.pages[0].events[0])
+        event.update(start='2026-09-26T17:30:00-07:00', end='2026-09-26T19:00:00-07:00')
+        self.p.pages[0] = replace(self.p.pages[0], events=[event])
+        policy['event_contexts'] = {'demo-events-only': {event['id']: {
+            'source': 'fictional://owner/event-classification',
+            'event_type': policy['allowed_event_types'][0], 'dress_applicability': 'not_applicable'}}}
+        self.c.configure_autonomy(policy, 'fictional owner classification', now=NOW)
+        self.assertEqual(self.run_cycle()['sent'], 2)
+        self.assertEqual(self.run_cycle('repeat-context-tick')['sent'], 0)
+        self.assertEqual(len(self.p.sent), 2)

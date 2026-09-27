@@ -132,6 +132,8 @@ class Coordinator:
         for key in ('calendar_scopes', 'allowed_event_types', 'allowed_task_categories'):
             if any(not isinstance(v, str) or not v.strip() or v == '*' for v in policy[key]):
                 raise ValueError(f'{key} needs explicit names, not wildcards.')
+        from .event_context import validate
+        validate(policy)
         with self.db:
             if self.autonomy() != policy:
                 for row in self.db.execute('SELECT id FROM events').fetchall():
@@ -473,6 +475,8 @@ class Coordinator:
             raise ValueError('Calendar check time cannot be in the future.')
         if not isinstance(snapshot.get('events'), list):
             raise ValueError('events must be a list.')
+        from .event_context import annotate
+        policy = self.autonomy()
         prepared = []
         for raw in snapshot['events']:
             event = dict(raw)
@@ -481,6 +485,7 @@ class Coordinator:
             if 'program' in event:
                 required(event['program'], 'event program')
             uid = required(event.get('id'), 'event instance id')
+            event = annotate(event, calendar, policy)
             required(event.get('title'), 'event title')
             required(event.get('source'), 'event source citation')
             if event.get('all_day') is True:
