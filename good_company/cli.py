@@ -13,7 +13,7 @@ from .onboarding import SetupCoordinator as Coordinator
 def main():
     parser = argparse.ArgumentParser(description='Good Company coordination tools')
     parser.add_argument('--db', default=os.environ.get('GOOD_COMPANY_DB', '.state/good-company.sqlite'))
-    parser.add_argument('action', choices=['add-shift', 'shift-status', 'health', 'readiness', 'record-connection', 'onboarding', 'create-correction', 'correction-queue', 'correction-claim', 'correction-receipt', 'task-impacts', 'communication-budget', 'set-contact-preferences', 'set-contact-consent', 'configure', 'ingest', 'retrieve', 'import-calendar', 'events', 'set-source-precedence', 'withdraw-source', 'profile', 'overdue-tasks', 'follow-up-task', 'export-summary', 'delete-source', 'retain-delivery-history',
+    parser.add_argument('action', choices=['allocation-report', 'overdue-tasks', 'follow-up-task', 'withdraw-source', 'create-correction', 'correction-queue', 'correction-claim', 'correction-receipt', 'task-impacts', 'communication-budget', 'set-contact-preferences', 'set-contact-consent', 'configure', 'ingest', 'retrieve', 'import-calendar', 'events', 'set-source-precedence', 'health', 'readiness', 'record-connection', 'onboarding', 'profile', 'export-summary', 'delete-source', 'retain-delivery-history', 'add-shift', 'shift-status',
                                          'plan', 'queue', 'review', 'edit', 'approve', 'claim', 'receipt', 'conflicts',
                                          'set-dress-code', 'dress-code', 'configure-autonomy', 'autonomy',
                                          'set-volunteer', 'add-task', 'delegate', 'task-queue', 'task-claim',
