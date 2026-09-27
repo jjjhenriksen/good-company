@@ -297,8 +297,6 @@ class Coordinator:
         from .knowledge import validate_metadata
         validate_metadata(metadata)
         required(source, 'source'); required(title, 'title'); stamp(updated)
-        if self._source_retired(source):
-            raise ValueError('This source is retired. Import a reviewed replacement with a new source ID.')
         if audience not in ('volunteer', 'coordinator'):
             raise ValueError('audience must be volunteer or coordinator.')
         if len(text) > 1_000_000:
@@ -319,6 +317,8 @@ class Coordinator:
         version = metadata['version'] if metadata else 'legacy:' + digest(records)
         with self.db:
             self.db.execute('BEGIN IMMEDIATE')
+            if self._source_retired(source):
+                raise ValueError('This source is retired. Import a reviewed replacement with a new source ID.')
             prior = self.db.execute('SELECT metadata,payload,audience FROM document_versions WHERE source=? AND version=?', (source, version)).fetchone()
             values = (json.dumps(metadata, sort_keys=True), json.dumps(records), audience)
             if prior and tuple(prior) != values:
@@ -378,6 +378,8 @@ class Coordinator:
             raise ValueError('Duplicate rule IDs within a source.')
         with self.db:
             self.db.execute('BEGIN IMMEDIATE')
+            if prepared and self._source_retired(source):
+                raise ValueError('This source is retired. Review rules under a new source ID.')
             previous = [tuple(r) for r in self.db.execute('SELECT id,source,payload FROM dress_rules WHERE source=? ORDER BY id', (source,))]
             changed = previous != sorted(prepared)
             if changed:
