@@ -340,6 +340,14 @@ class WorkCoordinator(Coordinator):
             self.log('task_' + status, task_id, {'authority': authority}, stamp(now))
         return {'task_id': task_id, 'status': status}
 
+    def record_participation(self, **request):
+        from .participation import record
+        return record(self, **request)
+
+    def participation_history(self, record_id):
+        from .participation import history
+        return history(self, record_id)
+
     def allocation_report(self, task_id=None):
         rows = self.db.execute("SELECT at,object_id,detail FROM audit WHERE action='task_delegated' ORDER BY id").fetchall()
         decisions = []

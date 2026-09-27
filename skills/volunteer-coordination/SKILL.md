@@ -98,6 +98,18 @@ and adding an explicitly authorized replacement with a new ID, after verifying
 availability for the new window. Never rewrite attempted notices or infer new
 availability from old assignments. Impact reports are private operator output.
 
+## Verified participation
+
+Use `record-participation` only after the trusted coordinator verifies an actual
+outcome source. Supply activity_id, participant_id, program, on date, status,
+attended, minutes, source and authority. Confirmed records require observed
+attendance and minutes; missing/disputed records use null for both. An assignment,
+RSVP or sent notice is never outcome evidence. Correct with expected_revision from
+the last result; stale corrections fail. `participation-history` retains original
+and corrected values privately. This is an operator attestation, not a public
+participant form or independent validation of the source's truth.
+
+
 ## Staffed shifts
 
 Use `add-shift` with id, title, capacity and explicit `slots`. Every slot contains
