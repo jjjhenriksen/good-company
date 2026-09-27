@@ -50,6 +50,23 @@ shown as `free`; do not assume `ln_p1` will remain free.
 
 ## 3. Run a private preview
 
+For an additional isolated preview on a machine that already runs Good Company,
+use a separate clone, then choose an unused local port and a unique Compose
+project name before the commands below. For example:
+
+```sh
+export COMPOSE_PROJECT_NAME=good-company-install-acceptance
+export GOOD_COMPANY_DASHBOARD_PORT=3017
+```
+
+Use these same values for every build, startup, logs, stop and resume command in
+that preview's terminal. The project name gives the preview separate state volumes;
+the port moves its dashboard to `http://localhost:3017` and updates the proxy's
+allowed local origins. Each fresh agent also needs its own free Plow line and
+credential file. Do not copy another installation's credentials or reuse its project
+name. With neither variable set, the defaults remain project `good-company` and
+dashboard port 3007. All dashboard bindings remain loopback-only.
+
 Before allocating a Plow line, build and check runtime compatibility without
 credentials. The temporary `/dev/null` override applies only to these two
 commands; it does not create or overwrite `plow-credentials`:

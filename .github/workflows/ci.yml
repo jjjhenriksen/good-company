@@ -33,6 +33,7 @@ jobs:
         run: |
           PLOW_CREDENTIAL_FILE=/dev/null docker compose config --quiet
           PLOW_CREDENTIAL_FILE=/dev/null docker compose -f compose.yml -f compose.arm64.yml config --quiet
+          PLOW_CREDENTIAL_FILE=/dev/null COMPOSE_PROJECT_NAME=good-company-install-acceptance GOOD_COMPANY_DASHBOARD_PORT=3017 docker compose -f compose.yml -f compose.arm64.yml config --format json | python -c 'import json,sys; c=json.load(sys.stdin); p=c["services"]["agent"]["ports"][0]; assert p["host_ip"]=="127.0.0.1" and p["published"]=="3017" and p["target"]==3001; assert c["services"]["dev-dashboard"]["environment"]["GOOD_COMPANY_DASHBOARD_PORT"]=="3017"; assert c["volumes"]["state"]["name"]=="good-company-install-acceptance_state"; assert c["volumes"]["coordination"]["name"]=="good-company-install-acceptance_coordination"'
           test ! -e plow-credentials
           if docker compose config --quiet 2>/dev/null; then
             echo "Normal startup must still require plow-credentials"
