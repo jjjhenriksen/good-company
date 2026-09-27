@@ -140,3 +140,51 @@ class GoogleCalendarTests(unittest.TestCase):
         raw['summary'] = wrap('Title').replace('Source: google_api', 'Source: unknown')
         with self.assertRaises(ProviderError):
             GoogleCalendar._event(raw, 'cal')
+
+    def test_full_paginated_recurring_import_move_and_disappearance(self):
+        c = Coordinator(Path(self.tmp.name) / 'recurrence.sqlite')
+        c.configure(json.loads(Path('examples/profile.json').read_text())['profile'])
+        c.configure_autonomy(json.loads(Path('examples/autonomy.json').read_text())['policy'], 'fixture owner')
+        first, second = event('occurrence-1'), event('occurrence-2')
+        second['start']['dateTime'] = '2026-10-04T10:00:00-07:00'
+        second['end']['dateTime'] = '2026-10-04T11:00:00-07:00'
+        second['originalStartTime'] = copy.deepcopy(second['start'])
+        pages = {None: {'events': [first], 'nextPageToken': 'next'},
+                 'next': {'events': [second], 'nextPageToken': ''}}
+        original_call = self.call
+
+        def paged_call(name, arguments):
+            argv = arguments['argv']
+            if argv != ['plow-gog', 'accounts']:
+                cursor = argv[argv.index('--page') + 1] if '--page' in argv else None
+                self.data = pages[cursor]
+            return original_call(name, arguments)
+
+        self.ops.call = paged_call
+        try:
+            result = import_complete_calendar(c, self.provider, 'demo-events-only', START, END)
+            self.assertEqual(result['imported'], 2)
+            before = {row['payload']['id']: row for row in c.events()}
+            self.assertEqual(set(before), {'occurrence-1', 'occurrence-2'})
+            # A moved instance retains its identity; an absent instance is cancelled
+            # only after the complete replacement snapshot has been exhausted.
+            moved = copy.deepcopy(first)
+            moved['start']['dateTime'] = '2026-09-27T12:00:00-07:00'
+            moved['end']['dateTime'] = '2026-09-27T13:00:00-07:00'
+            pages[None] = {'events': [moved], 'nextPageToken': ''}
+            self.provider.cycle_id = 'moved-and-cancelled'
+            import_complete_calendar(c, self.provider, 'demo-events-only', START, END)
+            after = {row['payload']['id']: row for row in c.events()}
+            self.assertEqual(after['occurrence-1']['id'], before['occurrence-1']['id'])
+            self.assertEqual(after['occurrence-1']['start'], '2026-09-27T19:00:00+00:00')
+            self.assertEqual(after['occurrence-2']['cancelled'], 1)
+            # An incomplete later page must not roll back the known state.
+            stable = c.events()
+            pages[None] = {'events': [first], 'nextPageToken': 'next'}
+            pages['next'] = {'events': [], 'nextPageToken': '', 'truncated': True}
+            self.provider.cycle_id = 'incomplete-refresh'
+            with self.assertRaises(ProviderError):
+                import_complete_calendar(c, self.provider, 'demo-events-only', START, END)
+            self.assertEqual(c.events(), stable)
+        finally:
+            c.db.close()
