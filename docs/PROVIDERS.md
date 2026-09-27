@@ -46,3 +46,13 @@ check, state change and replay receipt share one transaction. Only an opaque
 provider evidence reference is retained, not the message body or credentials.
 The trusted-operator CLI remains powerful; this does not create a public-user
 sandbox. Live genuine/spoofed provider acceptance remains unverified (#29).
+
+### Observed connection blocker (2026-09-26)
+
+The deployed MCP endpoint returns HTTP 503 with the specific status `Device is not
+connected`. The official signed Plow Latch app has now been installed on the test
+Mac and reaches its phone-verification screen. The authenticated Plow account has
+zero connected Google accounts. Phone verification and the intended Google account
+connection remain necessary before tool-schema verification or unattended delivery
+can be claimed. The probe reports this recovery path without echoing arbitrary
+provider response bodies. No live mail has been sent by this check.
