@@ -1,19 +1,22 @@
-# Working-agent recording plan (#13)
+# Working-agent media (#13)
 
-Status: blocked by #9's genuine provider lifecycle proof. No usable published video
-or actual-agent screenshot has been claimed by this recording plan. The native real-model
-setup and retrieval runs provide a working opening segment, not delivery evidence.
+Status: an actual-agent image and playable sampled screen capture are now available
+in [docs/media](../media/README.md), with provenance and file hashes. The recording
+shows genuine sourced answers and a read-only check of previously verified reminder
+and assignment receipts. It sends no new messages and does not show a current inbox
+check or prove unattended scheduling.
 
-Record one continuous concise sequence using fictional data:
-- Show the actual agent answering a source question with its source/section citation.
-- Show the saved scope and disabled/unavailable connection accurately if still blocked.
-- Once authorized test delivery works, show a due reminder, actual provider receipt
-  and inbox observation, followed by a repeat cycle with no duplicate.
-- Show assignment, independently verified decline and qualified replacement.
+Remaining acceptance work:
+- Finish #9's genuine provider lifecycle proof, including independently verified
+  decline and qualified replacement.
+- Record the delivery/inbox lifecycle and repeat-cycle no-duplicate evidence in
+  the working agent, with fictional people and sources.
+- Publish usable public media URLs when the release is ready. Repository links
+  currently require private-repository access.
 
 Frame only the actual agent window. Exclude credentials, account identities,
 private logs, real membership data and unrelated desktop content. Do not animate
-or reconstruct a fake provider receipt. Capture a still from the working agent
-sequence, review every frame and audio segment, then publish stable media URLs.
-Record exact commit/image and scene-to-receipt references alongside the URLs.
-A logo or generated illustration cannot replace the required actual-agent image.
+or reconstruct a fake provider receipt. Review all source frames and any audio,
+and record exact runtime image/source plus scene-to-receipt references. A logo or
+illustration cannot replace the actual-agent image. Keep #13 open until its full
+acceptance criteria are verified.
