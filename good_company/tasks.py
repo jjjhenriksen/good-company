@@ -12,18 +12,7 @@ from .core import Coordinator, required, stamp, iso, digest
 class WorkCoordinator(Coordinator):
     def __init__(self, path):
         super().__init__(path)
-        self.db.executescript('''
-        CREATE TABLE IF NOT EXISTS volunteers(id TEXT PRIMARY KEY, payload TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, payload TEXT NOT NULL, status TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS assignments(
-          id TEXT PRIMARY KEY, task_id TEXT NOT NULL, volunteer_id TEXT NOT NULL,
-          status TEXT NOT NULL, policy_hash TEXT NOT NULL,
-          UNIQUE(task_id, volunteer_id));
-        CREATE TABLE IF NOT EXISTS task_notices(
-          id TEXT PRIMARY KEY, assignment_id TEXT NOT NULL, kind TEXT NOT NULL,
-          due TEXT NOT NULL, status TEXT NOT NULL, message TEXT NOT NULL, receipt TEXT,
-          UNIQUE(assignment_id, kind));
-        ''')
+
 
     def set_volunteer(self, volunteer, authority, now=None):
         required(authority, 'roster source or authorization reference')
@@ -166,8 +155,11 @@ class WorkCoordinator(Coordinator):
 
     def _notice(self, assignment_id, t, v, kind, due, policy):
         aid = digest([assignment_id, kind])[:24]
-        date = stamp(t['start']).astimezone(ZoneInfo(self.profile()['timezone'])).strftime('%A, %B %-d at %-I:%M %p %Z')
-        prefix = 'Your task' if kind == 'assignment' else 'Task reminder'
+        from .localization import date_text, time_text, term
+        profile = self.profile()
+        date = date_text(t['start'], profile) + ' at ' + time_text(t['start'], profile)
+        task_term = term(profile, 'task')
+        prefix = 'Your ' + task_term if kind == 'assignment' else task_term.capitalize() + ' reminder'
         message = {'sender': policy['sender'], 'to': [v['email']], 'bcc': [],
                    'subject': f'{prefix}: {t["title"]}',
                    'body': f'Hi {v["name"]},\n\n{t["title"]}\nWhen: {date}\n\nThis is within the work you agreed to help with. If your availability has changed, reply and I will find another arrangement.\n\n{self.profile()["signoff"]}'}
@@ -306,6 +298,30 @@ class WorkCoordinator(Coordinator):
             self.db.execute("UPDATE task_notices SET status='cancelled' WHERE assignment_id=? AND status='pending'", (assignment_id,))
             self.log('task_declined', assignment_id, {'authority': authority}, stamp(now))
         return {'assignment_id': assignment_id, 'status': 'declined', 'next': 'Run delegate to find another eligible volunteer.'}
+
+    def overdue_tasks(self, now=None):
+        now = stamp(now)
+        overdue = []
+        for row in self.db.execute("SELECT id,payload FROM tasks WHERE status='open'"):
+            task = json.loads(row['payload'])
+            if stamp(task['end']) < now:
+                assignment_count = self.db.execute("SELECT count(*) FROM assignments WHERE task_id=? AND status='assigned'", (row['id'],)).fetchone()[0]
+                overdue.append({'task_id': row['id'], 'title': task['title'], 'ended_at': task['end'],
+                                'active_assignments': assignment_count, 'status': 'overdue_unresolved',
+                                'next': 'Verify completion, cancel, or record follow-up; capacity remains reserved until an explicit lifecycle transition.'})
+        return {'overdue': sorted(overdue, key=lambda item: (item['ended_at'], item['task_id']))}
+
+    def follow_up_task(self, task_id, outcome, authority, note, now=None):
+        required(authority, 'verified follow-up reference'); required(note, 'follow-up outcome note')
+        if outcome not in ('still_open', 'completed', 'cancelled'):
+            raise ValueError('Choose still_open, completed, or cancelled; never infer completion.')
+        if outcome in ('completed', 'cancelled'):
+            return self.close_task(task_id, outcome, authority, now=now)
+        with self.db:
+            if not self.db.execute("SELECT 1 FROM tasks WHERE id=? AND status='open'", (task_id,)).fetchone():
+                raise ValueError('No open task with that ID.')
+            self.log('task_follow_up', task_id, {'outcome': outcome, 'authority': authority, 'note': note}, stamp(now))
+        return {'task_id': task_id, 'status': 'open', 'capacity_released': False}
 
     def close_task(self, task_id, status, authority, now=None):
         if status not in ('completed', 'cancelled'):
