@@ -109,12 +109,10 @@ class SetupCoordinator(CorrectionCoordinator):
         fresh = bool(refreshes) and all(value and timedelta(0) <= now - stamp(value) <= timedelta(minutes=15) for value in refreshes)
         if not fresh:
             reasons.append('Refresh every authorized calendar scope completely.')
-        source_dates = [r[0] for r in self.db.execute('SELECT max(updated) FROM knowledge GROUP BY source')]
-        stale_sources = sum(stamp(value) > now or now - stamp(value) > timedelta(days=180) for value in source_dates)
-        if stale_sources:
-            reasons.append('Review stale document sources.')
-        source_state = {'documents': len(source_dates), 'stale': stale_sources,
-                        'status': 'not_supplied' if not source_dates else ('needs_review' if stale_sources else 'current')}
+        from .knowledge import source_readiness
+        source_state = source_readiness(self, now)
+        if source_state['status'] == 'needs_review':
+            reasons.append('Review document applicability, review dates and missing review metadata.')
         counts = {}
         for table in ('reminders', 'task_notices', 'corrections'):
             for row in self.db.execute(f'SELECT status,count(*) FROM {table} GROUP BY status'):

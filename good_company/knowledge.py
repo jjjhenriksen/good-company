@@ -18,12 +18,8 @@ def validate_metadata(metadata):
         raise ValueError('Source effective_until must follow effective_from.')
 
 
-def retrieve_versions(coordinator, query, audience, on, now):
-    """Use an ephemeral FTS index for applicable archived versions and legacy text.
-
-    The persistent archive stays immutable. Current source privacy also gates its
-    prior versions, so reclassification cannot expose older public copies.
-    """
+def _select_versions(coordinator, audience, on, now):
+    """Select evidence once for retrieval and aggregate readiness reporting."""
     day = date.fromisoformat(on) if on else stamp(now).date()
     current = {}
     for row in coordinator.db.execute('SELECT source,audience FROM knowledge'):
@@ -53,6 +49,39 @@ def retrieve_versions(coordinator, query, audience, on, now):
         if row['source'] in versioned_sources or row['source'] in retired or (audience != 'coordinator' and row['audience'] == 'coordinator'):
             continue
         selected.append(tuple(row) + ('legacy-unreviewed',))
+    versions = {}
+    for chunk in selected:
+        versions.setdefault(chunk[0], set()).add(chunk[6])
+    for source, values in versions.items():
+        if len(values) > 1:
+            gaps.append({'source': source, 'reason': 'overlapping_applicable_versions'})
+    return selected, gaps
+
+
+def source_readiness(coordinator, now):
+    """Private aggregate status, using the same source decisions as retrieval."""
+    from datetime import timedelta
+    now = stamp(now)
+    selected, gaps = _select_versions(coordinator, 'coordinator', None, now)
+    sources = {row[0] for row in coordinator.db.execute('''SELECT DISTINCT source FROM knowledge
+        WHERE source NOT IN (SELECT source FROM retired_sources)''')}
+    unreviewed = {chunk[0] for chunk in selected if chunk[6] == 'legacy-unreviewed'}
+    stale = {chunk[0] for chunk in selected if chunk[0] in unreviewed
+             and (stamp(chunk[4]) > now or now - stamp(chunk[4]) > timedelta(days=180))}
+    review_gaps = {gap['source'] for gap in gaps}
+    return {'documents': len(sources), 'stale': len(stale),
+            'unreviewed': len(unreviewed), 'review_gaps': len(review_gaps),
+            'status': ('not_supplied' if not sources else
+                       'needs_review' if unreviewed or review_gaps else 'current')}
+
+
+def retrieve_versions(coordinator, query, audience, on, now):
+    """Use an ephemeral FTS index for applicable archived versions and legacy text.
+
+    The persistent archive stays immutable. Current source privacy also gates its
+    prior versions, so reclassification cannot expose older public copies.
+    """
+    selected, gaps = _select_versions(coordinator, audience, on, now)
     index = sqlite3.connect(':memory:')
     index.row_factory = sqlite3.Row
     try:
@@ -66,12 +95,6 @@ def retrieve_versions(coordinator, query, audience, on, now):
             if item['version'] == 'legacy-unreviewed':
                 item['review_status'] = 'legacy_metadata_unknown'
             evidence.append(item)
-        versions = {}
-        for chunk in selected:
-            versions.setdefault(chunk[0], set()).add(chunk[6])
-        for source, values in versions.items():
-            if len(values) > 1:
-                gaps.append({'source': source, 'reason': 'overlapping_applicable_versions'})
         return evidence, gaps
     finally:
         index.close()
