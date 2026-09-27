@@ -129,6 +129,17 @@ completed or cancelled. The latter two use the existing lifecycle transition and
 stop unsent notices. Keep follow-up notes private; do not infer reliability from
 missing outcomes or missed windows.
 
+For opt-in signup shifts, set `signup_required: true` on add-shift. The allocator
+will not fill those slots automatically. A trusted provider adapter may invoke
+signups.apply with independently verified signup, accept_offer or decline_offer
+replies. An offer reserves capacity (and personal workload); only an owned verified
+RSVP confirms it. Waiting participants remain unconfirmed. Declines reopen only
+the targeted slot and reserve the next still-eligible waitlisted participant.
+Replays and spoofed identities are rejected. Pending offers do not expire silently;
+the operator must reconcile stalled offers. No CLI takes a caller-supplied verified
+flag. Live provider intake and offer delivery remain unverified and must not be
+presented as working merely because contract fixtures pass.
+
 `allocation-report` gives the trusted coordinator recorded selection reasons and
 aggregate workload distribution; optionally filter decisions by task_id. Hard
 eligibility checks precede ranking. The recorded ordering uses stated preferred

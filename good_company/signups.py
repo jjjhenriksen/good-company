@@ -1,0 +1,65 @@
+"""Verified provider replies for reserved shift offers, RSVPs and waitlists."""
+import json
+from .core import digest, stamp, iso
+from .providers import authenticated_account, ProviderError
+from .replies import VerifiedReply
+
+
+def apply(coordinator, provider, message_id, now=None):
+    account=authenticated_account(provider);reply=provider.verified_reply(message_id)
+    if not isinstance(reply,VerifiedReply) or not reply.authenticated or reply.message_id!=message_id or not reply.evidence:
+        raise ProviderError('unverified_signup_identity')
+    if reply.action not in ('signup','accept_offer','decline_offer'):raise ProviderError('unsupported_signup_action')
+    now=stamp(now);db=coordinator.db;receipt='shift-reply:'+digest([account.provider,account.account_id,message_id])
+    with db:
+        db.execute('BEGIN IMMEDIATE')
+        if db.execute('SELECT 1 FROM settings WHERE key=?',(receipt,)).fetchone():raise ProviderError('reply_already_processed')
+        policy=coordinator.autonomy()
+        if not policy or not policy['enabled'] or account.sender.casefold()!=policy['sender'].casefold():raise ProviderError('signup_account_outside_remit')
+        people=[json.loads(r[0]) for r in db.execute('SELECT payload FROM volunteers')]
+        actors=[v for v in people if v['email'].casefold()==reply.sender.casefold()]
+        if len(actors)!=1:raise ProviderError('sender_not_unique_in_roster')
+        actor=actors[0]
+        row=db.execute("SELECT payload FROM tasks WHERE id=? AND status='open'",(reply.target_id,)).fetchone()
+        if not row:raise ProviderError('slot_not_open')
+        task=json.loads(row[0]);task_id=task['id']
+        if not task.get('signup_required') or task['category'] not in policy['allowed_task_categories'] or stamp(task['start'])<=now:
+            raise ProviderError('slot_outside_signup_scope')
+        wait_key='waitlist:'+task_id
+        row=db.execute('SELECT value FROM settings WHERE key=?',(wait_key,)).fetchone()
+        waiting=json.loads(row[0]) if row else []
+        reservation=db.execute("SELECT * FROM assignments WHERE task_id=? AND status IN ('assigned','offered')",(task_id,)).fetchone()
+        def reserve(person):
+            assignment_id=digest([task_id,person['id']])[:24]
+            if db.execute('SELECT 1 FROM assignments WHERE id=?',(assignment_id,)).fetchone():return None
+            db.execute("INSERT INTO assignments VALUES(?,?,?,'offered',?)",(assignment_id,task_id,person['id'],digest(policy)))
+            coordinator.log('shift_offer_reserved',task_id,{'assignment_id':assignment_id},now)
+            return assignment_id
+        if reply.action=='signup':
+            if not coordinator._eligible(actor,task,policy):raise ProviderError('signup_ineligible_or_no_personal_capacity')
+            if reservation and reservation['volunteer_id']==actor['id']:raise ProviderError('already_reserved_or_confirmed')
+            if db.execute('SELECT 1 FROM assignments WHERE task_id=? AND volunteer_id=?',(task_id,actor['id'])).fetchone():raise ProviderError('previous_slot_outcome_requires_owner_review')
+            if reservation:
+                if actor['id'] not in waiting:waiting.append(actor['id'])
+                state='waitlisted'
+            else:reserve(actor);state='offered'
+        elif reply.action=='accept_offer':
+            if not reservation or reservation['volunteer_id']!=actor['id'] or reservation['status']!='offered':raise ProviderError('offer_not_owned_by_sender')
+            if not coordinator._eligible(actor,task,policy):raise ProviderError('offer_no_longer_eligible')
+            db.execute("UPDATE assignments SET status='assigned',policy_hash=? WHERE id=?",(digest(policy),reservation['id']))
+            coordinator.log('shift_rsvp_confirmed',task_id,{'assignment_id':reservation['id'],'evidence':reply.evidence},now)
+            state='confirmed'
+        else:
+            if reservation and reservation['volunteer_id']==actor['id']:
+                db.execute("UPDATE assignments SET status='declined' WHERE id=?",(reservation['id'],))
+                coordinator._retire_pending(task_id)
+                for candidate_id in list(waiting):
+                    candidate=next((v for v in people if v['id']==candidate_id),None)
+                    if candidate and coordinator._eligible(candidate,task,policy) and reserve(candidate):
+                        waiting.remove(candidate_id);break
+            elif actor['id'] in waiting:waiting.remove(actor['id'])
+            else:raise ProviderError('no_owned_offer_or_waitlist_entry')
+            state='declined'
+        db.execute('INSERT OR REPLACE INTO settings VALUES(?,?)',(wait_key,json.dumps(waiting)))
+        db.execute('INSERT INTO settings VALUES(?,?)',(receipt,json.dumps({'status':state,'at':iso(now),'evidence':reply.evidence})))
+    return {'status':state,'task_id':reply.target_id,'scope':'Offer/RSVP state only; no provider message or attendance is asserted.'}
