@@ -1,3 +1,4 @@
+import json
 import unittest
 import test_tasks as base
 from good_company.corrections import CorrectionCoordinator
@@ -50,7 +51,7 @@ class CorrectionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Reconcile'):
             self.create()
 
-    def test_cancelled_event_correction_preserves_original_and_claims_once(self):
+    def cancelled_event(self):
         from test_core import snapshot, DUE
         data = snapshot()
         data['events'][0].pop('attire', None)
@@ -65,6 +66,46 @@ class CorrectionTests(unittest.TestCase):
         self.c.import_calendar(data, now=DUE)
         message = {k: original[k] for k in ('sender', 'to', 'bcc')}
         message.update(subject='Event cancelled', body='The service activity has been cancelled.')
+        return rid, message
+
+    def test_correction_cannot_expose_original_bcc_recipients(self):
+        from test_core import DUE
+        rid, message = self.cancelled_event()
+        self.assertGreater(len(message['bcc']), 1)
+        message['to'], message['bcc'] = message['bcc'], []
+        with self.assertRaisesRegex(ValueError, 'hidden'):
+            self.c.create_correction('event', rid, message, digest(message), 'verified cancellation', now=DUE)
+        self.assertEqual(self.c.correction_queue(), [])
+
+    def test_legacy_correction_visibility_is_rechecked_at_claim(self):
+        from test_core import DUE
+        rid, message = self.cancelled_event()
+        cid = self.c.create_correction('event', rid, message, digest(message), 'verified cancellation', now=DUE)['id']
+        message['to'], message['bcc'] = [a.upper() for a in message['bcc']], []
+        with self.c.db:
+            self.c.db.execute('UPDATE corrections SET message=? WHERE id=?', (json.dumps(message), cid))
+        with self.assertRaisesRegex(ValueError, 'hidden'):
+            self.c.correction_claim(cid, now=DUE)
+        self.assertEqual(self.c.correction_queue()[0]['status'], 'pending')
+        self.assertEqual(self.c.reminder(rid)['receipt'], 'event-receipt')
+
+    def test_private_subset_correction_accepts_case_insensitive_identity(self):
+        from test_core import DUE
+        rid, message = self.cancelled_event()
+        message['bcc'] = [message['bcc'][0].upper()]
+        cid = self.c.create_correction('event', rid, message, digest(message), 'verified cancellation', now=DUE)['id']
+        claim = self.c.correction_claim(cid, now=DUE)
+        self.assertEqual(claim['message'], message)
+        self.assertEqual(claim['message']['to'], [])
+
+    def test_case_variant_duplicate_correction_recipients_are_rejected(self):
+        self.message['bcc'] = [self.message['to'][0].upper()]
+        with self.assertRaisesRegex(ValueError, 'original recipients'):
+            self.create()
+
+    def test_cancelled_event_correction_preserves_original_and_claims_once(self):
+        from test_core import DUE
+        rid, message = self.cancelled_event()
         cid = self.c.create_correction('event', rid, message, digest(message), 'verified calendar cancellation', now=DUE)['id']
         self.c.correction_claim(cid, now=DUE)
         with self.assertRaises(ValueError):

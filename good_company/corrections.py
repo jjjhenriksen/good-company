@@ -48,10 +48,15 @@ class CorrectionCoordinator(WorkCoordinator):
         if any(not isinstance(message[key], list) or any(not isinstance(a, str) for a in message[key]) for key in ('to', 'bcc')):
             raise ValueError('Recipient fields must be address lists.')
         recipients = message['to'] + message['bcc']
+        recipient_ids = [address.casefold() for address in recipients]
         previous = json.loads(original['message'])
-        allowed = set(previous.get('to', []) + previous.get('bcc', [])) & set(policy['allowed_recipients'])
-        if not recipients or len(recipients) != len(set(recipients)) or not set(recipients) <= allowed:
+        previous_to = {address.casefold() for address in previous.get('to', [])}
+        previous_bcc = {address.casefold() for address in previous.get('bcc', [])}
+        allowed = (previous_to | previous_bcc) & {address.casefold() for address in policy['allowed_recipients']}
+        if not recipients or len(recipient_ids) != len(set(recipient_ids)) or not set(recipient_ids) <= allowed:
             raise ValueError('Corrections may contact only still-authorized original recipients.')
+        if not {address.casefold() for address in message['to']} <= previous_to:
+            raise ValueError('Original hidden recipients must remain in BCC.')
         if message['sender'] != policy['sender']:
             raise ValueError('Use the current authorized sender.')
         if any(not self.contact_allowed(a) for a in recipients):
