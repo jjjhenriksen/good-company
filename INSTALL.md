@@ -37,6 +37,36 @@ shown as `free`; do not assume `ln_p1` will remain free.
 
 ## 3. Run a private preview
 
+Before allocating a Plow line, build and check runtime compatibility:
+
+```sh
+docker compose build agent
+docker compose run --rm --no-deps --entrypoint python3 agent /opt/good-company/runtime_preflight.py
+```
+
+Compose needs its environment file even for this check; before minting credentials,
+create an empty `plow-credentials` file if none exists (never overwrite an existing
+credential file). A passing result only checks syscall support. An `openat2`
+`Function not implemented` failure means this Linux emulation cannot run the pinned
+OpenClaw state filesystem. Use a compatible Linux host. Do not bypass filesystem
+containment, repeatedly reset the state volume, or count the build as a live boot.
+For the tested native Apple Silicon preview, add `-f compose.arm64.yml` to the
+Compose command after `-f compose.yml`. For example:
+
+```sh
+docker compose -f compose.yml -f compose.arm64.yml build agent
+docker compose -f compose.yml -f compose.arm64.yml run --rm --no-deps --entrypoint python3 agent /opt/good-company/runtime_preflight.py
+```
+
+Use the same file pair for startup, logs, stop and restart. Mint the selected Plow
+line's credential with `plow-agents mint LINE_ID`, then start this native Compose
+configuration directly; the generic `deploy --local` command uses the default
+AMD64 file. The native path passed boot, actual model-response and restart-state
+checks; connected calendar/mail remains unverified.
+The initial Apple Silicon x86-emulation attempt hit this failure; see
+[the runtime evidence](docs/RUNTIME-VALIDATION.md).
+
+
 From this project directory, replacing LINE_ID with that free line:
 
 ```sh
@@ -45,7 +75,9 @@ docker compose ps
 docker compose logs --tail 100 agent
 ```
 
-Compose builds Linux/amd64 and stores data in a named volume. The dashboard is
+Compose builds Linux/amd64 and uses separate named volumes for OpenClaw runtime
+state and Good Company coordination data. This keeps the app database outside
+OpenClaw's protected managed-state directory while preserving it across restarts. The dashboard is
 [localhost:3007](http://localhost:3007). It is loopback-only and grants local
 operator access. Do not expose that port to other machines. The proxy accepts only localhost and
 127.0.0.1 Host names and the documented local Origin values, removes caller-supplied
@@ -119,3 +151,15 @@ history and reporting install identity. Back up the named volume privately.
 
 For organization-specific terminology, use cases and upgrading the renamed skills,
 see [the adaptation guide](docs/ADAPTING.md).
+
+
+### Migrating an existing coordination database
+
+Stop the gateway and scheduler before changing volumes. Earlier previews stored
+`good-company/state.sqlite` inside the Plow state volume. Back up that entire
+volume privately, then use SQLite's backup API to copy the stopped coordination
+database into the new coordination volume as `state.sqlite`, owned by uid/gid 1000
+with mode 0600. Keep the old database and backup until the migrated policy and
+receipts are verified. Never initialize a replacement empty ledger for an existing
+installation: it would lose deduplication history. Back up both volumes together
+while stopped; the runtime volume retains the reporter install identity.
