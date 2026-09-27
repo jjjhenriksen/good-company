@@ -101,3 +101,21 @@ def safe_error(error, request):
     except RecursionError:
         return 'Request nesting exceeds the supported limit.'
     return detail[:500]
+
+
+SETTINGS_FIELDS = {
+    'profile': frozenset({'organization', 'timezone', 'greeting', 'signoff',
+        'audience', 'reminder_days', 'send_hour', 'locale', 'terminology'}),
+    'policy': frozenset({'enabled', 'sender', 'calendar_scopes', 'allowed_event_types',
+        'allowed_task_categories', 'allowed_recipients', 'reminder_recipients',
+        'cadence_days', 'task_reminder_hours', 'max_reminders_per_day',
+        'recipient_roles', 'program_audiences', 'event_contexts'}),
+}
+
+
+def validate_settings_fields(value, kind):
+    # Silently retained lookalike settings can misrepresent sending authority,
+    # pause state or limits to the owner even though the engine ignores them.
+    if not isinstance(value, dict) or set(value) - SETTINGS_FIELDS[kind]:
+        raise RequestError('Unsupported ' + kind + ' fields. Supported fields: '
+                           + ', '.join(sorted(SETTINGS_FIELDS[kind])) + '.')
