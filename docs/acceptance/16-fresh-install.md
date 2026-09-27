@@ -112,3 +112,34 @@ the public image can be obtained without maintainer registry credentials. Record
 any guide corrections as a patch and repeat the failed step from a fresh state.
 Finish with preserved install identity and a receipt-backed pass/fail table. Do not
 check the release checklist on the strength of a container build or fixture alone.
+
+## Fresh hosted public-image deployment — September 27, 2026
+
+The official Plow CLI requested a new hosted agent on a previously free line,
+using the existing owner account and the exact public AMD64 image below. Existing
+local installations, credentials and volumes were not modified.
+
+- Source: `5fa457253781a5d95680d2e7a9bda31d0128b6f5`.
+- Image: `ghcr.io/jjjhenriksen/good-company@sha256:438548cc74a5fcc79323c4d1b20cffe6780220e8b4576b1a7dcd6d615c524ce8`.
+- [Build and publication run](https://github.com/jjjhenriksen/good-company/actions/runs/36332812906)
+  completed successfully. All 479 installed-image tests and both fictional demos
+  passed before publication, along with the package and build-context gates.
+- Anonymous registry access returned the manifest and configuration. The manifest
+  bytes matched the registry digest; configuration identified Linux AMD64.
+- Plow transitioned from `provisioning` to `running`, with no reported failure code
+  and the requested image digest unchanged.
+- The supplied host initially lacked DNS, then resolved. Browser navigation reached
+  the hosting provider's authentication page. That page is not an authenticated
+  Good Company dashboard or proof of a model response.
+- The normal Plow owner controls could not be inspected further because the Mac
+  locked. No alternate login, security relaxation, setup SMS or email was used.
+- Plow subsequently accepted promotion of this digest for new installations and
+  the official CLI reported that the Index accepted its image update. The public
+  listing response does not expose an image field, so that mirror was not
+  independently readable there. The existing agents keep their
+  images. [Preview release v0.1.1](https://github.com/jjjhenriksen/good-company/releases/tag/v0.1.1)
+  records the same source and digest.
+
+The separate hosted test remains available for continuation. A hosted model reply,
+setup persistence, new phone/account activation and the actual Index texting flow
+remain unverified. Issue #16 stays open; a host status is not full install acceptance.
