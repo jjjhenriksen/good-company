@@ -24,6 +24,33 @@ The CLI queues and records work; connected provider tools perform external actio
 Schema examples live at `/opt/good-company/examples/` in the agent image and
 `examples/` in a source checkout. They are fictional shapes, not operating authority.
 
+## Inspect the deployed runtime before giving support instructions
+
+Distinguish the Plow-hosted agent from a local Docker preview. Inspect only the
+active gateway's port, bind and authentication mode and the process names/PIDs
+needed to identify its supervisor. Do not print the complete configuration,
+environment, process arguments, credentials or secret-bearing URLs. If configuration
+uses includes, inspect only those same selected fields in the included settings.
+
+The pinned Plow base uses gateway port 3000, loopback binding and trusted-proxy
+authentication. Confirm those deployed values; do not substitute OpenClaw's generic
+18789 default or assume systemd exists. A hosted loopback address is inside the
+agent, not the owner's computer. Its private host address is not automatically an
+owner dashboard link. Use a link actually supplied by Plow's owner controls; if
+none is available, say that dashboard access is unverified and use the assigned
+line for the response check. Do not create another hosting account or change
+authentication, bind addresses or proxy trust to make a dashboard reachable.
+
+For a local preview, use the owner's existing Compose project and documented
+restart command, preserving its platform overrides, credentials and volumes.
+For a hosted installation, use only a restart control or procedure documented
+for the actual hosting supervisor. If none is available, report that precise gap
+and leave restart acceptance pending. Do not recommend `update.run`, service
+installation/repair or process termination as substitutes for a verified restart
+path. An update changes the software and is not a restart test of the same image.
+Record a received model reply, agent-reported settings, independent state inspection
+and persistence across restart as separate observations.
+
 ## Set up the organization
 
 Use the organization’s own terms for its coordinator, participants and volunteers.
