@@ -1,0 +1,28 @@
+{
+  "observed_at": "2026-09-26 America/Los_Angeles",
+  "source_commit": "29772d7",
+  "runtime_image": "sha256:c8934bd9150844eedef6fb880c6dcdfeec65dbf681f8fc7997ed4a318a41d2cb",
+  "mode": "owner-approved fictional self-test; not unattended scheduling",
+  "provider": "Google Gmail and Calendar via deployed Plow Latch",
+  "calendar_fixture": {
+    "created": true,
+    "read_back": true,
+    "guests": 0,
+    "visibility": "private",
+    "transparency": "transparent"
+  },
+  "board_reminder": {
+    "claimed_before_send": true,
+    "provider_accepted": true,
+    "observed_in_inbox": true,
+    "receipt_sha256": "e6a3499f42efce59af78c7d399e34529545ea2bed492bcc49bfcf4d2cbb721ee",
+    "second_claim_refused": true,
+    "invented_attire_rule": false,
+    "private_conflict_title_exposed": false
+  },
+  "limitations": [
+    "Conflict input was a fictional local busy interval, not a fetched personal-calendar conflict.",
+    "One owner-controlled mailbox; no real participant deployment.",
+    "No operational scheduler or unattended-send acceptance."
+  ]
+}
