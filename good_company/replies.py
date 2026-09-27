@@ -69,6 +69,8 @@ def apply_verified_reply(coordinator, provider, message_id, now=None):
             if reply.action == 'decline':
                 db.execute("UPDATE assignments SET status='declined' WHERE id=?", (reply.target_id,))
                 db.execute("UPDATE task_notices SET status='cancelled' WHERE assignment_id=? AND status='pending'", (reply.target_id,))
+                from .signups import promote_waitlist
+                promote_waitlist(coordinator, assignment['task_id'], now)
                 coordinator.log('task_declined', reply.target_id, {'authority': authority}, now)
             else:
                 db.execute("UPDATE tasks SET status='completed' WHERE id=?", (assignment['task_id'],))

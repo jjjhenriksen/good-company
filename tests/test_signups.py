@@ -4,13 +4,77 @@ from pathlib import Path
 from test_shifts import ShiftTests
 from test_verified_replies import ReplyProvider
 from test_core import NOW
+from test_tasks import volunteer
 from good_company.replies import VerifiedReply
+from good_company.replies import apply_verified_reply
 from good_company.signups import apply
 from good_company.tasks import WorkCoordinator
 from good_company.providers import ProviderError
 
 
 class SignupTests(ShiftTests):
+    def confirmed_with_waitlist(self):
+        self.prepare()
+        for person in ['alex', 'sam']:
+            apply(self.c, self.reply(person, 'signup', person), person, now=NOW)
+        apply(self.c, self.reply('alex', 'accept_offer', 'accept'), 'accept', now=NOW)
+        return self.c.db.execute("SELECT id FROM assignments WHERE status='assigned'").fetchone()[0]
+
+    def test_normal_verified_decline_promotes_waitlist_without_confirming(self):
+        assignment = self.confirmed_with_waitlist()
+        provider = self.reply('alex', 'decline', 'normal-decline')
+        provider.reply = replace(provider.reply, target_id=assignment)
+        apply_verified_reply(self.c, provider, 'normal-decline', now=NOW)
+        status = self.c.shift_status('packing')
+        self.assertEqual(status['reserved_offers'], 1)
+        self.assertEqual(status['filled'], 0)
+        self.assertEqual(self.c.db.execute("SELECT volunteer_id FROM assignments WHERE status='offered'").fetchone()[0], 'sam')
+        with self.assertRaises(ProviderError):
+            apply_verified_reply(self.c, provider, 'normal-decline', now=NOW)
+
+    def test_operator_decline_promotes_waitlist(self):
+        assignment = self.confirmed_with_waitlist()
+        self.c.decline_task(assignment, 'alex', 'verified fixture', now=NOW)
+        self.assertEqual(self.c.shift_status('packing')['reserved_offers'], 1)
+
+    def test_decline_does_not_promote_someone_who_opted_out(self):
+        assignment = self.confirmed_with_waitlist()
+        person = volunteer('sam')
+        person['accepts_delegation'] = False
+        self.c.set_volunteer(person, 'participant opted out', now=NOW)
+        self.c.decline_task(assignment, 'alex', 'verified fixture', now=NOW)
+        status = self.c.shift_status('packing')
+        self.assertEqual(status['reserved_offers'], 0)
+        self.assertEqual(status['filled'], 0)
+
+    def test_decline_leaves_another_shift_reservation_intact(self):
+        assignment = self.confirmed_with_waitlist()
+        shift = self.shift()
+        shift.update(id='other', capacity=1, slots=shift['slots'][:1], signup_required=True)
+        shift['slots'][0].update(start='2026-09-29T17:00:00-07:00', end='2026-09-29T17:30:00-07:00')
+        self.c.add_shift(shift, 'different shift', now=NOW)
+        for person in ['alex', 'sam']:
+            message = 'other-' + person
+            provider = self.reply(person, 'signup', message)
+            provider.reply = replace(provider.reply, target_id='other:one')
+            apply(self.c, provider, message, now=NOW)
+        before = self.c.shift_status('other')
+        self.c.decline_task(assignment, 'alex', 'verified fixture', now=NOW)
+        self.assertEqual(self.c.shift_status('packing')['reserved_offers'], 1)
+        self.assertEqual(self.c.shift_status('other'), before)
+
+    def test_paused_decline_releases_without_promoting(self):
+        assignment = self.confirmed_with_waitlist()
+        policy = self.c.autonomy()
+        policy['enabled'] = False
+        self.c.configure_autonomy(policy, 'owner paused', now=NOW)
+        provider = self.reply('alex', 'decline', 'paused-decline')
+        provider.reply = replace(provider.reply, target_id=assignment)
+        apply_verified_reply(self.c, provider, 'paused-decline', now=NOW)
+        status = self.c.shift_status('packing')
+        self.assertEqual(status['reserved_offers'], 0)
+        self.assertEqual(status['filled'], 0)
+
     def reply(self,sender,action,message):
         p=ReplyProvider();p.reply=VerifiedReply(message,sender+'@example.invalid',True,'verified-fixture',action,'packing:one');return p
 

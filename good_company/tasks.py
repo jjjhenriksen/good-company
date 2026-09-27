@@ -297,14 +297,19 @@ class WorkCoordinator(Coordinator):
 
     def decline_task(self, assignment_id, volunteer_id, authority, now=None):
         required(authority, 'verified volunteer response reference')
+        now = stamp(now)
         with self.db:
+            self.db.execute('BEGIN IMMEDIATE')
             row = self.db.execute('SELECT * FROM assignments WHERE id=?', (assignment_id,)).fetchone()
             if not row or row['volunteer_id'] != volunteer_id or row['status'] != 'assigned':
                 raise ValueError('No active assignment for this volunteer.')
             self.db.execute("UPDATE assignments SET status='declined' WHERE id=?", (assignment_id,))
             self.db.execute("UPDATE task_notices SET status='cancelled' WHERE assignment_id=? AND status='pending'", (assignment_id,))
-            self.log('task_declined', assignment_id, {'authority': authority}, stamp(now))
-        return {'assignment_id': assignment_id, 'status': 'declined', 'next': 'Run delegate to find another eligible volunteer.'}
+            from .signups import promote_waitlist
+            offered = promote_waitlist(self, row['task_id'], now)
+            self.log('task_declined', assignment_id, {'authority': authority}, now)
+        return {'assignment_id': assignment_id, 'status': 'declined',
+                'next': 'Waitlist replacement offered; participation is not confirmed.' if offered else 'Run delegate for automatic tasks; signup slots require an eligible signup or waitlisted participant.'}
 
     def overdue_tasks(self, now=None):
         now = stamp(now)
