@@ -1,0 +1,10 @@
+{
+  "issue": 57,
+  "scope": "local preflight using existing fictional contract fixtures",
+  "commit": "29772d7e891f274b25f2a3bb1ada6ef89f6327d1",
+  "tests_run": 7,
+  "passed": true,
+  "live_acceptance": "pending",
+  "provider_receipts": [],
+  "messages_sent": 0
+}
