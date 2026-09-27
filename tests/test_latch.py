@@ -98,7 +98,7 @@ class LatchTests(unittest.TestCase):
         self.assertEqual(len(self.calls), 5)
 
     def test_malformed_results_do_not_become_success(self):
-        for i, payload in enumerate(({}, {'status': 'completed'}, {'status': 'pending'}, {'status': 'invented'})):
+        for i, payload in enumerate(({}, {'status': 'completed', 'exit_code': '0'}, {'status': 'pending'}, {'status': 'invented'})):
             self.responses = [payload]
             self.assertEqual(self.operations.execute(str(i), ['plow-gog', '--help'], 'Read help')['state'], 'uncertain')
         with self.assertRaises(ProviderError):
@@ -117,6 +117,17 @@ class LatchTests(unittest.TestCase):
             with self.assertRaises(ProviderError):
                 LatchMCP._https(value)
         LatchMCP._https('https://example.com/mcp')
+
+    def test_error_envelope_preserves_gatekeeper_denial(self):
+        payload = response({'status': 'denied', 'reason': 'outside owner instructions'})
+        payload['isError'] = True
+        self.operations.call = lambda *args: payload
+        self.assertEqual(self.execute()['state'], 'denied')
+        self.assertEqual(self.execute()['result']['reason'], 'outside owner instructions')
+
+    def test_structured_accounts_completion_without_process_exit(self):
+        self.responses = [{'status': 'completed', 'accounts': [], 'degraded': []}]
+        self.assertEqual(self.execute()['state'], 'completed')
 
     def transport(self, raw):
         client = object.__new__(LatchMCP)

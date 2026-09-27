@@ -64,7 +64,7 @@ def import_complete_calendar(coordinator, provider, scope, start, end, now=None)
     policy = coordinator.autonomy()
     if not policy or scope not in policy['calendar_scopes']:
         raise ProviderError('calendar_outside_standing_scope')
-    now = stamp(now)
+    fixed_now = stamp(now) if now is not None else None
     start, end = iso(start), iso(end)
     events, cursors, cursor, checked = [], set(), None, None
     for _ in range(1000):
@@ -72,7 +72,7 @@ def import_complete_calendar(coordinator, provider, scope, start, end, now=None)
         if page.scope != scope or not page.expanded or not page.complete_page:
             raise ProviderError('incomplete_or_unscoped_calendar')
         observed = stamp(page.checked_at)
-        if observed > now:
+        if observed > (fixed_now or stamp()):
             raise ProviderError('future_calendar_observation')
         checked = min(checked, observed) if checked else observed
         events.extend(page.events)
@@ -80,7 +80,7 @@ def import_complete_calendar(coordinator, provider, scope, start, end, now=None)
             raise ProviderError('calendar_payload_limit')
         if page.next_cursor is None:
             return coordinator.import_calendar({'calendar': scope, 'window_start': start, 'window_end': end,
-                                                'checked_at': iso(checked), 'complete': True, 'events': events}, now=now)
+                                                'checked_at': iso(checked), 'complete': True, 'events': events}, now=fixed_now or stamp())
         if not page.next_cursor or page.next_cursor in cursors:
             raise ProviderError('invalid_calendar_pagination')
         cursors.add(page.next_cursor)

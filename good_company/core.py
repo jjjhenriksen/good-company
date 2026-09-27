@@ -487,7 +487,11 @@ class Coordinator:
                 # Date-only events cannot silently become midnight appointments.
                 date = datetime.strptime(event['start'], '%Y-%m-%d').date()
                 s = datetime.combine(date, time.min, ZoneInfo(self.profile()['timezone']))
-                e = s + timedelta(days=1)
+                if isinstance(event.get('end'), str) and len(event['end']) == 10:
+                    final_date = datetime.strptime(event['end'], '%Y-%m-%d').date()
+                    e = datetime.combine(final_date, time.min, ZoneInfo(self.profile()['timezone']))
+                else:
+                    e = s + timedelta(days=1)
             else:
                 s, e = stamp(event['start']), stamp(event['end'])
             if not s < e or not start <= s < end:
