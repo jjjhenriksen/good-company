@@ -1,0 +1,79 @@
+{
+  "status": "passed",
+  "source_commit": "c3d67b801ac48192b6ae6354c0f041b17cc8312c",
+  "image": "sha256:7c81f3cd0c9f9a7312b4db305eacef54e65d6042feab719ee6f5372a2ee8ad00",
+  "scheduler": {
+    "job_id": "ecc725d7-fc5e-45bd-9c35-747657a52f32",
+    "run_at": "2026-09-27T03:11:05.395+00:00",
+    "finished_at": "2026-09-27T03:11:35.883+00:00",
+    "duration_ms": 30488,
+    "status": "ok",
+    "completion_status": "succeeded",
+    "payload": "command",
+    "job_disabled_after_test": true
+  },
+  "authority": {
+    "owner_approved_two_self_emails": true,
+    "authenticated_google_identity": true,
+    "recipient_is_sender": true,
+    "interactive_per_send_approval": false,
+    "gatekeeper_enabled": true,
+    "original_gatekeeper_policy_restored": true,
+    "test_scope_paused_after_test": true
+  },
+  "calendar": {
+    "complete": true,
+    "page_count_per_cycle": 1,
+    "event_count": 1,
+    "window_start": "2026-10-03T19:00:00+00:00",
+    "window_end": "2026-10-03T20:00:00+00:00",
+    "writes": 0
+  },
+  "cycles": [
+    {
+      "cycle_id": "approved-scheduled-20260926-1",
+      "status": "completed",
+      "refreshed_scopes": 1,
+      "sent": 0,
+      "uncertain": 2,
+      "failed": 0,
+      "reconciled": 0,
+      "deferred": 0,
+      "planning_exceptions": 0
+    },
+    {
+      "cycle_id": "approved-scheduled-20260926-2",
+      "status": "completed",
+      "refreshed_scopes": 1,
+      "sent": 0,
+      "uncertain": 0,
+      "failed": 0,
+      "reconciled": 2,
+      "deferred": 0,
+      "planning_exceptions": 0
+    }
+  ],
+  "send_dispatch_count": 2,
+  "repeat_cycle_additional_sends": 0,
+  "receipts": [
+    {
+      "operation_sha256": "92b1ca2e7ac514d384b45ef452bb00adce49d24e504302d25a28ef62c8333cfa",
+      "message_id_sha256": "52c4e33b86afe3aec6a9564984b0d01332c421e90a0263d7dfc0b9bd047ffe55",
+      "accepted": true,
+      "inbox_observed": true,
+      "observed_at": "2026-09-27T03:12:02.454835+00:00"
+    },
+    {
+      "operation_sha256": "b0a4c35fb957ecedda70d94df0c8cdafd480a9e7f595f683c2f00d0fa9984bab",
+      "message_id_sha256": "88bfa74b10c2a0717316f5353391c5cca2ed96a835fdf13e67c8efceddb3ce6f",
+      "accepted": true,
+      "inbox_observed": true,
+      "observed_at": "2026-09-27T03:12:06.720946+00:00"
+    }
+  ],
+  "limits": [
+    "One isolated fictional self-test scope and one owner-controlled account.",
+    "One scheduled command ran two real-clock cycles; this does not prove separate future scheduler ticks.",
+    "No production organization sending remit, external reply identity, live recurring events or multipage results are established."
+  ]
+}
