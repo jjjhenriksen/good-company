@@ -781,7 +781,7 @@ class Coordinator:
             self._record_contacts('event', rid, item['message'], now)
             self.db.execute("UPDATE reminders SET status='sending',claimed_at=? WHERE id=?", (iso(now), rid))
             self.log('send_claim', rid, {'message_hash': digest(item['message'])}, now)
-        return {'id': rid, 'message': item['message'], 'instruction': 'Send these exact fields once. Record the provider receipt. Unknown outcome must be marked uncertain; never resend automatically.'}
+        return {'id': rid, 'message': item['message'], 'instruction': 'Send this exact content to these recipients once. BCC-only groups may use private individual copies without adding recipients. Record every provider receipt. Unknown outcome must be marked uncertain; never resend automatically.'}
 
     def receipt(self, rid, outcome, provider_id, now=None):
         if outcome not in ('sent', 'uncertain', 'failed'):
