@@ -206,6 +206,11 @@ A running container alone does not prove usage was accepted by the Index.
 `docker compose up -d` resumes it. Avoid `down -v`: it deletes the coordination
 history and reporting install identity. Back up the named volume privately.
 
+Use Compose for explicit restarts too: `docker compose restart agent` restarts the
+dashboard proxy after the agent so it joins the current network namespace. On
+Apple Silicon, keep the documented `-f compose.yml -f compose.arm64.yml` file pair;
+for an isolated preview, keep its project name and dashboard-port settings.
+
 For organization-specific terminology, use cases and upgrading the renamed skills,
 see [the adaptation guide](docs/ADAPTING.md).
 
