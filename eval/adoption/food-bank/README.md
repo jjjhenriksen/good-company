@@ -17,6 +17,8 @@ tokens and private message content out of this repository. Record release image,
 actual job/operation IDs, genuine provider acceptance, received-message observation,
 and repeat-run send counts separately. A unit-test receipt is not provider proof.
 
-Observed 2026-09-26: signed official Latch app is installed, awaiting phone
-verification; Plow account reports no connected Google account. No live messages
-were sent. Do not close this issue or mark this draft ready from local tests alone.
+Live baseline on 2026-09-26: Latch setup and Google connection completed. Four
+authorized owner-loopback emails were accepted and observed; reminder/task repeat
+claims were refused, and STOP cancelled two queued notices. See the board and
+mutual-aid live results. This scenario still needs its own outstanding acceptance
+evidence. Merging this preflight does not complete the linked issue.
