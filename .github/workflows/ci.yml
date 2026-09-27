@@ -29,6 +29,9 @@ jobs:
       - name: Exercise pinned development proxy
         if: matrix.python == '3.13'
         run: python scripts/check_proxy.py
+      - name: Verify exact Docker build context with fictional canaries
+        if: matrix.python == '3.13'
+        run: python scripts/check_build_context.py
       - name: Validate Compose without real credentials
         run: |
           PLOW_CREDENTIAL_FILE=/dev/null docker compose config --quiet
