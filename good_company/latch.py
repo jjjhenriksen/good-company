@@ -6,6 +6,7 @@ contain mail or calendar data. No retry here ever dispatches a command twice.
 import hashlib
 import json
 import sqlite3
+from datetime import datetime, timezone
 import urllib.parse
 import urllib.request
 
@@ -94,18 +95,21 @@ class LatchMCP:
 
 def unpack(response):
     """Accept the structured result or exactly one JSON text block."""
-    if not isinstance(response, dict) or response.get('isError'):
+    if not isinstance(response, dict):
         raise ProviderError('latch_tool_unconfirmed')
     if isinstance(response.get('structuredContent'), dict):
-        return response['structuredContent']
-    blocks = [item['text'] for item in response.get('content', [])
-              if item.get('type') == 'text']
-    try:
-        value = json.loads(blocks[0]) if len(blocks) == 1 else None
-    except (ValueError, TypeError):
-        value = None
+        value = response['structuredContent']
+    else:
+        blocks = [item['text'] for item in response.get('content', [])
+                  if item.get('type') == 'text']
+        try:
+            value = json.loads(blocks[0]) if len(blocks) == 1 else None
+        except (ValueError, TypeError):
+            value = None
     if not isinstance(value, dict):
         raise ProviderError('latch_result_unconfirmed')
+    if response.get('isError') and value.get('status') not in ('denied', 'blocked'):
+        raise ProviderError('latch_tool_unconfirmed')
     return value
 
 
@@ -174,6 +178,7 @@ class LatchOperations:
     def _save(self, operation_id, result, previous):
         if result.get('status') == 'ready' and isinstance(result.get('result'), dict):
             result = result['result']
+        result = dict(result, _received_at=datetime.now(timezone.utc).isoformat())
         state = result.get('status', 'uncertain')
         poll_tool, handle = None, None
         if state in ('pending', 'running'):
@@ -183,7 +188,7 @@ class LatchOperations:
             else:
                 poll_tool = 'plow_get_result' if state == 'pending' else 'plow_get_output'
         elif state == 'completed':
-            if type(result.get('exit_code')) is not int:
+            if 'exit_code' in result and type(result['exit_code']) is not int:
                 state = 'uncertain'
         elif state not in ('denied', 'blocked', 'failed', 'expired', 'unknown'):
             state = 'uncertain'
