@@ -57,12 +57,20 @@ calendar read with an empty complete result and no next-page cursor. The account
 owns its primary calendar. Private account/calendar identifiers remain outside
 this repository.
 
-The live Google Workspace skill establishes an important capability boundary:
-Latch shows each send for approval, and varying sends always ask. This does not
-establish unattended-send permission. Keep `Account.unattended_send` false until
-an actual supported unattended authorization exists. Do not bypass Latch or
-pretend manual approval proves unattended operation. No live email has yet been
-sent; the owner has been asked to authorize a bounded fictional self-test.
+The live Google Workspace skill describes a per-command approval boundary.
+Observed behavior is more specific: the AI Gatekeeper reviewed and allowed three
+owner-authorized fictional self-emails, but denied the fictional STOP reply as
+outside its current family-errand scope. A human click is not necessarily required
+for every send; an applicable Gatekeeper decision is. Existing policy does not
+establish a standing Good Company unattended-send remit. Keep
+`Account.unattended_send` false until that capability is genuinely established.
+Do not bypass Latch, alter a denied request to evade review, or treat success on
+one send as blanket authorization. The denied reply was not retried.
+
+Actual self-test results: three Gmail acceptance IDs, received-message evidence,
+one private transparent calendar fixture without guests, and refused second
+claims for the core event and task notices. These are reviewed self-tests; they
+do not prove scheduled unattended delivery or external-participant reply identity.
 
 The probe now distinguishes the disconnected-device response without echoing
 arbitrary provider error bodies. Tool discovery and successful reads are useful
