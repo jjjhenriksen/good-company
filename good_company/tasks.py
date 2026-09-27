@@ -348,6 +348,10 @@ class WorkCoordinator(Coordinator):
         from .participation import history
         return history(self, record_id)
 
+    def weekly_brief(self, week_start):
+        from .reporting import weekly
+        return weekly(self, week_start)
+
     def allocation_report(self, task_id=None):
         rows = self.db.execute("SELECT at,object_id,detail FROM audit WHERE action='task_delegated' ORDER BY id").fetchall()
         decisions = []
