@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -33,6 +34,29 @@ class LatchTests(unittest.TestCase):
 
     def execute(self, argv=None):
         return self.operations.execute('calendar:one', argv or ['plow-gog', 'calendar', '--help'], 'Inspect supported calendar flags')
+
+    def test_journal_is_private_under_permissive_umask(self):
+        path = Path(self.directory.name) / 'fresh.sqlite'
+        previous_umask = os.umask(0o022)
+        try:
+            operations = LatchOperations(path, self.call)
+        finally:
+            os.umask(previous_umask)
+        try:
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+        finally:
+            operations.close()
+
+    def test_reopen_tightens_legacy_journal_without_losing_receipts(self):
+        self.responses = [{'status': 'completed', 'exit_code': 0, 'output': 'fictional private result'}]
+        before = self.execute()
+        self.operations.close()
+        self.path.chmod(0o644)
+        self.operations = LatchOperations(self.path, self.call)
+        self.assertEqual(self.path.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(self.operations.status('calendar:one'), before)
+        self.assertEqual(self.execute(), before)
+        self.assertEqual(len(self.calls), 1)
 
     def test_restart_polls_saved_handle_without_dispatch(self):
         self.responses = [{'status': 'pending', 'handle': 'approval-one'},
