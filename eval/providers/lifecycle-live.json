@@ -1,19 +1,19 @@
 {
-  "status": "partial",
+  "status": "passed_for_owner_controlled_lifecycle_scope",
   "source_commit": "3c526d916f2f066f32aab8e8d0fe15bef81b4991",
   "image": "sha256:e5ff89e8e3b6c53b31670d76f6c6d283c74b7b06a5590a1d070c27aff5a96751",
   "observed_utc": {
     "first": "2026-09-27T03:41:40.802582+00:00",
-    "last": "2026-09-27T03:47:27.119114+00:00"
+    "last": "2026-09-27T03:56:16.847190+00:00"
   },
   "authority": {
     "owner_approved_two_self_emails_and_one_existing_fictional_event": true,
     "email_send_count": 2,
     "attachments": 0,
     "external_recipients": 0,
-    "all_six_lifecycle_ledgers_paused": true,
     "gatekeeper_enabled": true,
-    "original_gatekeeper_policy_restored": true
+    "original_gatekeeper_policy_restored": true,
+    "all_eight_lifecycle_ledgers_paused": true
   },
   "replies": [
     {
@@ -85,19 +85,54 @@
     "complete_snapshot_before_and_after": true,
     "location_change_observed": true,
     "original_status_times_privacy_and_guest_list_preserved": true,
-    "original_location_restored": false,
+    "original_location_restored": true,
     "clear_location_command_exit_code": 0,
-    "clear_location_readback": "temporary_location_still_present",
-    "cancellation_exercised": false,
+    "clear_location_readback": "CLI clear failed; owner-authenticated Calendar UI subsequently restored empty location",
+    "cancellation_exercised": true,
     "provider_cli": "gog v0.36.0",
-    "remaining_action": "Clear only the fictional fixture location through an authenticated Google Calendar UI, then complete the approved cancellation and restoration test."
+    "remaining_action": null,
+    "restoration_method": "Google Calendar UI: clear location, delete into Trash, restore the same event",
+    "complete_cancelled_snapshot_event_count": 0,
+    "complete_restored_snapshot_event_count": 1,
+    "final_readback_matches_original_fields": [
+      "id",
+      "status",
+      "start",
+      "end",
+      "attendees",
+      "transparency",
+      "visibility",
+      "organizer",
+      "creator",
+      "reminders",
+      "iCalUID",
+      "location",
+      "summary",
+      "description"
+    ]
   },
   "limits": [
     "Owner loopback identity uses the actual authorized send receipt plus authenticated SENT and INBOX readback. It is not general external sender authentication.",
     "Spoofed input is a controlled unverified-provider fixture, not an external forged email sent to the account.",
     "Pause-after uses a cloned ledger with a simulated lost acknowledgement and the real saved provider receipt. It adds no fresh network reconciliation.",
     "Prior genuine scheduler ambiguity and reconciliation are recorded separately in scheduled-live.json.",
-    "No cancellation was attempted because the installed provider command has no restore/status-update operation.",
-    "Google Calendar browser sign-in is required to finish cleanup: the advertised empty-location update silently preserved the temporary location."
+    "Calendar mutations and restoration used the owner-authenticated browser; the deployed Google adapter independently verified complete snapshots and exact final raw state.",
+    "The installed CLI empty-location bug remains upstream; cleanup completed through the normal Google Calendar UI recovery flow."
+  ],
+  "cancellation": [
+    {
+      "case": "before-cancel",
+      "pending_notice_superseded": true,
+      "claim_refused": true,
+      "new_send_calls": 0
+    },
+    {
+      "case": "after-cancel",
+      "sent_payload_and_receipt_preserved": true,
+      "sent_payload_sha256": "268a8c9ee09743c29c79b5d8263a462331ba29017b1780960cee669ce4e6bbcc",
+      "receipt_sha256": "985d5b8847dab0aff12db8b34a7272bb85ff9c5545908a76b8f427bb0d0bbfe0",
+      "new_routine_notice_count": 0,
+      "new_send_calls": 0
+    }
   ]
 }
