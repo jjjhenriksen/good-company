@@ -12,6 +12,7 @@ dependencies = []
 
 [project.scripts]
 good-company = "good_company.cli:main"
+good-company-cycle = "good_company.cycle_cli:main"
 
 [tool.setuptools.packages.find]
 include = ["good_company*"]

@@ -116,7 +116,7 @@ class Delivery:
     def send(self, kind, notice_id, now=None):
         account = authenticated_account(self.provider)
         policy = self.coordinator.autonomy()
-        if not account.unattended_send or not policy or account.sender != policy['sender']:
+        if not account.unattended_send or not policy or not policy.get('enabled') or account.sender != policy['sender']:
             raise ProviderError('unattended_sender_permission_denied')
         claim, _, parameter = self._methods(kind)
         payload = claim(**{parameter: notice_id}, now=now)
