@@ -225,10 +225,15 @@ class WorkCoordinator(Coordinator):
                         preference = int(t['category'] in v['preferred_categories'])
                         return (-matches, -preference, len(self._workload(v['id'])), v['id'])
                     v = sorted(candidates, key=rank)[0]
+                    selection = {'eligible_candidates': len(candidates),
+                                 'preferred_fit_points': sum(v['skills'].get(skill, 0) for skill in t['preferred_skills']),
+                                 'preferred_category': t['category'] in v['preferred_categories'],
+                                 'open_work_before': len(self._workload(v['id'])),
+                                 'order': 'Eligible first; preferred task fit, recorded category preference, lower open workload, then stable ID.'}
                     assignment_id = digest([t['id'], v['id']])[:24]
                     self.db.execute("INSERT INTO assignments VALUES(?,?,?,'assigned',?)", (assignment_id, t['id'], v['id'], digest(policy)))
                     self._notice(assignment_id, t, v, 'assignment', now, policy)
-                    self.log('task_delegated', t['id'], {'assignment_id': assignment_id, 'volunteer_id': v['id']}, now)
+                    self.log('task_delegated', t['id'], {'assignment_id': assignment_id, 'volunteer_id': v['id'], 'selection': selection}, now)
                     made.append({'task_id': t['id'], 'volunteer_id': v['id'], 'assignment_id': assignment_id,
                                  'reason': 'Matches the stated skills, role, availability and workload limits.',
                                  'delivery': 'queued, not yet sent'})
@@ -342,6 +347,24 @@ class WorkCoordinator(Coordinator):
     def participation_history(self, record_id):
         from .participation import history
         return history(self, record_id)
+
+    def allocation_report(self, task_id=None):
+        rows = self.db.execute("SELECT at,object_id,detail FROM audit WHERE action='task_delegated' ORDER BY id").fetchall()
+        decisions = []
+        for row in rows:
+            if task_id is not None and row['object_id'] != task_id:
+                continue
+            detail = json.loads(row['detail'])
+            decisions.append({'task_id': row['object_id'], 'at': row['at'],
+                              'assignment_id': detail['assignment_id'],
+                              'selection': detail.get('selection'),
+                              'explanation': 'Historical selection evidence unavailable.' if not detail.get('selection') else detail['selection']['order']})
+        counts = [self.db.execute("SELECT count(*) FROM assignments WHERE volunteer_id=? AND status='assigned'", (row[0],)).fetchone()[0]
+                  for row in self.db.execute('SELECT id FROM volunteers')]
+        return {'decisions': decisions,
+                'distribution': {'recorded_volunteers': len(counts), 'assigned_total': sum(counts),
+                                 'minimum': min(counts, default=0), 'maximum': max(counts, default=0)},
+                'scope': 'Trusted owner report. Descriptive assignment counts include completed work; not attendance, reliability, personal worth or a fairness guarantee. Different eligibility and availability affect distribution.'}
 
     def add_shift(self, shift, authority, now=None):
         from .shifts import add_shift

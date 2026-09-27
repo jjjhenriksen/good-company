@@ -128,3 +128,12 @@ checks are read-only and never infer completion or release capacity. Use
 completed or cancelled. The latter two use the existing lifecycle transition and
 stop unsent notices. Keep follow-up notes private; do not infer reliability from
 missing outcomes or missed windows.
+
+`allocation-report` gives the trusted coordinator recorded selection reasons and
+aggregate workload distribution; optionally filter decisions by task_id. Hard
+eligibility checks precede ranking. The recorded ordering uses stated preferred
+fit, category preference, current workload and a stable tie-break. Historical
+choices without evidence are marked unknown. Counts describe assignments, not
+participation, reliability or personal worth. Do not share comparative skill/fit
+assessments in participant messages. Unequal availability can justify unequal
+counts; investigate opportunity and requirements before claiming unfairness.
