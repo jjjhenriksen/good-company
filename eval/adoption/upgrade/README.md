@@ -45,3 +45,27 @@ is not proof of preserving real sent receipts. There is still no operational Goo
 Company scheduler job, registered Index install identity or next-run delivery
 proof. This is a real source-image upgrade with retained local state, not a claim
 that all base-image, identity, skill-loading and scheduled-delivery criteria pass.
+
+## Current-code upgrade with nonempty receipt history
+
+A second local upgrade deployed merged source `7ea8c8997526a48e6efac387e4e5226586950585`
+on September 26, 2026 (Los Angeles). [runtime-result.json](runtime-result.json)
+records the immutable old/new images, genuine model run and verification scope.
+Both existing databases were backed up before container replacement, retaining the
+same named volumes. Every table's row hash matched before replacement, after boot,
+and after the model check. The isolated self-test database contains one reminder,
+three task notices, one assignment and the recorded opt-out; this now covers
+preservation of existing real self-test receipt history, unlike the earlier empty
+main ledger check. Both databases retained SQLite integrity and disabled autonomy.
+
+All 27 installed Python modules matched the committed sources. The real GLM 5.2
+trajectory contains exactly three successful local commands: the cycle command's
+help without inherited PYTHONPATH, profile, and autonomy. The model read the saved
+fictional club and Los Angeles timezone; autonomy remained null in the main DB.
+The dashboard returned HTTP 200. Three existing background job IDs, enabled states
+and schedules were preserved; none is a Good Company operational delivery job.
+
+This verifies an actual application-code upgrade and retained state. It does not
+complete #57's exactly-one-operational-job or next-run delivery criteria. The base
+runtime version was not changed, no provider was contacted by the verification
+commands, and raw databases/trajectories remain private.

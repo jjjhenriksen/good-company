@@ -46,8 +46,13 @@ this baseline count as its latest result. The combined audit changes passed 70 t
 [GitHub CI](https://github.com/jjjhenriksen/good-company/actions/runs/36217186171).
 The [remote image build and packaged-engine smoke test](https://github.com/jjjhenriksen/good-company/actions/runs/36217167986)
 also passed at integration commit `3254ee9`. All five audit PRs are now merged
-into `main`. The full Plow runtime has not been booted or texted, no operational scheduler
-has been enabled, and no live calendar sync or email send has been verified.
+into `main`. Since that baseline, the native Plow runtime has been booted and the
+real model has used the installed tools. Bounded fictional self-tests produced
+verified calendar reads and four owner-loopback emails. The latest
+[runtime upgrade evidence](eval/adoption/upgrade/README.md) verifies current code
+and preserved state. No Good Company operational scheduler is enabled; unattended
+delivery, external-participant reply identity and the full live lifecycle remain
+unverified. See [scheduled acceptance](docs/acceptance/08-scheduled-cycle.md).
 
 ## Try it without credentials
 

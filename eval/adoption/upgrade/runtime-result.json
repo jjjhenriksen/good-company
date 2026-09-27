@@ -1,0 +1,49 @@
+{
+  "observed_at_utc": "2026-09-27T02:15:00Z",
+  "source_commit": "7ea8c8997526a48e6efac387e4e5226586950585",
+  "previous_image": "sha256:c8934bd9150844eedef6fb880c6dcdfeec65dbf681f8fc7997ed4a318a41d2cb",
+  "running_image": "sha256:e6fce282326191d16c5ff92736dd6dd314d65af8e9d6412a8cb5c90a4744b253",
+  "model": "plow/z-ai/glm-5.2",
+  "run_id": "ed4071be-829a-49db-b9b4-17dd29da47fc",
+  "matching_installed_python_modules": 27,
+  "model_commands": [
+    {
+      "command": "env -u PYTHONPATH good-company-cycle --help",
+      "exit_code": 0
+    },
+    {
+      "command": "good-company profile",
+      "exit_code": 0
+    },
+    {
+      "command": "good-company autonomy",
+      "exit_code": 0
+    }
+  ],
+  "databases": {
+    "state.sqlite": {
+      "integrity": "ok",
+      "autonomy_enabled": false,
+      "table_count": 23,
+      "all_table_rows_unchanged": true,
+      "snapshot_sha256": "462a184a58fc2deeb585b2ea5fea24206355594eca2c6fcad0253a42a9212eeb"
+    },
+    "live-acceptance.sqlite": {
+      "integrity": "ok",
+      "autonomy_enabled": false,
+      "table_count": 24,
+      "all_table_rows_unchanged": true,
+      "snapshot_sha256": "79fd7a12f3497c34e59558ad690b84f449ee21f0b2a2b168a373f4ccbb899070"
+    }
+  },
+  "existing_background_jobs_preserved": 3,
+  "operational_jobs": 0,
+  "new_provider_sends": 0,
+  "dashboard_http_status": 200,
+  "limitations": [
+    "Local image, not public registry manifest",
+    "No operational scheduler job or post-upgrade delivery run",
+    "Index install identity not verified",
+    "Base runtime version unchanged"
+  ]
+}
