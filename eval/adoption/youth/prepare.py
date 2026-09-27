@@ -9,7 +9,9 @@ import json
 from pathlib import Path
 import sys
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+parents = Path(__file__).resolve().parents
+if len(parents) > 3 and (parents[3] / 'good_company').is_dir():
+    sys.path.insert(0, str(parents[3]))
 
 from good_company.core import Coordinator
 
