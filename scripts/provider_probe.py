@@ -60,7 +60,17 @@ def probe():
         return {'ready': False, 'discovery': 'reachable', 'tool_names': [tool['name'] for tool in catalog.get('tools', [])],
                 'next': 'Verify exact calendar/mail schemas, account identity and permissions before implementing the adapter. Discovery alone does not establish readiness.'}
     except urllib.error.HTTPError as error:
-        return {'ready': False, 'reason': 'connected_tool_http_error', 'http_status': error.code}
+        reason = 'connected_tool_http_error'
+        try:
+            payload = json.loads(error.read(4096))
+            if error.code == 503 and payload.get('detail') == 'Device is not connected':
+                reason = 'latch_device_disconnected'
+        except (ValueError, OSError, AttributeError):
+            pass
+        result = {'ready': False, 'reason': reason, 'http_status': error.code}
+        if reason == 'latch_device_disconnected':
+            result['next'] = 'Open the official Plow Latch app, complete account verification, and connect the intended Google account. Retry discovery after the device connects.'
+        return result
     except (OSError, ValueError, KeyError, StopIteration):
         return {'ready': False, 'reason': 'connected_tool_discovery_failed'}
 
