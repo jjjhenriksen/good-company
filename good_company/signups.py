@@ -5,8 +5,18 @@ from .providers import authenticated_account, ProviderError
 from .replies import VerifiedReply
 
 
+def _check_account(coordinator, account):
+    policy = coordinator.autonomy()
+    if (not policy or not policy['enabled'] or not isinstance(account.sender, str)
+            or account.sender.casefold() != policy['sender'].casefold()):
+        raise ProviderError('signup_account_outside_remit')
+    return policy
+
+
 def apply(coordinator, provider, message_id, now=None):
-    account=authenticated_account(provider);reply=provider.verified_reply(message_id)
+    account=authenticated_account(provider)
+    _check_account(coordinator, account)
+    reply=provider.verified_reply(message_id)
     if not isinstance(reply,VerifiedReply) or not reply.authenticated or reply.message_id!=message_id or not reply.evidence:
         raise ProviderError('unverified_signup_identity')
     if reply.action not in ('signup','accept_offer','decline_offer'):raise ProviderError('unsupported_signup_action')
@@ -14,8 +24,8 @@ def apply(coordinator, provider, message_id, now=None):
     with db:
         db.execute('BEGIN IMMEDIATE')
         if db.execute('SELECT 1 FROM settings WHERE key=?',(receipt,)).fetchone():raise ProviderError('reply_already_processed')
-        policy=coordinator.autonomy()
-        if not policy or not policy['enabled'] or account.sender.casefold()!=policy['sender'].casefold():raise ProviderError('signup_account_outside_remit')
+        # Recheck after the provider read in case the owner changed the remit.
+        policy=_check_account(coordinator, account)
         people=[json.loads(r[0]) for r in db.execute('SELECT payload FROM volunteers')]
         actors=[v for v in people if v['email'].casefold()==reply.sender.casefold()]
         if len(actors)!=1:raise ProviderError('sender_not_unique_in_roster')

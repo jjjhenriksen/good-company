@@ -52,3 +52,36 @@ class SignupTests(ShiftTests):
         self.assertEqual(status['filled'],0)
         self.assertEqual(status['unfilled'],0)
         self.assertFalse(status['slots'][0]['reserved_offer'])
+
+    def test_wrong_mailbox_or_paused_scope_never_reads_reply(self):
+        self.prepare()
+        for paused in (False, True):
+            with self.subTest(paused=paused):
+                provider = self.reply('alex', 'signup', 'must-not-fetch')
+                account = provider.account()
+                if paused:
+                    policy = self.c.autonomy()
+                    policy['enabled'] = False
+                    self.c.configure_autonomy(policy, 'owner paused', now=NOW)
+                else:
+                    account = replace(account, sender='unrelated@example.invalid')
+                provider.account = lambda: account
+                provider.verified_reply = lambda message: self.fail('Out-of-scope message was fetched')
+                before = self.c.shift_status('packing')
+                with self.assertRaisesRegex(ProviderError, 'signup_account_outside_remit'):
+                    apply(self.c, provider, 'must-not-fetch', now=NOW)
+                self.assertEqual(self.c.shift_status('packing'), before)
+
+    def test_mailbox_changed_during_read_does_not_apply_signup(self):
+        self.prepare()
+        provider = self.reply('alex', 'signup', 'changed-scope')
+        reply = provider.reply
+        def read(message):
+            policy = self.c.autonomy()
+            policy['sender'] = 'new-owner@example.invalid'
+            self.c.configure_autonomy(policy, 'owner changed mailbox', now=NOW)
+            return reply
+        provider.verified_reply = read
+        with self.assertRaisesRegex(ProviderError, 'signup_account_outside_remit'):
+            apply(self.c, provider, 'changed-scope', now=NOW)
+        self.assertEqual(self.c.shift_status('packing')['reserved_offers'], 0)
