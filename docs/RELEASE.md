@@ -124,7 +124,7 @@ plow-agents image push ghcr.io/YOUR_ACCOUNT/good-company:v2 --promote good-compa
 ## Source references checked
 
 - [Publish instructions](https://aiworthusing.com/agent-index/publish)
-- [OpenClaw base](https://github.com/plow-pbc/plow-openclaw-agent), commit `1e73c82c4b3e0c9f76935bc0cc45061875b34aee`
+- [OpenClaw base](https://github.com/plow-pbc/plow-openclaw-agent), commit `771198a9609dcef54d44843e7da5329c17fa51b4`
 - [Plow CLI](https://github.com/plow-pbc/plow-agents), commit `3033a59754067bb21b4b6b2844967db343ecf7bd`
 - [Agent Index client](https://github.com/plow-pbc/agent-index-client)
 - [OpenClaw automations](https://docs.openclaw.ai/automation/cron-jobs/managing-jobs)
