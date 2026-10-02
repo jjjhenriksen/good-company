@@ -1,17 +1,51 @@
-# Donor/beneficiary integration decision (#49)
+# Donor and beneficiary integration: Bethel 337 assessment
 
-Decision: no-go without a concrete pilot workflow and authoritative external system.
-Volunteer coordination does not authorize donor processing, beneficiary casework or
-copying sensitive records. No CRM, payment or case-management capability is added.
+Refs #49. Decision: **no-go for donor CRM or beneficiary case integration**.
 
-A pilot must identify the specific operation (for example a read-only aggregate
-program count), system of record, owner, minimum fields, consent/legal basis as
-provided by that organization, role restrictions, retention and deletion process,
-and evidence of the operation's success. Keep these decisions separate from
-volunteer roster authority; do not inherit broad access automatically.
+The existing fundraising dashboard describes product sales, vendor expenses, stock
+and campaign revenue. Retail purchasers are not automatically donors, and a campaign
+total is not a beneficiary record. No donor CRM, authorized ledger integration,
+beneficiary intake or consent source has been supplied.
 
-Prefer a bounded read-only/aggregate integration when it meets the supplied need.
-Exclude charging/refunds, payment-card data, eligibility determinations, case notes,
-health records and benefit promises unless separately specified and reviewed.
-Only create implementation issues after a documented go decision states the exact
-API action, access boundary, data lifecycle and observable acceptance test.
+[The HIKE Fund](https://thehikefund.org/) is JDI's philanthropic project and has its own
+external authority. That relationship does not give Good Company permission to read
+grant applications, contact recipients or manage cases. Do not infer a local donor
+system or beneficiary identity from the affiliation.
+
+## Concrete alternative considered
+
+A later owner-authorized pilot could remind a campaign coordinator to record an
+aggregate fundraising transfer in the existing authoritative ledger. Minimum fields:
+campaign ID, reporting period, aggregate amount/currency, source ledger reference,
+responsible coordinator and acknowledgment reference. This is an aggregate reporting
+aid; it would exclude individual donor/recipient names and payment credentials.
+The current workbook description does not prove a donation-transfer ledger, so even
+this alternative remains disabled pending a named source and authority.
+
+| Boundary | Required evidence before a future pilot | Current outcome |
+| --- | --- | --- |
+| Workflow | Named reporting action and responsible owner | Product sales known; donation action unconfirmed |
+| System | Exact authoritative ledger and read/write scope | No authorized connector supplied |
+| Consent/access | Separate permission for donor or beneficiary data | None supplied |
+| Retention | Purpose and deletion period for each minimal field | Must be selected before enabling |
+| Receipt | Ledger acknowledgment of a reporting action | A sent reminder is insufficient |
+
+## Access and exclusions
+
+Volunteer rosters and opt-in do not authorize donor or beneficiary processing.
+Keep any future reporting permission separate. Only the named finance/reporting owner
+could acknowledge ledger status. Use aggregates in ordinary coordination messages;
+never attach applications, medical records, income details or a donor list.
+
+No payments, tax receipts, donation promises, eligibility determinations, case
+management, grant approval, recipient outreach or transfer of beneficiary records
+are implemented by this proposal.
+
+## Decision and future acceptance gate
+
+Do not create speculative CRM implementation issues. Reopen the assessment when
+the owner identifies a specific workflow, authoritative system, separate access/consent,
+retention period and observable receipt. A bounded future test must reject a sales
+record misclassified as a donation, prevent recipient-data access from volunteer
+authority, reconcile an uncertain ledger update without duplication, and avoid
+claiming a transfer based on an email notification. Public source review: 2026-10-01.
