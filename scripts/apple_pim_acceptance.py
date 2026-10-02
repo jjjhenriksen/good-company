@@ -96,9 +96,9 @@ def probe(port, token, state):
     # A deliberately nonexistent calendar makes this probe non-writing even if
     # the guard regresses. It must return the guard's exact denial, not CLI failure.
     status, body = invoke('apple_pim_calendar', {'action': 'create',
-        'calendarId': 'good-company-nonexistent-6a3286b8-2c16-4d64-9e9c-f87c34117e1f',
-        'title': 'Fictional containment probe', 'startDate': '2030-01-01T10:00:00Z',
-        'endDate': '2030-01-01T11:00:00Z'})
+        'calendar': 'good-company-nonexistent-6a3286b8-2c16-4d64-9e9c-f87c34117e1f',
+        'title': 'Fictional containment probe', 'start': '2030-01-01T10:00:00Z',
+        'end': '2030-01-01T11:00:00Z'})
     checks['calendar_mutation_blocked'] = blocked(status, body)
     status, body = invoke('apple_pim_calendar', {'action': 'list', 'configDir': str(state / 'nonexistent-scope')})
     checks['scope_override_blocked'] = blocked(status, body)

@@ -63,6 +63,16 @@ class AcceptanceHarnessTests(unittest.TestCase):
             result = native.probe(19846, 'private-token', self.root)
         self.assertTrue(all(value is False for value in result.values()))
 
+    def test_mutation_probe_uses_native_schema_with_explicit_nonexistent_calendar(self):
+        with patch.object(native, 'request', return_value=(403, {'error': {'type': 'tool_call_blocked'}})) as request:
+            native.probe(19846, 'private-token', self.root)
+        args = request.call_args_list[2].args[3]['args']
+        self.assertEqual(args['action'], 'create')
+        self.assertTrue(args['calendar'].startswith('good-company-nonexistent-'))
+        self.assertIn('start', args)
+        self.assertIn('end', args)
+        self.assertNotIn('calendarId', args)
+
     def test_calendar_accepts_plugin_preamble_and_requires_exact_empty_result(self):
         value = {'ok': True, 'result': {'details': {'domain': 'calendar', 'action': 'list'},
             'content': [{'type': 'text', 'text': 'Data between [UNTRUSTED_CALENDAR_DATA_TEST] and '
