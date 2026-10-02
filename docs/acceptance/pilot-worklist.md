@@ -5,7 +5,7 @@ testing instance. No specific nonprofit pilot, inventory system, accessibility
 intake, form authority or donor/beneficiary system was identified. The existing
 local/hosted installation evidence remains valid within its recorded limits.
 
-## Concrete fixes ready for review
+## Merged concrete fixes
 
 | Issue | Change |
 | --- | --- |
@@ -15,8 +15,9 @@ local/hosted installation evidence remains valid within its recorded limits.
 | #202 | Preserve/reconcile sparse calendar cancellations and retire stale queued work (#207). |
 | #203 | Report reserved offers separately from truly unassigned staffing (#208). |
 
-Each PR has regression coverage and its own passing Python 3.11–3.13 CI. These
-issues close when their corresponding PRs merge.
+PRs #204–209 merged after their Python 3.11–3.13 checks passed. The resulting main
+tree matches the combined branch that passed 504 tests and the original 19 grouped
+checks. Issues #199–203 are closed; the twelve issues below remain open.
 
 ## Installation and live workflow work
 
@@ -34,6 +35,14 @@ issues close when their corresponding PRs merge.
 Run `python3 scripts/local_acceptance.py` to reproduce the grouped fictional checks.
 Their successful fixture receipts are not provider receipts. Local mail remains
 disabled until an exact test sender/audience is authorized.
+
+The runner now covers six groups and 31 checks, including verified reply identity,
+mailbox changes, replay rejection and signup/capacity/acceptance. Its machine-readable
+report accounts for every issue below and never converts fixture success into live
+acceptance. The [native Apple PIM harness](local-apple-pim.md#repeat-the-native-startup-and-containment-checks)
+automates isolated startup, tool reads, mutation/scope denials and restart persistence
+using the installed plugin. Both runners stop short of generating genuine participant
+identity, provider receipts or a real pilot's requirements.
 
 ## Optional modules: current scope decisions
 
