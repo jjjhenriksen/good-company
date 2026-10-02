@@ -527,8 +527,20 @@ class Coordinator:
             event['start'], event['end'] = iso(s), iso(e)
             event_id = digest([calendar, uid])[:24]
             prepared.append((event_id, event, digest(event)))
+        cancellations = snapshot.get('cancellations', [])
+        if not isinstance(cancellations, list) or len(cancellations) + len(prepared) > 10000:
+            raise ValueError('cancellations must be a bounded list.')
+        tombstones = []
+        for raw in cancellations:
+            item = dict(raw)
+            uid = required(item.get('id'), 'cancelled instance id')
+            required(item.get('source'), 'cancellation source citation')
+            if item.get('status') != 'cancelled':
+                raise ValueError('A cancellation must explicitly have cancelled status.')
+            tombstones.append((digest([calendar, uid])[:24], item))
         ids = [item[0] for item in prepared]
-        if len(ids) != len(set(ids)):
+        all_ids = ids + [item[0] for item in tombstones]
+        if len(all_ids) != len(set(all_ids)):
             raise ValueError('Duplicate event instance IDs: expand recurring events before importing.')
         with self.db:
             # Serialize updates with delivery claims and reject out-of-order snapshots.
@@ -539,7 +551,9 @@ class Coordinator:
                 raise ValueError('Snapshot is older than the stored calendar; refresh it.')
             old = {r['id']: r for r in rows}
             changes = 0
+            unresolved = []
             for event_id, event, revision in prepared:
+                self.db.execute('DELETE FROM settings WHERE key=?', ('calendar-cancellation:' + event_id,))
                 previous = old.get(event_id)
                 changed = not previous or previous['revision'] != revision or previous['cancelled']
                 if changed:
@@ -548,14 +562,31 @@ class Coordinator:
                 self.db.execute('''INSERT OR REPLACE INTO events VALUES(?,?,?,?,?,?,?,?)''',
                                 (event_id, calendar, event['start'], event['end'], revision,
                                  json.dumps(event), iso(checked), int(event['status'] == 'cancelled')))
+            for event_id, item in tombstones:
+                previous = old.get(event_id)
+                evidence = dict(item, calendar=calendar, checked_at=iso(checked), resolved=previous is not None)
+                self.db.execute('INSERT OR REPLACE INTO settings VALUES(?,?)',
+                                ('calendar-cancellation:' + event_id, json.dumps(evidence)))
+                if previous:
+                    event = json.loads(previous['payload'])
+                    event['status'] = 'cancelled'
+                    self.db.execute('UPDATE events SET cancelled=1,payload=?,revision=?,checked_at=? WHERE id=?',
+                                    (json.dumps(event), digest(event), iso(checked), event_id))
+                    self._invalidate(event_id)
+                    changes += int(not previous['cancelled'])
+                else:
+                    unresolved.append(item)
+                self.log('calendar_cancellation', event_id, evidence, now)
             for row in rows:
-                if start <= stamp(row['start']) < end and row['id'] not in ids:
+                if start <= stamp(row['start']) < end and row['id'] not in all_ids:
                     self.db.execute('UPDATE events SET cancelled=1,checked_at=? WHERE id=?', (iso(checked), row['id']))
                     self._invalidate(row['id'])
                     changes += 1
             self.db.execute('INSERT OR REPLACE INTO calendar_sync VALUES(?,?)', (calendar, iso(checked)))
-            self.log('calendar_import', calendar, {'events': len(ids), 'changes': changes}, now)
-        return {'imported': len(ids), 'changes': changes}
+            self.log('calendar_import', calendar, {'events': len(ids), 'changes': changes, 'cancellations': len(tombstones),
+                                                   'unresolved_cancellations': len(unresolved)}, now)
+        return {'imported': len(ids), 'changes': changes, 'cancellations': len(tombstones),
+                'unresolved_cancellations': unresolved}
 
     def _invalidate(self, event_id):
         self.db.execute("UPDATE reminders SET status='superseded', approval=NULL WHERE event_id=? AND status IN ('draft','approved')", (event_id,))

@@ -40,3 +40,17 @@ class LinkedTaskTests(unittest.TestCase):
         t['event_id'] = 'unknown'
         with self.assertRaises(ValueError):
             self.c.add_task(t, 'task request', now=NOW)
+
+    def test_sparse_cancellation_retires_linked_work_without_invented_event(self):
+        self.link()
+        self.c.delegate(now=NOW)
+        notice = next(n for n in self.c.task_queue() if n['kind'] == 'assignment')
+        uid = self.data['events'][0]['id']
+        self.data['events'] = []
+        self.data['cancellations'] = [{'id': uid, 'status': 'cancelled', 'source': 'provider://cancelled'}]
+        result = self.c.import_calendar(self.data, now=NOW)
+        self.assertEqual(result['impacts'][0]['reason'], 'event_cancelled')
+        self.assertTrue(all(n['status'] == 'cancelled' for n in self.c.task_queue()))
+        with self.assertRaises(ValueError):
+            self.c.task_claim(notice['id'], now=NOW)
+        self.assertEqual(self.c.delegate(now=NOW)['assigned'], [])

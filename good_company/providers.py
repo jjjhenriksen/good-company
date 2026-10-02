@@ -2,7 +2,7 @@
 
 The fixtures implement this protocol; they are never evidence of live delivery.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol
 from uuid import uuid4
 from .core import required, required_time, stamp, iso
@@ -33,6 +33,7 @@ class CalendarPage:
     expanded: bool
     complete_page: bool
     next_cursor: str | None = None
+    cancellations: list[dict] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -66,7 +67,7 @@ def import_complete_calendar(coordinator, provider, scope, start, end, now=None)
     if not policy or scope not in policy['calendar_scopes']:
         raise ProviderError('calendar_outside_standing_scope')
     fixed_now = stamp(now) if now is not None else None
-    events, cursors, cursor, checked = [], set(), None, None
+    events, cancellations, cursors, cursor, checked = [], [], set(), None, None
     for _ in range(1000):
         page = provider.calendar_page(scope, start, end, cursor)
         if page.scope != scope or not page.expanded or not page.complete_page:
@@ -79,11 +80,13 @@ def import_complete_calendar(coordinator, provider, scope, start, end, now=None)
             raise ProviderError('future_calendar_observation')
         checked = min(checked, observed) if checked else observed
         events.extend(page.events)
-        if len(events) > 10000:
+        cancellations.extend(page.cancellations)
+        if len(events) + len(cancellations) > 10000:
             raise ProviderError('calendar_payload_limit')
         if page.next_cursor is None:
             return coordinator.import_calendar({'calendar': scope, 'window_start': start, 'window_end': end,
-                                                'checked_at': iso(checked), 'complete': True, 'events': events}, now=fixed_now or stamp())
+                                                'checked_at': iso(checked), 'complete': True, 'events': events,
+                                                'cancellations': cancellations}, now=fixed_now or stamp())
         if not page.next_cursor or page.next_cursor in cursors:
             raise ProviderError('invalid_calendar_pagination')
         cursors.add(page.next_cursor)

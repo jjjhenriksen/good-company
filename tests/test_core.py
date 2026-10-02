@@ -124,3 +124,25 @@ class CoordinationTests(unittest.TestCase):
         self.assertEqual(self.c.reminder(rid)['status'], 'approved')
         self.assertEqual(self.c.plan(now=NOW)['created'], [])
 if __name__ == '__main__': unittest.main()
+
+
+class CancellationTests(unittest.TestCase):
+    setUp = CoordinationTests.setUp
+    tearDown = CoordinationTests.tearDown
+    draft = CoordinationTests.draft
+    approved = CoordinationTests.approved
+    def test_tombstone_supersedes_approval_and_rejects_duplicate_atomically(self):
+        rid = self.approved()
+        data = snapshot(DUE)
+        tombstone = {'id': data['events'][0]['id'], 'status': 'cancelled', 'source': 'provider://deleted'}
+        data['cancellations'] = [tombstone]
+        before = self.c.events()
+        with self.assertRaisesRegex(ValueError, 'Duplicate'):
+            self.c.import_calendar(data, now=DUE)
+        self.assertEqual(self.c.events(), before)
+        self.assertEqual(self.c.reminder(rid)['status'], 'approved')
+        data['events'] = []
+        self.c.import_calendar(data, now=DUE)
+        self.assertEqual(self.c.reminder(rid)['status'], 'superseded')
+        with self.assertRaises(ValueError):
+            self.c.claim(rid, now=DUE)
