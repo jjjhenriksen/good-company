@@ -1,9 +1,10 @@
 import json
+import io
 import os
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from good_company.latch import LatchMCP, LatchOperations, unpack
 from good_company.providers import ProviderError
@@ -159,7 +160,9 @@ class LatchTests(unittest.TestCase):
         client.opener = Mock()
         response_mock = Mock()
         response_mock.headers = {'Mcp-Session-Id': 'session-one'}
-        response_mock.read.return_value = raw
+        stream = io.BytesIO(raw)
+        response_mock.read.side_effect = stream.read
+        response_mock.read1.side_effect = stream.read1
         client.opener.open.return_value.__enter__ = Mock(return_value=response_mock)
         client.opener.open.return_value.__exit__ = Mock(return_value=False)
         return client
@@ -175,3 +178,55 @@ class LatchTests(unittest.TestCase):
                 client = self.transport(raw)
                 with self.assertRaisesRegex(ProviderError, '^latch_transport_unconfirmed$'):
                     client._request('https://example.com/mcp', {'id': 7})
+
+    def test_sse_returns_matching_result_without_waiting_for_eof(self):
+        client = self.transport(b'')
+        response = client.opener.open.return_value.__enter__.return_value
+        response.headers['Content-Type'] = 'text/event-stream'
+        response.read1.side_effect = [
+            b'data: {"method":"notification"}\n', b'\n',
+            b'data: {"id":7,"result":{}}\n', b'\n',
+            TimeoutError('stream remains open'),
+        ]
+        response.read.side_effect = TimeoutError('must not wait for EOF')
+        self.assertEqual(client._request('https://example.com/mcp', {'id': 7}),
+                         {'id': 7, 'result': {}})
+        self.assertEqual(response.read1.call_count, 4)
+        response.read.assert_not_called()
+
+    def test_sse_missing_result_remains_unconfirmed(self):
+        client = self.transport(b'data: {"id":8,"result":{}}\n\n')
+        client.opener.open.return_value.__enter__.return_value.headers['Content-Type'] = 'text/event-stream'
+        with self.assertRaisesRegex(ProviderError, '^latch_transport_unconfirmed$'):
+            client._request('https://example.com/mcp', {'id': 7})
+
+    def test_sse_multiline_data_and_crlf_are_supported(self):
+        client = self.transport(b'data: {"id":7,\r\ndata: "result":{}}\r\n\r\n')
+        client.opener.open.return_value.__enter__.return_value.headers['Content-Type'] = 'text/event-stream'
+        self.assertEqual(client._request('https://example.com/mcp', {'id': 7})['id'], 7)
+
+    def test_sse_total_byte_and_elapsed_budgets_remain_bounded(self):
+        client = self.transport(b'data: ' + b'x' * 2_000_000)
+        response = client.opener.open.return_value.__enter__.return_value
+        response.headers['Content-Type'] = 'text/event-stream'
+        with self.assertRaisesRegex(ProviderError, '^latch_transport_unconfirmed$'):
+            client._request('https://example.com/mcp', {'id': 7})
+        client = self.transport(b'data: unfinished')
+        response = client.opener.open.return_value.__enter__.return_value
+        response.headers['Content-Type'] = 'text/event-stream'
+        with patch('good_company.latch.time.monotonic', side_effect=[0, 0, 46]):
+            with self.assertRaisesRegex(ProviderError, '^latch_transport_unconfirmed$'):
+                client._request('https://example.com/mcp', {'id': 7})
+        self.assertEqual(response.read1.call_count, 1)
+
+    def test_sse_fragmented_utf8_and_crlf_do_not_require_eof(self):
+        client = self.transport(b'')
+        response = client.opener.open.return_value.__enter__.return_value
+        response.headers['Content-Type'] = 'text/event-stream'
+        raw = 'data: {"id":7,"result":{"name":"José"}}\r\n\r\n'.encode()
+        split = raw.index(b'\xc3') + 1
+        response.read1.side_effect = [raw[:split], raw[split:-3], raw[-3:],
+                                     TimeoutError('stream remains open')]
+        self.assertEqual(client._request('https://example.com/mcp', {'id': 7})['result'],
+                         {'name': 'José'})
+        self.assertEqual(response.read1.call_count, 3)
