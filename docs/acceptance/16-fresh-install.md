@@ -1,5 +1,18 @@
 # Fresh-user installation acceptance (#16)
 
+## Accepted — October 1, 2026
+
+The owner confirmed: “Fresh user installation has already been proven since 1 click
+install is allowed.” Fresh-user installation is accepted and #16 is complete on
+that basis. The acceptance harness records this as owner confirmation and removes
+#16 from its outstanding issue list.
+
+The dated observations below preserve the original runtime and packaging evidence.
+Their earlier open-issue statements describe the status at those dates; the owner’s
+October 1 acceptance supersedes those installation blockers.
+
+## Historical evidence
+
 Status: incomplete. [Organizer admission](15-index-admission.md) was observed on
 September 27 at 14:04 UTC; the listing now exposes its texting installation link.
 A fresh one-click installation has not been performed.
