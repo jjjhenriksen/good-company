@@ -31,7 +31,8 @@ private durable directory when the sandbox must survive those events.
 
 The initializer refuses an existing state directory. The new fictional ledger
 is paused; calendars have an empty allowlist, mail/contacts/reminders are disabled,
-and the gateway permits only the calendar tool. It generates its own private
+and the gateway permits only calendar list reads. A generated local guard rejects
+other calendar actions and per-call config/profile overrides before execution. It generates its own private
 gateway token and never prints it. The gateway exposes the calendar's schema directly, binds to loopback, disables
 cron and heartbeats, and starts with `OPENCLAW_SKIP_CHANNELS=1`. This supported runtime
 flag preserves the plugin's tools while preventing its Apple Mail channel from
@@ -52,7 +53,8 @@ The installed Apple PIM source and native binaries were reused without modificat
 - The registered `apple_pim_calendar` tool returned a successful empty list under
   the new allowlist. The plugin's native helper handled Calendar read access;
   direct CLI authorization alone was write-only.
-- The excluded `apple_pim_mail` tool returned HTTP 404. No email was sent and no
+- The excluded `apple_pim_mail` tool returned HTTP 404. Explicit calendar create
+  and config-directory escape attempts returned HTTP 403 from the local guard. No email was sent and no
   personal calendar event was imported or written.
 - The paused profile/remit and gateway token hashes matched after a controlled
   stop and restart. Direct ledger reads found zero events and queued notices.

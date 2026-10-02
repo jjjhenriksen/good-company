@@ -43,14 +43,31 @@ def initialize(state, repository, plugin, launcher, node, bin_dir, port=19843, m
         'contacts': {'enabled': False, 'mode': 'allowlist', 'items': []},
         'mail': {'enabled': False},
     })
+    guard = state / 'guard-plugin'
+    guard.mkdir(mode=0o700)
+    save(guard / 'openclaw.plugin.json', {'id': 'good-company-local-guard',
+        'name': 'Good Company local read guard',
+        'activation': {'onStartup': True, 'onCapabilities': ['hook']}, 'configSchema': {'type': 'object', 'additionalProperties': False, 'properties': {}}})
+    save(guard / 'package.json', {'name': 'good-company-local-guard', 'type': 'module',
+        'openclaw': {'extensions': ['./index.js']}})
+    (guard / 'index.js').write_text(
+        'export default { id: \'good-company-local-guard\', register(api) {\n'
+        '  api.on(\'before_tool_call\', (event) => {\n'
+        '    if (event.toolName !== \'apple_pim_calendar\') return;\n'
+        '    const p = event.params || {};\n'
+        '    if (p.action !== \'list\' || p.profile || (p.configDir && p.configDir !== ' + json.dumps(str(pim)) + '))\n'
+        '      return { block: true, blockReason: \'Local check permits only calendar list reads in its own configuration.\' };\n'
+        '    return { params: { ...p, configDir: ' + json.dumps(str(pim)) + ' } };\n'
+        '  });\n} };\n')
+    (guard / 'index.js').chmod(0o600)
     config = {
         'gateway': {'mode': 'local', 'bind': 'loopback', 'port': port,
                     'auth': {'mode': 'token', 'token': secrets.token_urlsafe(32)}},
         'agents': {'defaults': {'workspace': str(workspace), 'heartbeat': {'every': '0m'}}},
         'cron': {'enabled': False},
         'channels': {},
-        'plugins': {'enabled': True, 'allow': ['apple-pim-cli'], 'load': {'paths': [str(plugin)]},
-                    'entries': {'apple-pim-cli': {'enabled': True,
+        'plugins': {'enabled': True, 'allow': ['apple-pim-cli', 'good-company-local-guard'], 'load': {'paths': [str(plugin), str(guard)]},
+                    'entries': {'good-company-local-guard': {'enabled': True}, 'apple-pim-cli': {'enabled': True,
                         'config': {'binDir': str(bin_dir), 'configDir': str(pim)}}}},
         # Mail, contacts, reminder writes and arbitrary shell tools are unavailable.
         'tools': {'allow': ['apple_pim_calendar'], 'toolSearch': False},
@@ -81,7 +98,7 @@ def initialize(state, repository, plugin, launcher, node, bin_dir, port=19843, m
         'Use supplied evidence and distinguish a proposal, queued action and genuine provider receipt. '
         'The private coordination ledger is ' + str(state / 'state.sqlite') + '.\n')
     (workspace / 'AGENTS.md').chmod(0o600)
-    command = ['env', 'OPENCLAW_SKIP_CHANNELS=1', 'OPENCLAW_STATE_DIR=' + str(state), 'OPENCLAW_CONFIG_PATH=' + str(state / 'openclaw.json'),
+    command = ['env', 'OPENCLAW_SKIP_CHANNELS=1', 'APPLE_PIM_PROFILE=', 'OPENCLAW_STATE_DIR=' + str(state), 'OPENCLAW_CONFIG_PATH=' + str(state / 'openclaw.json'),
                str(node), str(launcher), 'gateway', 'run', '--port', str(port), '--bind', 'loopback']
     start = state / 'start.sh'
     start.write_text('#!/bin/sh\nexec ' + shlex.join(command) + '\n')

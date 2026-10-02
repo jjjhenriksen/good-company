@@ -3,6 +3,8 @@ import io
 from unittest.mock import patch
 from pathlib import Path
 import stat
+import subprocess
+import shutil
 import tempfile
 import unittest
 
@@ -46,6 +48,7 @@ class LocalSandboxTests(unittest.TestCase):
         self.assertFalse(pim['mail']['enabled'])
         self.assertEqual(config['tools']['allow'], ['apple_pim_calendar'])
         self.assertFalse(config['tools']['toolSearch'])
+        self.assertTrue(json.loads((state / 'guard-plugin/openclaw.plugin.json').read_text())['activation']['onStartup'])
         self.assertFalse(config['cron']['enabled'])
         self.assertEqual(config['channels'], {})
         self.assertIn('OPENCLAW_SKIP_CHANNELS=1', (state / 'start.sh').read_text())
@@ -96,3 +99,27 @@ class LocalSandboxTests(unittest.TestCase):
         config = json.loads((Path(result['state']) / 'openclaw.json').read_text())
         self.assertEqual(config['agents']['defaults']['model']['primary'], 'ollama/fixture')
         self.assertEqual(config['models']['providers']['ollama']['baseUrl'], 'http://127.0.0.1:11434')
+
+    def test_loaded_guard_rejects_mutations_and_per_call_scope_escape(self):
+        if not shutil.which('node'):
+            self.skipTest('Node is required for the native plugin guard')
+        result = self.init()
+        state = Path(result['state'])
+        code = """
+import { pathToFileURL } from 'node:url';
+import assert from 'node:assert/strict';
+const plugin = (await import(pathToFileURL(process.argv[1]).href)).default;
+let hook;
+plugin.register({ on(name, callback) { assert.equal(name, 'before_tool_call'); hook = callback; } });
+for (const action of ['create', 'update', 'delete', 'batch_create', 'events', 'get', 'search']) {
+  assert.equal(hook({toolName:'apple_pim_calendar', params:{action}}).block, true);
+}
+for (const params of [{action:'list',configDir:'/outside'}, {action:'list',profile:'outside'}]) {
+  assert.equal(hook({toolName:'apple_pim_calendar',params}).block, true);
+}
+const allowed = hook({toolName:'apple_pim_calendar',params:{action:'list'}});
+assert.equal(allowed.params.configDir, process.argv[2]);
+assert.equal(allowed.block, undefined);
+"""
+        subprocess.run(['node', '--input-type=module', '-e', code, str(state / 'guard-plugin/index.js'),
+                        str(state / 'workspace/apple-pim')], check=True, capture_output=True, text=True)
