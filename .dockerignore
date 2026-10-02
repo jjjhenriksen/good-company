@@ -18,6 +18,7 @@
 !good_company/authority.py
 !good_company/availability_cli.py
 !good_company/cli.py
+!good_company/checklists.py
 !good_company/core.py
 !good_company/corrections.py
 !good_company/cycle.py

@@ -1,6 +1,10 @@
 # Form checklists: status aid for a Bethel 337 candidate pilot
 
-Refs #48. Decision: **conditional go for a status-only prototype; no live reminders**.
+Refs #48 and #229. The owner subsequently requested all optional workflows. The
+[implemented local checklist](../OPTIONAL-WORKFLOWS.md#document-checklists) uses
+fictional required items, explicit deadlines and a named fictional register and
+custodian. Reminders can use the configured provider path. Actual Bethel items,
+people and dates are separately supplied; this does not certify compliance.
 
 The owner's existing Bethel 337 context makes JDI's public form catalog a concrete
 discovery source. [JDI resources](https://jobsdaughtersinternational.org/resources/)

@@ -51,3 +51,10 @@ def access_request():
             'service_owner': 'service', 'arrangement': 'Live captions for the presentation',
             'consent': 'fictional requester consent to the named recipients and retention',
             'share_with': ['owner', 'service']}
+
+
+def checklist():
+    return {'id': 'consent-form', 'title': 'Fictional event consent', 'subject': 'alex', 'owner': 'owner',
+            'form_url': 'https://example.invalid/consent', 'form_version': 'v1',
+            'due': '2026-10-02T16:00:00Z', 'source': 'fictional-document-register',
+            'consent': 'fictional status-only consent and reminder remit'}

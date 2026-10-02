@@ -116,6 +116,8 @@ def run_cycle(coordinator, provider, cycle_id, start, end, now=None):
         planned = coordinator.plan(now=now)
         allocated = coordinator.delegate(now=now)
         summary['planning_exceptions'] = len(planned.get('exceptions', [])) + len(allocated.get('exceptions', []))
+        if hasattr(coordinator, 'plan_module_notices'):
+            summary['planning_exceptions'] += coordinator.plan_module_notices(now=now)['exceptions']
         delivery = Delivery(coordinator, provider)
         queues = [('event', coordinator.queue()), ('task', coordinator.task_queue()),
                   ('correction', coordinator.correction_queue())]
