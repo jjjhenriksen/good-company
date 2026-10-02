@@ -93,6 +93,52 @@ arts program separation/change/correction (5), mutual-aid stop/identity/budget (
 and board reminders without dress rules/private conflict labels/deduplication (4).
 These checks prepare #58–61; genuine receipt and identity requirements stay open.
 
+The expanded runner adds six verified-reply checks (#29) and six signup-intake
+checks (#41), for 31 grouped checks. Its `issues` map lists all twelve remaining
+issues, their local coverage and exact missing evidence. A passing run still sets
+`remaining_issue_acceptance: false`; it does not declare a simulated sender or
+receipt genuine. Report files are created exclusively with mode 0600.
+
+## Repeat the native startup and containment checks
+
+From the source checkout, using the installed macOS runtime and a new directory:
+
+```sh
+python3 scripts/apple_pim_acceptance.py \
+  --state /private/tmp/good-company-native-check \
+  --plugin /path/to/apple-pim/openclaw \
+  --launcher /path/to/openclaw/openclaw.mjs \
+  --node /path/to/node \
+  --bin-dir /path/to/apple-pim/binaries \
+  --port 19846
+```
+
+This harness refuses existing state and occupied ports. It starts its own process
+group, checks health/readiness, performs a genuine empty-allowlist calendar read,
+and requires the runtime guard's precise denial for calendar writes and scope
+overrides. The write probe names a deliberately nonexistent calendar, so it
+cannot create a personal event if the guard regresses. Mail must be unavailable.
+It then stops and restarts only its own process, repeats the tool checks and
+independently compares the paused ledger's settings/counts and gateway token hash.
+It stops the test runtime on completion and failure; the separately running local
+instance and pre-existing installation remain available.
+
+The resulting private `native-report.json` contains booleans and safe failure
+classes, never credentials or native response bodies. `gateway-private.log` is
+private diagnostic data and must not be uploaded as acceptance evidence. These
+checks run through the native gateway, unlike the fixture checks. They establish
+local startup/read access/containment/persistence, not a model turn, event sync,
+participant identity, message delivery or fresh hosted installation. No model
+credentials are required and the harness has no send option.
+
+The October 1 automated native run passed all 12 checks against OpenClaw 2026.9.7
+and the installed Apple PIM plugin, including both pre- and post-restart reads and
+guard denials. The first run correctly failed its calendar-result assertion: the
+plugin emits one JSON value after a datamarking preamble, with domain/action
+metadata in `details`. The corrected parser accepts that exact content format,
+rejects ambiguous/error/nonempty results, and passed the fresh second run. The
+original local gateway remained healthy after the harness stopped its own runtime.
+
 ## Provider work that the probe exposed
 
 | Requirement | Apple PIM evidence and next step |
