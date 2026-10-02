@@ -11,7 +11,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / 'tests')]
-SCENARIOS = {58: ('test_food_bank_lab', 'FoodBankLabTests')}
+SCENARIOS = {58: ('test_food_bank_lab', 'FoodBankLabTests'),
+             59: ('test_arts_change_lab', 'ArtsChangeLabTests')}
 
 
 def run(issues=None):
