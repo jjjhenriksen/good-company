@@ -16,6 +16,13 @@ The native read client has successfully read the isolated gateway. The installed
 plugin's missing evidence is explicit; local simulated identity never repairs that
 production gap by assertion. Runtime modules are included in the exact Docker context.
 
+The existing Google/Latch mail connection now also has a [mailbox possession
+confirmation path](29-google-mailbox-proof.md) for #29 and #41. Its owner-issued,
+action-bound codes use the real sender and receipt reconciliation, and the Google
+adapter feeds the shared dispatcher. Fictional transport tests cover spoofing,
+expiry, replay, concurrency and state changes. Controlled live acceptance remains
+outstanding; an October 1 account-enumeration attempt was denied by Latch review.
+
 ## Optional module discovery
 
 Existing Bethel 337 fundraising work provides a concrete candidate context, not

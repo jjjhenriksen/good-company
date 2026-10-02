@@ -18,6 +18,11 @@ bridge and domain dispatcher, covering offers, waitlists, confirmed acceptance,
 replacement, mailbox changes, pause behavior and concurrent duplicate intake. An
 offer stays reserved until verified acceptance, and neither state asserts attendance.
 
-Native message binding and an authorized live mailbox remain required by #29.
+The [Google mailbox confirmation adapter](29-google-mailbox-proof.md) now uses
+this same dispatcher for preselected actions, authenticated through single-use
+secrets delivered by the existing Google sender. Its tests exercise fictional
+Google envelopes and preserve the same signup/offer/acceptance distinction.
+
+Native message binding or controlled Google confirmation acceptance remains required by #29.
 Issue #41 stays open until genuine signup/decline/acceptance messages traverse
 this same integration path and their observed outcomes are retained.

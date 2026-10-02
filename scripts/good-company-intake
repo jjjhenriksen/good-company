@@ -1,0 +1,3 @@
+#!/bin/sh
+export PYTHONPATH=/opt/good-company
+exec python3 -m good_company.intake_cli "$@"
