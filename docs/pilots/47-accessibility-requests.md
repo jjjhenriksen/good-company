@@ -1,6 +1,9 @@
 # Accessibility requests: optional pilot proposal
 
-Refs #47. Decision: **conditional scope; disabled until intake and owner are named**.
+Refs #47 and #227. The owner subsequently requested implementation of all optional
+workflows. [The local module](../OPTIONAL-WORKFLOWS.md#accessibility-arrangements)
+now implements the fictional captions/event pilot below. A live organization's
+intake, responsible people and actual arrangements remain separately configured.
 
 Bethel 337 provides a concrete organization context for an event pilot. No actual
 accessibility request, requester, intake channel or fulfillment owner has been

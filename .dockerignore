@@ -14,6 +14,7 @@
 !good_company/apple_pim.py
 !good_company/apple_calendar.py
 !good_company/accessibility.py
+!good_company/access_requests.py
 !good_company/authority.py
 !good_company/availability_cli.py
 !good_company/cli.py

@@ -271,3 +271,11 @@ class ModuleCoordinator(SetupCoordinator):
     def resource_availability(self, *args, **request):
         from .resources import resource_availability
         return resource_availability(self, *args, **request)
+
+    def request_accessibility(self, *args, **request):
+        from .access_requests import request_accessibility
+        return request_accessibility(self, *args, **request)
+
+    def update_accessibility(self, *args, **request):
+        from .access_requests import update_accessibility
+        return update_accessibility(self, *args, **request)

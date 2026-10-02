@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 import json
 from good_company.modules import ModuleCoordinator
+from good_company.core import digest
 
 NOW = datetime(2026, 10, 1, 17, tzinfo=timezone.utc)
 
@@ -35,3 +36,18 @@ def resource(capacity=1, buffer=15):
 def booking(record_id='booking-one', requester='alex', start='2026-10-02T10:00:00Z', end='2026-10-02T11:00:00Z'):
     return {'id': record_id, 'resource_id': 'projector', 'requester': requester,
             'start': start, 'end': end, 'quantity': 1}
+
+
+def event_snapshot(location='Fictional hall'):
+    return {'calendar': 'demo-events-only', 'complete': True, 'window_start': '2026-10-01T00:00:00Z',
+            'window_end': '2026-10-15T00:00:00Z', 'checked_at': NOW.isoformat(),
+            'events': [{'id': 'event-one', 'title': 'Fictional event', 'source': 'fictional://calendar',
+                        'start': '2026-10-02T10:00:00Z', 'end': '2026-10-02T11:00:00Z',
+                        'location': location, 'status': 'confirmed'}]}
+
+
+def access_request():
+    return {'id': 'captions', 'event_id': digest(['demo-events-only', 'event-one'])[:24], 'requester': 'alex', 'owner': 'owner',
+            'service_owner': 'service', 'arrangement': 'Live captions for the presentation',
+            'consent': 'fictional requester consent to the named recipients and retention',
+            'share_with': ['owner', 'service']}
