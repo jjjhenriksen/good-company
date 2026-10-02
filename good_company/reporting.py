@@ -17,14 +17,17 @@ def weekly(coordinator, week_start):
             group['confirmed_minutes']+=item['minutes']
         else:group[item['status']]+=1
     zone=ZoneInfo(coordinator.profile()['timezone'])
-    upcoming={'events':0,'open_tasks':0,'unassigned_tasks':0}
+    upcoming={'events':0,'open_tasks':0,'unassigned_tasks':0,'reserved_offer_tasks':0}
     for row in coordinator.db.execute('SELECT start FROM events WHERE cancelled=0'):
         if end <= stamp(row[0]).astimezone(zone).date() < upcoming_end:upcoming['events']+=1
     for row in coordinator.db.execute("SELECT id,payload FROM tasks WHERE status='open'"):
         item=json.loads(row['payload'])
         if end <= stamp(item['start']).astimezone(zone).date() < upcoming_end:
             upcoming['open_tasks']+=1
-            if not coordinator.db.execute("SELECT 1 FROM assignments WHERE task_id=? AND status='assigned'",(row['id'],)).fetchone():upcoming['unassigned_tasks']+=1
+            statuses = {r[0] for r in coordinator.db.execute(
+                'SELECT status FROM assignments WHERE task_id=?', (row['id'],))}
+            if 'assigned' not in statuses:
+                upcoming['reserved_offer_tasks' if 'offered' in statuses else 'unassigned_tasks'] += 1
     exceptions={'draft':0,'failed':0,'unknown':0}
     unavailable=[]
     for table in ('reminders','task_notices','corrections'):
