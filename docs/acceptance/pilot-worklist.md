@@ -1,66 +1,66 @@
-# Remaining Good Company work — October 1, 2026
+# Good Company issue work and evidence — October 1, 2026
 
-The owner requested work on every open issue and selected Apple PIM for a local
-testing instance. No specific nonprofit pilot, inventory system, accessibility
-intake, form authority or donor/beneficiary system was identified. The existing
-local/hosted installation evidence remains valid within its recorded limits.
+The owner requested PRs for all remaining issues, selected Apple PIM for a local
+instance, and authorized merging when ready. The owner separately confirmed fresh-user
+installation with one-click installation allowed; #16 remains accepted on that basis.
 
-## Merged concrete fixes
+## Provider and participant integration
 
-| Issue | Change |
-| --- | --- |
-| #199 | Preserve empty state directories with backward-compatible backup restore (#204). |
-| #200 | Use the organization's local date for source applicability/review (#205). |
-| #201 | Return the matching MCP SSE result before stream EOF (#206). |
-| #202 | Preserve/reconcile sparse calendar cancellations and retire stale queued work (#207). |
-| #203 | Report reserved offers separately from truly unassigned staffing (#208). |
-
-PRs #204–209 merged after their Python 3.11–3.13 checks passed. The resulting main
-tree matches the combined branch that passed 504 tests and the original 19 grouped
-checks. Issues #199–203 are closed. The owner confirmed on October 1 that fresh-user
-installation is already proven with one-click installation allowed, accepting #16.
-See the [installation acceptance record](16-fresh-install.md). Eleven issues below remain open.
-
-## Installation and live workflow work
-
-| Issue | Prepared or observed | Required completion evidence |
+| Issue | Implemented PR | Evidence and remaining acceptance |
 | --- | --- | --- |
-| #29 | Existing roster/remit/ownership/replay checks pass. Apple PIM's pinned authserv/DKIM boundary is a concrete candidate. | Implement the mailbox-bound VerifiedReply bridge; genuine and spoofed messages must traverse that exact integration. Preserve opaque evidence, reject domain-only identity and unauthenticated commands. |
-| #31 | Apple PIM loads and its native helper reads the explicitly scoped calendar tool. Contract gaps are [documented](local-apple-pim.md#provider-work-that-the-probe-exposed). | Stable recurring occurrence identity, demonstrably complete bounded reads, exact mailbox/account permissions and truthful receipt/reconciliation behavior. |
-| #41 | Signup/capacity/waitlist/acceptance/replacement regressions pass, including simultaneous responses and opt-out. | Bind the same proven #29 identity path to signup/RSVP commands and retain same-path live evidence. Offers must remain separate from confirmed participation. |
-| #58 | Five repeatable fictional food-bank checks pass. | Authorized test mailbox; real eligibility/offer/decline/replacement observations and provider references. |
-| #59 | Five repeatable fictional arts-change checks pass. | Move/cancel controlled scoped events; real team-specific corrections and linked-work handling, with receipt/deduplication evidence. |
-| #60 | Five repeatable fictional stop/budget checks pass. | A verified live STOP with pending event/task notices; no later send to that helper while other authorized work continues. |
-| #61 | Four repeatable fictional board checks pass. No dress policy is fabricated; private conflict titles stay hidden. | Real routine scoped reminder receipt and repeat-run deduplication through an authorized mailbox. |
+| #29 | [#212](https://github.com/jjjhenriksen/good-company/pull/212): exact-message Apple PIM identity bridge | [Mailbox/account, content/header/policy binding and spoof/race checks](29-apple-pim-replies.md). Native legacy auth results omit messageBinding; genuine and spoofed native messages still need acceptance. |
+| #31 | [#213](https://github.com/jjjhenriksen/good-company/pull/213): bounded Apple PIM provider | [Exact calendars, sentinel completeness, recurring/all-day evidence and private availability](31-apple-pim-provider.md). Unsupported native occurrence/date evidence and send receipt/reconciliation are refused. |
+| #41 | [#214](https://github.com/jjjhenriksen/good-company/pull/214): shared verified intake | [Signup, acceptance, decline and ordinary replies share one replay journal](41-provider-intake.md). Offers reserve capacity without confirming attendance. Native same-path acceptance depends on #29. |
 
-Run `python3 scripts/local_acceptance.py` to reproduce the grouped fictional checks.
-Their successful fixture receipts are not provider receipts. Local mail remains
-disabled until an exact test sender/audience is authorized.
+The native read client has successfully read the isolated gateway. The installed
+plugin's missing evidence is explicit; local simulated identity never repairs that
+production gap by assertion. Runtime modules are included in the exact Docker context.
 
-The runner now covers six groups and 31 checks, including verified reply identity,
-mailbox changes, replay rejection and signup/capacity/acceptance. Its machine-readable
-report accounts for every issue below and records #16 separately as accepted by
-owner confirmation. It never converts fixture success into live
-acceptance. The [native Apple PIM harness](local-apple-pim.md#repeat-the-native-startup-and-containment-checks)
-automates isolated startup, tool reads, mutation/scope denials and restart persistence
-using the installed plugin. Both runners stop short of generating genuine participant
-identity, provider receipts or a real pilot's requirements.
+## Optional module discovery
 
-## Optional modules: current scope decisions
+Existing Bethel 337 fundraising work provides a concrete candidate context, not
+permission to infer resource ownership, medical needs or a donor system.
 
-These are prepared discovery briefs, not findings about an actual nonprofit.
-The current decision is to defer production implementation for all four modules
-until a concrete pilot supplies the source and authority below. No speculative
-implementation issues were opened and none of the discovery issues is closed.
+| Issue | Scope PR | Decision |
+| --- | --- | --- |
+| #46 | [#215](https://github.com/jjjhenriksen/good-company/pull/215), [resource booking](../pilots/46-resource-booking.md) | No-go: product stock/sales do not establish bookable equipment or a reservation ledger. |
+| #47 | [#216](https://github.com/jjjhenriksen/good-company/pull/216), [accessibility requests](../pilots/47-accessibility-requests.md) | Disabled candidate workflow; actual intake, fulfillment owner, consent and retention remain to be supplied. |
+| #48 | [#217](https://github.com/jjjhenriksen/good-company/pull/217), [form checklists](../pilots/48-form-checklists.md) | Status-only proposal grounded in official form sources; actual required items, dates and custodian remain unconfirmed. |
+| #49 | [#218](https://github.com/jjjhenriksen/good-company/pull/218), [donor/beneficiary](../pilots/49-donor-beneficiary.md) | No-go: retail fundraising and external philanthropic affiliation do not establish donor CRM or case authority. |
 
-| Issue | Candidate bounded workflow | Minimal proposed data / responsible role | Evidence needed for a go decision |
-| --- | --- | --- | --- |
-| #46 Resources | Availability check, explicit reservation, cancellation and readback for one equipment type in one authoritative inventory. | Resource ID, time window, reservation ID, responsible coordinator; access limited to the inventory owner and authorized bookers. | Actual ownership/inventory, conflict and concurrent-reservation rules, allowed actions, cancellation/expiry semantics, retention period and authoritative booking receipt. Do not infer an equipment reservation from a calendar event. |
-| #47 Accessibility | Acknowledge an opted-in request, route it to a named fulfillment owner, record verified fulfillment or an unresolved gap. | Event ID, requested practical arrangement, owner/status and consent; omit diagnoses or unrelated personal history. | Pilot intake/fulfillment process, access list, explicit consent, retention/deletion rules, escalation responsibility and evidence of actual accommodation. Message-format preferences alone do not prove accommodation. |
-| #48 Forms | Sourced checklist and deadline reminders for one named form set; status from its designated authority. | Form identifier/version, due date, participant reference, authoritative completion status and evidence reference. Avoid retaining form contents when status suffices. | Supplied forms/deadlines, authoritative status source, allowed readers, retention and reminder remit. Keep document validation, legal/compliance certification and automatic collection outside this proposed scope. |
-| #49 Donor/beneficiary | One explicitly named lookup/status workflow against the pilot's chosen system. | External record ID and only fields essential to that workflow; separate access/consent/retention from volunteer operations. | Specific workflow and system, ownership/access/consent, minimal fields and retention. Payment processing, beneficiary case management and inferred eligibility remain excluded until independently scoped and implemented. |
+Each brief specifies minimal data, access/retention boundaries and observable gates.
+No speculative runtime implementation issues were opened. Discovery issues remain
+open where actual pilot facts are missing; merging a proposal does not enable it.
 
-A coordinator can now review concrete boundaries and supply only the missing
-pilot facts. For each approved module, create a bounded implementation issue with
-its actual authoritative source, permission model, failure/cancellation behavior
-and observable acceptance tests. Avoid silently broadening routine onboarding.
+## Complete isolated adoption scenarios
+
+| Issue | Scenario PR | Asserted outcomes |
+| --- | --- | --- |
+| #58 | [#219](https://github.com/jjjhenriksen/good-company/pull/219), [food bank](58-food-bank-lab.md) | Ineligible and forged signups/declines refused; qualified replacement offered and explicitly confirmed; two local notices; replay/send deduplication. |
+| #59 | [#220](https://github.com/jjjhenriksen/good-company/pull/220), [arts](59-arts-change-lab.md) | Separate programs, controlled rehearsal cancellation, linked-task retirement, original receipts preserved, two private corrections and no cross-team leakage. |
+| #60 | [#221](https://github.com/jjjhenriksen/good-company/pull/221), [mutual aid](60-mutual-aid-lab.md) | Verified STOP blocks both queued workflows; unaffected notices continue; consent and shared daily budget survive reopening state. |
+| #61 | [board scenario](61-board-meeting-lab.md) | Online reminder without dress rules; private calendar conflict response hides title/location; exact scope and repeat-send refusal. |
+
+Run `python scripts/adoption_lab.py --report /new/private/report.json` with Python
+3.11 or newer from the repository root. Select one issue with `--issue NUMBER`.
+Nine scenario/service checks exercise the NativeApplePIM HTTP client and the actual
+domain code against a private loopback server with independent participant credentials,
+example.invalid recipients and persisted local receipt hashes. The report retains
+asserted counts and outcomes, excludes credentials/content, refuses overwrites and
+explicitly marks live provider acceptance false. CI runs the same harness.
+
+These are complete local scenarios, not genuine email delivery or native DKIM proof.
+All seven integration/adoption issues retain their external acceptance requirements.
+No personal calendars were modified and no external mail was sent.
+
+The earlier `scripts/local_acceptance.py` still supplies 31 grouped library checks
+and the issue inventory. The [native Apple PIM harness](local-apple-pim.md) separately
+checks isolated plugin startup, guarded reads, mutation/scope denials and restart
+persistence. Keep each evidence kind distinct.
+
+## Previously completed work
+
+PRs #204–209 fixed issues #199–203 and added the original local acceptance harness.
+PR #210 added automated native Apple PIM checks. PR #211 records owner-confirmed
+installation acceptance for #16. Those installation records remain valid within
+[their stated evidence boundaries](16-fresh-install.md).
