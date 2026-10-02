@@ -28,6 +28,8 @@ with tempfile.TemporaryDirectory() as directory:
     assert not (root / 'latch.sqlite').exists(), 'Paused entrypoint opened provider journal'
     subprocess.run(['good-company-availability', '--help'], cwd=root, env=env,
                    capture_output=True, text=True, check=True)
+    subprocess.run(['good-company-intake', '--help'], cwd=root, env=env,
+                   capture_output=True, text=True, check=True)
     (root / 'availability.json').write_text(json.dumps({'journal': 'availability.sqlite',
         'account': 'owner@example.invalid', 'scopes': {'selected': 'calendar@example.invalid'}}))
     result = subprocess.run(['good-company-availability', '--config', str(root / 'availability.json'),

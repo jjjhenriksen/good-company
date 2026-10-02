@@ -14,6 +14,7 @@ dependencies = []
 good-company = "good_company.cli:main"
 good-company-cycle = "good_company.cycle_cli:main"
 good-company-availability = "good_company.availability_cli:main"
+good-company-intake = "good_company.intake_cli:main"
 
 [tool.setuptools.packages.find]
 include = ["good_company*"]

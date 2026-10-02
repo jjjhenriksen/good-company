@@ -81,6 +81,11 @@ calendar availability without using personal apps or sending external mail. Repo
 distinguish local acceptance from live provider evidence. Select one scenario with
 `--issue 58`, `59`, `60` or `61`. See the [work and evidence index](docs/acceptance/pilot-worklist.md).
 
+The existing Google/Latch connection also supports owner-issued, one-use mailbox
+confirmations for participant replies. See the [Gmail intake command and evidence
+boundary](docs/acceptance/29-google-mailbox-proof.md). Ordinary From headers cannot
+authorize a change, and the live acceptance gate remains open.
+
 Use tools through JSON request files:
 
 ```sh

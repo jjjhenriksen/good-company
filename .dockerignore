@@ -24,8 +24,10 @@
 !good_company/event_context.py
 !good_company/google_calendar.py
 !good_company/google_mail.py
+!good_company/google_intake.py
 !good_company/health.py
 !good_company/intake.py
+!good_company/intake_cli.py
 !good_company/knowledge.py
 !good_company/latch.py
 !good_company/lifecycle.py
@@ -47,6 +49,7 @@
 !scripts/good-company
 !scripts/good-company-availability
 !scripts/good-company-cycle
+!scripts/good-company-intake
 !scripts/runtime_preflight.py
 !scripts/start_runtime.py
 !skills/community-operations/SKILL.md
