@@ -50,3 +50,42 @@ class BackupTests(unittest.TestCase):
             backup_state(self.tmp.name, self.tmp.name)
         with self.assertRaises(ValueError):
             backup_state(self.tmp.name, self.tmp.name, offline=True)
+
+    def test_nested_empty_directories_round_trip_privately(self):
+        source = Path(self.tmp.name)
+        (source / 'empty' / 'nested').mkdir(parents=True)
+        (source / 'populated' / 'empty').mkdir(parents=True)
+        (source / 'populated' / 'data.txt').write_text('fixture')
+        with tempfile.TemporaryDirectory() as area:
+            backup, restored = Path(area) / 'backup', Path(area) / 'restored'
+            backup_state(source, backup, offline=True)
+            restore_state(backup, restored, offline=True)
+            for name in ('empty', 'empty/nested', 'populated', 'populated/empty'):
+                self.assertTrue((restored / name).is_dir(), name)
+                self.assertEqual((restored / name).stat().st_mode & 0o777, 0o700)
+            self.assertEqual((restored / 'populated/data.txt').read_text(), 'fixture')
+
+    def test_format_one_backups_remain_restorable(self):
+        with tempfile.TemporaryDirectory() as area:
+            backup, restored = Path(area) / 'backup', Path(area) / 'restored'
+            backup_state(self.tmp.name, backup, offline=True)
+            record = backup / 'backup-manifest.json'
+            manifest = json.loads(record.read_text())
+            manifest['format'] = 1
+            manifest.pop('directories', None)
+            record.write_text(json.dumps(manifest))
+            restore_state(backup, restored, offline=True)
+            self.assertTrue((restored / 'tasks.sqlite').is_file())
+
+    def test_unsafe_directory_records_refused_before_restore(self):
+        for name in ('../outside', '/outside', '.', 'tasks.sqlite'):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as area:
+                backup, restored = Path(area) / 'backup', Path(area) / 'restored'
+                backup_state(self.tmp.name, backup, offline=True)
+                record = backup / 'backup-manifest.json'
+                manifest = json.loads(record.read_text())
+                manifest.update(format=2, directories=[name])
+                record.write_text(json.dumps(manifest))
+                with self.assertRaises(ValueError):
+                    restore_state(backup, restored, offline=True)
+                self.assertFalse(restored.exists())

@@ -37,7 +37,7 @@ def backup_state(source, destination, offline=False):
     with tempfile.TemporaryDirectory(prefix='.state-backup-', dir=destination.parent) as temporary:
         root = Path(temporary) / 'snapshot'
         root.mkdir(mode=0o700)
-        manifest = {'format': 1, 'files': {}, 'modes': {}}
+        manifest = {'format': 2, 'files': {}, 'modes': {}, 'directories': []}
         for item in sorted(source.rglob('*')):
             if item.is_symlink():
                 raise ValueError('State contains symlinks; resolve and review them before backup.')
@@ -47,6 +47,7 @@ def backup_state(source, destination, offline=False):
             target = root / relative
             if item.is_dir():
                 target.mkdir(mode=0o700, exist_ok=True)
+                manifest['directories'].append(relative.as_posix())
                 continue
             if not item.is_file():
                 raise ValueError('State contains a non-regular file; stop services and review it.')
@@ -87,8 +88,20 @@ def restore_state(backup, destination, offline=False):
     root = Path(backup).resolve(strict=True)
     destination = private_destination(destination)
     manifest = json.loads((root / 'backup-manifest.json').read_text())
-    if manifest.get('format') != 1 or not isinstance(manifest.get('files'), dict):
+    if manifest.get('format') not in (1, 2) or not isinstance(manifest.get('files'), dict):
         raise ValueError('Unsupported backup manifest.')
+    directories = manifest.get('directories') if manifest['format'] == 2 else []
+    if not isinstance(directories, list) or any(not isinstance(name, str) for name in directories):
+        raise ValueError('Unsupported backup directory records.')
+    if len(directories) != len(set(directories)):
+        raise ValueError('Duplicate backup directory records.')
+    for name in directories:
+        relative = Path(name)
+        source = root / relative
+        if (not name or relative == Path('.') or relative.is_absolute() or '..' in relative.parts
+                or name == 'backup-manifest.json' or not source.is_dir()
+                or any(p.is_symlink() for p in [source, *source.parents] if p != root.parent)):
+            raise ValueError('Unsafe backup directory path.')
     for name, expected in manifest['files'].items():
         relative = Path(name)
         source = root / relative
@@ -101,10 +114,15 @@ def restore_state(backup, destination, offline=False):
     with tempfile.TemporaryDirectory(prefix='.state-restore-', dir=destination.parent) as temporary:
         restored = Path(temporary) / 'state'
         restored.mkdir(mode=0o700)
+        for name in sorted(directories):
+            (restored / name).mkdir(parents=True, exist_ok=True, mode=0o700)
         for name in manifest['files']:
             target = restored / name
             target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
             shutil.copyfile(root / name, target)
             target.chmod(manifest.get('modes', {}).get(name, 0o600))
+        for directory in restored.rglob('*'):
+            if directory.is_dir():
+                directory.chmod(0o700)
         os.rename(restored, destination)
     return {'restored': True, 'files': len(manifest['files']), 'next': 'Verify identity, policy and receipts before starting one scheduler.'}
