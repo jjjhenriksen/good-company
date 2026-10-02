@@ -98,3 +98,49 @@ class SourceReadinessTests(unittest.TestCase):
         self.assertFalse(self.c.health(now=NOW)['notify'])
         for private in ('private-source', 'Private title', 'gloves', 'private reviewer', 'private://'):
             self.assertNotIn(private, json.dumps([report, recovery]))
+
+    def test_implicit_applicability_uses_local_date_in_both_offset_directions(self):
+        cases = [
+            ('America/Los_Angeles', '2026-10-01T00:30:00Z', '2026-09-30', '2026-10-01'),
+            ('Asia/Tokyo', '2026-09-30T16:30:00Z', '2026-10-01', '2026-10-02'),
+        ]
+        self.configured()
+        for zone, now, start, end in cases:
+            with self.subTest(zone=zone):
+                profile = self.c.profile()
+                profile['timezone'] = zone
+                self.c.configure(profile)
+                source = 'source-' + zone
+                metadata = dict(version='v1', original_source='fixture://local-date',
+                                review_authority='fixture reviewer', effective_from=start,
+                                effective_until=end, review_by='2027-01-01')
+                self.c.ingest('Packing calendar policy.', source, 'Fixture', NOW, metadata=metadata)
+                evidence = self.c.retrieve('packing', now=now)['evidence']
+                self.assertIn(source, {item['source'] for item in evidence})
+                self.c.withdraw_source(source, 'fixture cleanup', now=now)
+
+    def test_local_expiry_and_review_deadline_match_retrieval_and_readiness(self):
+        self.configured()
+        profile = self.c.profile()
+        profile['timezone'] = 'Asia/Tokyo'
+        self.c.configure(profile)
+        now = '2026-09-30T16:30:00Z'  # October 1 locally.
+        for field in ('effective_until', 'review_by'):
+            with self.subTest(field=field):
+                changes = {field: '2026-10-01' if field == 'effective_until' else '2026-09-30'}
+                metadata = dict(version=field, original_source='fixture://deadline',
+                                review_authority='fixture reviewer', effective_from='2026-09-01',
+                                effective_until='2026-11-01', review_by='2026-10-01')
+                metadata.update(changes)
+                self.c.ingest('Packing calendar policy.', 'deadline-' + field, 'Fixture',
+                              NOW, metadata=metadata)
+                self.assertEqual(self.c.retrieve('packing', now=now)['evidence'], [])
+                self.assertEqual(self.c.readiness(now=now)['sources']['status'], 'needs_review')
+
+    def test_local_review_day_and_explicit_requested_date_are_preserved(self):
+        self.configured()
+        now = '2026-10-01T00:30:00Z'  # September 30 in the configured Los Angeles zone.
+        self.source(review_by='2026-09-30')
+        self.assertTrue(self.c.retrieve('packing', now=now)['evidence'])
+        self.assertEqual(self.c.readiness(now=now)['sources']['status'], 'current')
+        self.assertEqual(self.c.retrieve('packing', on='2026-10-01', now=now)['evidence'], [])

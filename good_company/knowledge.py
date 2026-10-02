@@ -2,6 +2,7 @@
 import json
 import sqlite3
 from datetime import date
+from zoneinfo import ZoneInfo
 from .core import required, stamp
 
 
@@ -20,7 +21,8 @@ def validate_metadata(metadata):
 
 def _select_versions(coordinator, audience, on, now):
     """Select evidence once for retrieval and aggregate readiness reporting."""
-    day = date.fromisoformat(on) if on else stamp(now).date()
+    today = stamp(now).astimezone(ZoneInfo(coordinator.profile()['timezone'])).date()
+    day = date.fromisoformat(on) if on else today
     current = {}
     for row in coordinator.db.execute('SELECT source,audience FROM knowledge'):
         current[row['source']] = row['audience']
@@ -37,7 +39,7 @@ def _select_versions(coordinator, audience, on, now):
         versioned_sources.add(source)
         if day < date.fromisoformat(meta['effective_from']) or (meta.get('effective_until') and day >= date.fromisoformat(meta['effective_until'])):
             continue
-        if max(day, stamp(now).date()) > date.fromisoformat(meta['review_by']):
+        if max(day, today) > date.fromisoformat(meta['review_by']):
             gaps.append({'source': source, 'version': row['version'], 'reason': 'review_overdue'})
             continue
         for chunk in json.loads(row['payload']):
