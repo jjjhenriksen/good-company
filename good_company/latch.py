@@ -82,25 +82,33 @@ class LatchMCP:
     @staticmethod
     def _sse_response(response, envelope):
         deadline = time.monotonic() + 45
-        consumed, data = 0, []
+        consumed, pending, data = 0, b'', []
         while time.monotonic() < deadline:
-            line = response.readline(2_000_001 - consumed)
-            consumed += len(line)
+            # read1 returns available bytes after at most one underlying read.
+            # readline could keep waiting as a peer trickles an unfinished line.
+            chunk = response.read1(min(65_536, 2_000_001 - consumed))
+            consumed += len(chunk)
             if consumed > 2_000_000:
                 raise ValueError('oversized response')
-            if not line:
+            if time.monotonic() >= deadline:
+                raise ValueError('response deadline exceeded')
+            if not chunk:
                 break
-            line = line.decode().rstrip('\r\n')
-            if not line:
-                if data:
-                    candidate = json.loads('\n'.join(data))
-                    if isinstance(candidate, dict) and candidate.get('id') == envelope.get('id'):
-                        return candidate
-                    data = []
-            elif line.startswith('data:'):
-                value = line[5:]
-                data.append(value[1:] if value.startswith(' ') else value)
-            # Other SSE fields, comments and unrelated notifications are inert.
+            lines = (pending + chunk).split(b'\n')
+            pending = lines.pop()
+            for raw_line in lines:
+                # Decode complete lines so fragmented UTF-8 remains intact.
+                line = raw_line.rstrip(b'\r').decode()
+                if not line:
+                    if data:
+                        candidate = json.loads('\n'.join(data))
+                        if isinstance(candidate, dict) and candidate.get('id') == envelope.get('id'):
+                            return candidate
+                        data = []
+                elif line.startswith('data:'):
+                    value = line[5:]
+                    data.append(value[1:] if value.startswith(' ') else value)
+                # Other SSE fields, comments and unrelated notifications are inert.
         raise ValueError('matching response missing')
 
     def _rpc(self, method, params, notification=False):
