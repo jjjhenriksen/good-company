@@ -1,20 +1,20 @@
 # Second provider decision (#31)
 
-Decision: no-go for implementation until a pilot selects an authoritative calendar
-and mail system. No concrete second-provider need is supplied in the current issue
-or fictional examples. Google/Latch discovery and bounded owner-loopback delivery now work. General
-provider normalization, external reply identity and unattended execution remain
-unverified, so portability is not yet established. Do not select a vendor
-on the assumption that generic nonprofit workflows imply a Microsoft tenant.
+The owner selected Apple PIM for a local testing instance on October 1, 2026.
+[PR #213](https://github.com/jjjhenriksen/good-company/pull/213) implements the
+existing provider contract for explicitly selected Apple calendars without changing
+domain coordination logic. It uses the read-only NativeApplePIM client and the
+mailbox-bound identity policy introduced by [#212](https://github.com/jjjhenriksen/good-company/pull/212).
 
-The pilot record must name its actual system/account owner, calendar scope,
-unattended send permissions, recurrence/completeness behavior, verified inbound
-identity and receipt reconciliation. Map these to providers.Account, CalendarPage,
-SendResult and verified_reply. Reuse domain logic and the contract suite. Explicitly
-mark unsupported idempotency, reconciliation or inbound verification; an ICS export
-or SMTP acceptance alone is not bidirectional calendar/mail integration.
+Supported scope: exact-account reads, explicit calendar IDs, bounded complete
+non-recurring timed-event snapshots, sparse cancellations, and private overlap checks.
+Recurring events require original occurrence identity; all-day events require floating
+date evidence. The installed exporter lacks those fields, so the adapter refuses
+such records. Installed auth results lack exact-message binding, so domain reply
+changes remain unavailable through that legacy result. Native send and reconciliation
+raise explicit unsupported errors; display text is not a provider receipt.
 
-Once the need is evidenced, create one bounded adapter implementation with the same
-complete-pagination, sender/scope, failure/unknown and replay tests, then prove the
-same live cycle with an authorized test inbox. No integration was invented or
-account credentials requested by this decision record.
+See the [adapter evidence and limitations](../acceptance/31-apple-pim-provider.md).
+Local contract tests and the isolated HTTP adoption lab prove the code boundaries.
+They do not establish native live sync, genuine incoming authentication or delivery.
+Keep #31 open for missing native evidence and an authorized genuine mailbox run.

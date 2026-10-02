@@ -69,6 +69,18 @@ reminder authorization, skill-based assignment, repeat-run deduplication and
 reassignment after a decline. It performs no network calls or actual sends.
 [Captured replay](docs/AUTONOMOUS-DEMO.txt).
 
+For complete fictional food-bank, arts, mutual-aid and board workflows, run:
+
+```sh
+python3 scripts/adoption_lab.py --report /new/private/adoption-report.json
+```
+
+This laboratory uses a private loopback HTTP service and example.invalid addresses.
+It exercises verified intake, delivery claims, local receipt reconciliation and
+calendar availability without using personal apps or sending external mail. Reports
+distinguish local acceptance from live provider evidence. Select one scenario with
+`--issue 58`, `59`, `60` or `61`. See the [work and evidence index](docs/acceptance/pilot-worklist.md).
+
 Use tools through JSON request files:
 
 ```sh

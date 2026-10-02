@@ -12,16 +12,18 @@ from uuid import uuid4
 
 from good_company.apple_pim import NativeApplePIM
 from good_company.core import digest
+from good_company.core import stamp
 from good_company.intake import ApplePIMIntake
 from good_company.providers import ProviderError, SendResult
 
 
 class MailLab:
-    def __init__(self, root, owner='coordinator@example.invalid'):
+    def __init__(self, root, owner='coordinator@example.invalid', calendars=None):
         self.root = Path(root).resolve()
         if not owner.endswith('@example.invalid'):
             raise ValueError('Fictional owner required')
         self.owner = owner
+        self.calendars = calendars or {}
         self.credentials = {name: secrets.token_urlsafe(24) for name in ('owner', 'alex', 'sam', 'lee', 'pat')}
         self.policy_path = self.root / 'lab-trusted-senders.json'
         self.policy_path.write_text(json.dumps({'trustedAuthservIds': {'lab-account': ['lab.example.invalid']},
@@ -110,9 +112,25 @@ class MailLab:
             raise PermissionError()
         if path == '/tools/invoke':
             args = payload['args']
-            if payload['tool'] != 'apple_pim_mail' or args['configDir'] != str(self.root):
+            if args['configDir'] != str(self.root):
                 raise PermissionError()
             action = args['action']
+            if payload['tool'] == 'apple_pim_calendar':
+                if action == 'list':
+                    value = {'success': True, 'calendars': [{'id': cid} for cid in self.calendars]}
+                elif action == 'events' and args.get('calendar') in self.calendars:
+                    first, last = stamp(args['from']), stamp(args['to'])
+                    if first >= last or type(args.get('limit')) is not int or args['limit'] != 10001:
+                        raise ValueError()
+                    records = [e for e in self.calendars[args['calendar']]
+                               if stamp(e['startDate']) < last and stamp(e['endDate']) > first]
+                    value = {'success': True, 'events': records[:args['limit']], 'count': min(len(records), args['limit'])}
+                else:
+                    raise PermissionError()
+                return {'ok': True, 'result': {'details': {'domain': 'calendar', 'action': action},
+                        'content': [{'type': 'text', 'text': json.dumps(value)}]}}
+            if payload['tool'] != 'apple_pim_mail':
+                raise PermissionError()
             if action == 'accounts':
                 value = {'success': True, 'accounts': [{'id': 'lab-account', 'name': 'Isolated mail lab',
                           'enabled': True, 'userName': self.owner}]}
