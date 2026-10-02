@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import sqlite3
+import time
 from datetime import datetime, timezone
 import urllib.parse
 import urllib.request
@@ -54,21 +55,21 @@ class LatchMCP:
                 session = response.headers.get('Mcp-Session-Id')
                 if session:
                     self.headers['Mcp-Session-Id'] = session
-                raw = response.read(2_000_001)
-            if notification:
-                return {}
-            if len(raw) > 2_000_000:
-                raise ValueError('oversized response')
-            text = raw.decode()
-            if text.lstrip().startswith(('event:', 'data:', ':')):
-                candidates = []
-                for block in text.replace('\r\n', '\n').split('\n\n'):
-                    data = '\n'.join(line[5:].lstrip() for line in block.splitlines() if line.startswith('data:'))
-                    if data:
-                        candidates.append(json.loads(data))
-                result = next(item for item in candidates if item.get('id') == envelope.get('id'))
-            else:
-                result = json.loads(text)
+                if notification:
+                    return {}
+                if response.headers.get('Content-Type', '').split(';')[0].strip() == 'text/event-stream':
+                    result = self._sse_response(response, envelope)
+                else:
+                    raw = response.read(2_000_001)
+                    if len(raw) > 2_000_000:
+                        raise ValueError('oversized response')
+                    text = raw.decode()
+                    if text.lstrip().startswith(('event:', 'data:', ':')):
+                        # Compatibility with finite older responses missing Content-Type.
+                        import io
+                        result = self._sse_response(io.BytesIO(raw), envelope)
+                    else:
+                        result = json.loads(text)
             if not isinstance(result, dict):
                 raise ValueError('invalid envelope')
             if envelope is not None and result.get('id') != envelope.get('id'):
@@ -77,6 +78,30 @@ class LatchMCP:
         except Exception:
             # Provider errors may contain tokens, URLs or private message text.
             raise ProviderError('latch_transport_unconfirmed') from None
+
+    @staticmethod
+    def _sse_response(response, envelope):
+        deadline = time.monotonic() + 45
+        consumed, data = 0, []
+        while time.monotonic() < deadline:
+            line = response.readline(2_000_001 - consumed)
+            consumed += len(line)
+            if consumed > 2_000_000:
+                raise ValueError('oversized response')
+            if not line:
+                break
+            line = line.decode().rstrip('\r\n')
+            if not line:
+                if data:
+                    candidate = json.loads('\n'.join(data))
+                    if isinstance(candidate, dict) and candidate.get('id') == envelope.get('id'):
+                        return candidate
+                    data = []
+            elif line.startswith('data:'):
+                value = line[5:]
+                data.append(value[1:] if value.startswith(' ') else value)
+            # Other SSE fields, comments and unrelated notifications are inert.
+        raise ValueError('matching response missing')
 
     def _rpc(self, method, params, notification=False):
         self.sequence += 1
