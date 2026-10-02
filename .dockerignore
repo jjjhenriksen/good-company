@@ -11,6 +11,7 @@
 !examples/tasks.json
 !examples/team.json
 !good_company/__init__.py
+!good_company/apple_pim.py
 !good_company/accessibility.py
 !good_company/authority.py
 !good_company/availability_cli.py
