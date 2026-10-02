@@ -27,6 +27,7 @@
 !good_company/latch.py
 !good_company/lifecycle.py
 !good_company/localization.py
+!good_company/local_sandbox.py
 !good_company/migrations.py
 !good_company/onboarding.py
 !good_company/participant.py

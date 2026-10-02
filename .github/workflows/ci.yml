@@ -23,6 +23,7 @@ jobs:
       - run: python -m unittest discover -s tests -v
       - run: python scripts/demo.py
       - run: python scripts/autonomous_demo.py
+      - run: python scripts/local_acceptance.py
       - run: python -m pip install build
       - run: python -m build --wheel
       - run: python scripts/check_wheel.py dist/*.whl
