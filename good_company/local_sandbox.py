@@ -53,7 +53,7 @@ def initialize(state, repository, plugin, launcher, node, bin_dir, port=19843, m
                     'entries': {'apple-pim-cli': {'enabled': True,
                         'config': {'binDir': str(bin_dir), 'configDir': str(pim)}}}},
         # Mail, contacts, reminder writes and arbitrary shell tools are unavailable.
-        'tools': {'allow': ['apple_pim_calendar']},
+        'tools': {'allow': ['apple_pim_calendar'], 'toolSearch': False},
         'skills': {'load': {'extraDirs': [str(repository / 'skills')]}},
     }
     if model:

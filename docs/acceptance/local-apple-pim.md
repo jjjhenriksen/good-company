@@ -6,7 +6,7 @@ replacement for the Plow deployment or completed live nonprofit acceptance.
 ## Create a separate macOS workspace
 
 Use Python 3.11 or later and the already installed OpenClaw, Apple PIM plugin,
-native CLI binaries and Node runtime. This command neither installs them nor
+native CLI binaries and Node runtime, from the Good Company source checkout. This command neither installs them nor
 copies an existing account's credentials. Choose a new private state directory
 and an unused loopback port. Keep this directory outside cloud-synced storage.
 
@@ -32,8 +32,8 @@ private durable directory when the sandbox must survive those events.
 The initializer refuses an existing state directory. The new fictional ledger
 is paused; calendars have an empty allowlist, mail/contacts/reminders are disabled,
 and the gateway permits only the calendar tool. It generates its own private
-gateway token and never prints it. The gateway binds to loopback, disables cron
-and heartbeats, and starts with `OPENCLAW_SKIP_CHANNELS=1`. This supported runtime
+gateway token and never prints it. The gateway exposes the calendar's schema directly, binds to loopback, disables
+cron and heartbeats, and starts with `OPENCLAW_SKIP_CHANNELS=1`. This supported runtime
 flag preserves the plugin's tools while preventing its Apple Mail channel from
 polling or answering mail. `channels.apple-mail.enabled=false` disabled the
 entire plugin in the tested runtime and is unsuitable for a tools-only check.
@@ -56,9 +56,16 @@ The installed Apple PIM source and native binaries were reused without modificat
   personal calendar event was imported or written.
 - The paused profile/remit and gateway token hashes matched after a controlled
   stop and restart. Direct ledger reads found zero events and queued notices.
-- The available Ollama Bonsai model rejected the tool-enabled conversation with
-  `does not support tools`. A conversational local smoke test did not pass; select
-  and verify a model with tool support before interactive use.
+- The pre-existing Ollama Bonsai model rejected tool use. A separate local
+  `qwen3:1.7b` model was obtained; its native capability report includes tools, and
+  the gateway returned the genuine response `GOOD_COMPANY_LOCAL_OK`. The initializer
+  now refuses a selected local model that lacks tool support. A model capability
+  label alone does not prove that any requested tool was actually called.
+- With the direct calendar schema, a subsequent model turn actually invoked
+  `apple_pim_calendar` and returned the empty authorized list. The runtime
+  terminal receipt names that successful tool. The earlier compact tool-search
+  attempt emitted JSON as text and did not count as a call; direct schemas fixed
+  this narrow local-model path.
 - Startup explicitly skipped channels, cron and heartbeats. The existing gateway
   and Good Company installation were not restarted, configured or upgraded.
 

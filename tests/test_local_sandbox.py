@@ -45,6 +45,7 @@ class LocalSandboxTests(unittest.TestCase):
         self.assertEqual(pim['calendars']['items'], [])
         self.assertFalse(pim['mail']['enabled'])
         self.assertEqual(config['tools']['allow'], ['apple_pim_calendar'])
+        self.assertFalse(config['tools']['toolSearch'])
         self.assertFalse(config['cron']['enabled'])
         self.assertEqual(config['channels'], {})
         self.assertIn('OPENCLAW_SKIP_CHANNELS=1', (state / 'start.sh').read_text())
