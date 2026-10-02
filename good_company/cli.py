@@ -7,13 +7,13 @@ import sys
 from pathlib import Path
 from .core import digest
 from .validation import MAX_REQUEST_BYTES, RequestError, validate_request, safe_error
-from .onboarding import SetupCoordinator as Coordinator
+from .modules import ModuleCoordinator as Coordinator
 
 
 def main():
     parser = argparse.ArgumentParser(description='Good Company coordination tools')
     parser.add_argument('--db', default=os.environ.get('GOOD_COMPANY_DB', '.state/good-company.sqlite'))
-    parser.add_argument('action', choices=['register-translation', 'accessible-evidence', 'health', 'readiness', 'record-connection', 'onboarding', 'create-correction', 'correction-queue', 'correction-claim', 'correction-receipt', 'task-impacts', 'communication-budget', 'set-contact-preferences', 'set-contact-consent', 'configure', 'ingest', 'retrieve', 'import-calendar', 'events', 'set-source-precedence', 'withdraw-source', 'profile', 'export-summary', 'delete-source', 'retain-delivery-history', 'overdue-tasks', 'follow-up-task', 'allocation-report', 'add-shift', 'shift-status', 'record-participation', 'participation-history', 'weekly-brief',
+    parser.add_argument('action', choices=['configure-module', 'module-status', 'module-summary', 'expire-module-records', 'module-notice', 'module-queue', 'module-claim', 'module-receipt', 'add-resource', 'book-resource', 'cancel-booking', 'resource-availability', 'register-translation', 'accessible-evidence', 'health', 'readiness', 'record-connection', 'onboarding', 'create-correction', 'correction-queue', 'correction-claim', 'correction-receipt', 'task-impacts', 'communication-budget', 'set-contact-preferences', 'set-contact-consent', 'configure', 'ingest', 'retrieve', 'import-calendar', 'events', 'set-source-precedence', 'withdraw-source', 'profile', 'export-summary', 'delete-source', 'retain-delivery-history', 'overdue-tasks', 'follow-up-task', 'allocation-report', 'add-shift', 'shift-status', 'record-participation', 'participation-history', 'weekly-brief',
                                          'plan', 'queue', 'review', 'edit', 'approve', 'claim', 'receipt', 'conflicts',
                                          'set-dress-code', 'dress-code', 'configure-autonomy', 'autonomy',
                                          'set-volunteer', 'add-task', 'delegate', 'task-queue', 'task-claim',

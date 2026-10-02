@@ -185,6 +185,15 @@ and a changed remit requires new verification. Readiness never echoes evidence
 references, addresses, calendar identifiers or document contents.
 ## Stop requests
 
+Optional resource, accessibility, checklist and relationship workflows use
+`configure-module` and the owner-only actions in docs/OPTIONAL-WORKFLOWS.md.
+They require their own verified people/source/retention/notice remit. Never infer
+that volunteer consent covers these records. Run `module-summary` for aggregate
+status and `module-status` only on behalf of a verified authorized viewer.
+`module-notice` creates a private status-only notice; claim/receipt and the recurring
+cycle use the same sender, consent, quiet-hour, budget and reconciliation rules.
+Never treat a notice receipt as an external booking, arrangement or acknowledgment.
+
 After verifying the participant identity through the connected account, call
 `set-contact-consent` with their verified address, `enabled: false`, and the
 verified response reference. This covers event and task claims and persists across

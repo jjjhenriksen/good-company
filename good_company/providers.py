@@ -110,6 +110,8 @@ class Delivery:
             return c.task_claim, c.task_receipt, 'notice_id'
         if kind == 'correction':
             return c.correction_claim, c.correction_receipt, 'correction_id'
+        if kind == 'module':
+            return c.module_claim, c.module_receipt, 'notice_id'
         raise ProviderError('unknown_notice_kind')
 
     def _record(self, kind, notice_id, result, now):

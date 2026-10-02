@@ -8,7 +8,7 @@ import sqlite3
 from .cycle import run_cycle
 from .google_mail import GoogleProvider
 from .latch import LatchMCP, LatchOperations
-from .onboarding import SetupCoordinator
+from .modules import ModuleCoordinator as SetupCoordinator
 
 
 def main():
