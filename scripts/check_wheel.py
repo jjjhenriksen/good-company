@@ -41,7 +41,7 @@ def main():
         result = subprocess.run([str(cli), 'module-summary'], input='{}', cwd=target, env=env,
                                 check=True, capture_output=True, text=True)
         assert json.loads(result.stdout)['counts'] == []
-        subprocess.run([str(python), '-c', 'from good_company.resources import book_resource; from good_company.access_requests import request_accessibility'],
+        subprocess.run([str(python), '-c', 'from good_company.resources import book_resource; from good_company.access_requests import request_accessibility; from good_company.checklists import add_checklist'],
                        cwd=target, env=env, check=True, capture_output=True)
     print('Installed CLI smoke check passed outside the source checkout.')
 

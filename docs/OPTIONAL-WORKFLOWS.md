@@ -88,6 +88,33 @@ requested arrangement. Confirmation/check references are trusted-host attestatio
 from the responsible people's real observations; fictional tests demonstrate the
 state machine without asserting an actual accommodation exists.
 
+## Document checklists
+
+Configure `checklists` with the exact authoritative status source, assigned
+custodian, separately consented people, retention and reminder recipients.
+`add-checklist` takes `item`, `actor`, `authority`. Fields: `id`, `title`, `subject`,
+`owner`, `form_url` (official HTTPS link), `form_version`, `due` (actual supplied
+date/time with offset), `source`, `consent`, optional normalized `event_id`.
+The assigned custodian registers the requirement. No form contents, signatures,
+medical records, registry credentials or background-check findings are stored.
+
+`update-checklist` takes `item_id`, `action`, `actor`, `evidence`, `authority`:
+the participant can `report-submitted` or `withdraw`; the assigned custodian can
+`acknowledge` an actual source observation, `mark-missing`, `change-deadline`
+(with `due`), `replace-version` (with `form_version`), or `recheck-event` after a
+linked event changes. New versions/event rechecks clear old acknowledgments.
+Reported submission never becomes source acknowledgment automatically, and
+acknowledgment never claims certification/compliance. Repeated identical source
+updates preserve the revision. Changed requirements invalidate pending notices.
+
+`plan-module-notices` and the cycle queue at most one private reminder per current
+missing-item revision when its supplied deadline is within one day or overdue.
+The configured recipient/consent/quiet-hour/budget rules still apply. The reminder
+includes the current title, deadline and official form link, with no form contents.
+Reported-submitted, acknowledged and withdrawn items receive no automatic missing
+reminder. Manual status correspondence also uses the bounded module notice path.
+There is no inferred deadline, form submission, attachment upload or verification.
+
 ## Status, notices and retention
 
 `module-status` takes `module`, `record_id`, `actor`. Individual records are visible

@@ -188,6 +188,11 @@ class ModuleCoordinator(SetupCoordinator):
             message = {'sender': (self.autonomy() or {}).get('sender'), 'to': [recipient.casefold()], 'bcc': [],
                        'subject': 'Good Company: ' + module + ' update',
                        'body': 'Your ' + module + ' record has status: ' + record['status'] + '.\nAsk your coordinator for the current details.'}
+            if module == 'checklists':
+                item = record['payload']
+                message.update(subject='Checklist: ' + item['title'], body=item['title'] + '\nDeadline: ' + item['due']
+                               + '\nStatus: ' + record['status'].replace('_', ' ') + '\nOfficial form: ' + item['form_url']
+                               + '\nThis is a status reminder; it does not certify compliance.')
             policy_hash = digest([p, self.autonomy()])
             for previous in self.db.execute('SELECT id,status,message FROM module_notices WHERE module=? AND record_id=? AND revision=?', (module, record_id, record['revision'])):
                 if previous['status'] in ('sending', 'uncertain', 'sent', 'failed') and json.loads(previous['message']).get('to') == message['to']:
@@ -208,6 +213,8 @@ class ModuleCoordinator(SetupCoordinator):
     def _notice_current(self, module, record, now):
         if record['status'] in ('withdrawn', 'cancelled', 'expired'):
             raise ValueError('This record no longer authorizes notices.')
+        if module == 'checklists' and record['status'] == 'acknowledged':
+            raise ValueError('The authoritative source acknowledged this item; no further reminder is due.')
 
     def module_queue(self):
         return [dict(r) | {'message': json.loads(r['message'])} for r in self.db.execute('SELECT * FROM module_notices ORDER BY due,id')]
@@ -279,3 +286,19 @@ class ModuleCoordinator(SetupCoordinator):
     def update_accessibility(self, *args, **request):
         from .access_requests import update_accessibility
         return update_accessibility(self, *args, **request)
+
+    def add_checklist(self, *args, **request):
+        from .checklists import add_checklist
+        return add_checklist(self, *args, **request)
+
+    def update_checklist(self, *args, **request):
+        from .checklists import update_checklist
+        return update_checklist(self, *args, **request)
+
+    def plan_module_notices(self, now=None):
+        from .checklists import plan_checklists
+        try:
+            self._module_policy('checklists')
+        except ValueError:
+            return {'queued': [], 'exceptions': 0}
+        return plan_checklists(self, now=now)
