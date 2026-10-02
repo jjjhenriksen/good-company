@@ -60,6 +60,34 @@ captures its authorized revision. Changes require review and never silently move
 a reservation or free its capacity. There are no implicit conflict overrides,
 fees, stock adjustments, return inspections, or reservation claims elsewhere.
 
+## Accessibility arrangements
+
+Configure `accessibility` with the named event-service desk as its source and a
+workflow-specific coordinator, requester and service owner. `request-accessibility`
+takes `request`, `actor`, `authority`. Request fields: `id`, `event_id` (the engine's
+normalized event ID returned by `events`), `requester`, `owner`, `service_owner`,
+`arrangement`, `consent`, `share_with`. The consent reference attests to sharing
+with exactly the named coordinator/service owner and the configured retention.
+Only a verified requester may submit their request. Request text describes the
+arrangement; diagnoses, medical records and proof of disability are not fields.
+
+`update-accessibility` takes `request_id`, `action`, `actor`, `evidence`, `authority`.
+The responsible coordinator acknowledges a requested arrangement (`acknowledge`),
+the service owner confirms it (`arrange`), and the coordinator records evidence
+of an actual separate check (`verify`). No receipt for a sent email changes these
+states. `unavailable` records an evidenced inability; it removes previous
+confirmation/check evidence. `recheck` captures the current event revision and
+returns to acknowledged, requiring fresh service confirmation and verification.
+Changed/cancelled events expose `needs_review`, never an outdated verified claim.
+`withdraw` is restricted to the requester, removes the arrangement/consent text,
+revokes the service owner's view and invalidates pending notices. Withdrawal
+cannot be undone by replay; renewed consent uses a new request ID.
+
+Only the consented viewers can retrieve the record. Status messages omit the
+requested arrangement. Confirmation/check references are trusted-host attestations
+from the responsible people's real observations; fictional tests demonstrate the
+state machine without asserting an actual accommodation exists.
+
 ## Status, notices and retention
 
 `module-status` takes `module`, `record_id`, `actor`. Individual records are visible
