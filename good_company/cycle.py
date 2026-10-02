@@ -43,6 +43,8 @@ def run_cycle(coordinator, provider, cycle_id, start, end, now=None):
     with cycle_lock(coordinator) as locked:
         if not locked:
             return {'status': 'already_running', 'cycle_id': cycle_id}
+        if hasattr(coordinator, 'expire_module_records'):
+            coordinator.expire_module_records('configured workflow retention', now=now)
         policy = coordinator.autonomy()
         if not policy or not policy.get('enabled'):
             return {'status': 'paused', 'cycle_id': cycle_id}
@@ -64,7 +66,8 @@ def run_cycle(coordinator, provider, cycle_id, start, end, now=None):
             with db:
                 observe('blocked')
             return {'status': 'blocked', 'cycle_id': cycle_id, 'reason': 'provider_identity_unavailable'}
-        fingerprint = digest([start, end, policy, coordinator.profile(), account.provider,
+        modules = [list(r) for r in db.execute('SELECT module,payload FROM module_policies ORDER BY module')] if hasattr(coordinator, 'module_queue') else []
+        fingerprint = digest([start, end, policy, modules, coordinator.profile(), account.provider,
                               account.account_id, account.sender, sorted(account.calendar_scopes),
                               getattr(provider, 'scopes', None)])
         db.execute('''CREATE TABLE IF NOT EXISTS operational_cycles(
@@ -116,6 +119,8 @@ def run_cycle(coordinator, provider, cycle_id, start, end, now=None):
         delivery = Delivery(coordinator, provider)
         queues = [('event', coordinator.queue()), ('task', coordinator.task_queue()),
                   ('correction', coordinator.correction_queue())]
+        if hasattr(coordinator, 'module_queue'):
+            queues.append(('module', coordinator.module_queue()))
         for kind, notices in queues:
             for notice in notices:
                 # Every send still goes through the domain's current authority,

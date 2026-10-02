@@ -1,7 +1,11 @@
 # Resource booking: Bethel 337 discovery decision
 
-Refs #46. Decision: **no-go for booking in the current fundraising pilot**.
-This is a scope assessment, not an enabled module.
+Refs #46 and #225. **The owner subsequently requested all optional workflows.**
+The selected implementation is now an owner-configured local reservation ledger;
+see [optional workflows](../OPTIONAL-WORKFLOWS.md). Fictional projector/custodian
+records establish the local pilot's concrete acceptance scope. This does not
+establish ownership of actual Bethel equipment or connect its sales workbook.
+The discovery below is retained as the boundary for those real-world records.
 
 ## Evidence and ownership
 
