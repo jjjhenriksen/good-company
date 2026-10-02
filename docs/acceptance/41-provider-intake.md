@@ -1,0 +1,23 @@
+# Verified participant intake
+
+`ApplePIMIntake` extends the exact-message identity bridge with `SIGNUP <task-id>`,
+`ACCEPT <task-id>` and `DECLINE-OFFER <task-id>`. `dispatch` resolves one verified
+message, checks the account before and after its read, and routes the bound result
+to existing reply or signup domain handling. It checks mailbox remit before reading
+participant content. Sending can be paused while verified STOP remains available.
+
+A shared private `inbound_intake` journal claims an account/message exactly once
+across both routes. Reusing a consumed message as a different command is rejected.
+Claims precede domain mutation; a crash or unexpected failure leaves a claimed or
+uncertain record for owner review rather than replaying an operation that may have
+committed. Rejected domain operations also remain recorded. Only opaque identity
+evidence is stored, never raw mail bodies or headers.
+
+The integration tests send fictional native records through the actual identity
+bridge and domain dispatcher, covering offers, waitlists, confirmed acceptance,
+replacement, mailbox changes, pause behavior and concurrent duplicate intake. An
+offer stays reserved until verified acceptance, and neither state asserts attendance.
+
+Native message binding and an authorized live mailbox remain required by #29.
+Issue #41 stays open until genuine signup/decline/acceptance messages traverse
+this same integration path and their observed outcomes are retained.
