@@ -24,5 +24,7 @@ secrets delivered by the existing Google sender. Its tests exercise fictional
 Google envelopes and preserve the same signup/offer/acceptance distinction.
 
 Native message binding or controlled Google confirmation acceptance remains required by #29.
-Issue #41 stays open until genuine signup/decline/acceptance messages traverse
-this same integration path and their observed outcomes are retained.
+The [live Apple Mail/connected Gmail follow-up](29-41-apple-mail-live.md) now
+records genuine signup, acceptance and decline through this shared dispatcher,
+alongside rejected identity and replay attempts. Native Apple PIM acceptance
+remains separate from this independently authorized Gmail route.

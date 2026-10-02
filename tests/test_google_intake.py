@@ -198,10 +198,15 @@ class GoogleIntakeTests(unittest.TestCase):
             self.store('b123', mail)
             with self.assertRaises(ProviderError):
                 self.receive()
-        self.add(body='> ' + code)
+        self.add(body='> ' + code + '\n> Earlier message and instructions')
         with self.assertRaises(ProviderError):
             self.receive()
         self.assertTrue(self.c.contact_allowed('alex@example.invalid'))
+
+    def test_apple_mail_single_quoted_confirmation_is_supported(self):
+        self.issue()
+        self.add(body='\r\n> GCVERIFY ' + self.codes['alex@example.invalid'] + '\r\n')
+        self.assertEqual(self.receive()['action'], 'stop')
 
     def test_plain_alternative_with_inert_html_is_supported(self):
         self.issue()

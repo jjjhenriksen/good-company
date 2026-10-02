@@ -11,7 +11,8 @@ An owner explicitly selects an enrolled, permitted recipient and a fixed command
 The existing Google sender emails that mailbox a random 256-bit code. Only an
 accepted provider receipt activates it. The participant confirms that specific
 action by replying with exactly `GCVERIFY <code>` as the plain-text body, without
-quoted history or a signature. Codes expire after one hour and must not be forwarded.
+quoted history or a signature. Apple Mail's sole quoted `> GCVERIFY <code>` line
+is also accepted. Codes expire after one hour and must not be forwarded.
 
 The authenticated organization's inbox is read by exact opaque Gmail message ID
 using `plow-gog gmail get ID --account ADDRESS --format raw --json`. The adapter
@@ -89,3 +90,9 @@ claim it happened.
 Transport references: [Gmail messages.get](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages/get),
 [Gmail raw message resource](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages),
 and [gog v0.36 raw-message projection](https://github.com/openclaw/gogcli/blob/v0.36.0/internal/cmd/gmail_get.go).
+# Live connector follow-up
+
+[Apple Mail acceptance](29-41-apple-mail-live.md) now supplies real identity and
+signup/acceptance/decline evidence through `GmailConnectorReplies`, the independent
+Gmail plugin binding. Its scoped profile/raw MIME tools reuse the same confirmation
+parser and shared dispatcher. Bethel/Latch rollout remains outside this proof.

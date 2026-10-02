@@ -65,6 +65,13 @@ and the issue inventory. The [native Apple PIM harness](local-apple-pim.md) sepa
 checks isolated plugin startup, guarded reads, mutation/scope denials and restart
 persistence. Keep each evidence kind distinct.
 
+The subsequent [live Apple Mail/Gmail connector acceptance](29-41-apple-mail-live.md)
+provides the identity and signup/acceptance/decline gates for #29 and #41 using the
+owner's personal test mailboxes. Its content-free manifest preserves 15 observed
+assertions and explicitly defers live completion/paused-STOP at the quiet-hours
+boundary. It does not claim Bethel/Latch or native Apple PIM acceptance, nor does
+it close the four broader nonprofit adoption scenarios.
+
 ## Previously completed work
 
 PRs #204–209 fixed issues #199–203 and added the original local acceptance harness.
