@@ -2,7 +2,7 @@ from datetime import timedelta
 from pathlib import Path
 import tempfile
 import unittest
-from module_fixture import NOW, access_request, coordinator, event_snapshot
+from module_fixture import NOW, access_request, coordinator, event_snapshot, policy
 
 
 class AccessRequestTests(unittest.TestCase):
@@ -99,3 +99,11 @@ class AccessRequestTests(unittest.TestCase):
     def test_retention_removes_arrangement_and_consent_text(self):
         self.c.expire_module_records('configured retention', now=NOW + timedelta(days=31))
         self.assertEqual(self.c.db.execute("SELECT payload FROM module_records WHERE id='captions'").fetchone()[0], '{}')
+
+    def test_stale_calendar_blocks_notices_and_pause_never_prevents_withdrawal(self):
+        notice = self.notice()
+        with self.assertRaises(ValueError):
+            self.c.module_claim(notice, now=NOW + timedelta(minutes=16))
+        p = policy('fictional-event-service-desk'); p['enabled'] = False
+        self.c.configure_module('accessibility', p, 'owner pause', now=NOW)
+        self.assertEqual(self.update('withdraw', 'alex')['status'], 'withdrawn')

@@ -30,7 +30,7 @@ def weekly(coordinator, week_start):
                 upcoming['reserved_offer_tasks' if 'offered' in statuses else 'unassigned_tasks'] += 1
     exceptions={'draft':0,'failed':0,'unknown':0}
     unavailable=[]
-    for table in ('reminders','task_notices','corrections'):
+    for table in ('reminders','task_notices','corrections','module_notices'):
         if not coordinator.db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",(table,)).fetchone():
             unavailable.append(table);continue
         for row in coordinator.db.execute(f'SELECT status,count(*) FROM {table} GROUP BY status'):

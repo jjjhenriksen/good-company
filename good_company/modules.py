@@ -29,21 +29,6 @@ def fields(value, allowed, mandatory=()):
 
 
 class ModuleCoordinator(SetupCoordinator):
-    def __init__(self, path):
-        super().__init__(path)
-        with self.db:
-            self.db.execute('''CREATE TABLE IF NOT EXISTS module_policies(
-                module TEXT PRIMARY KEY, payload TEXT NOT NULL)''')
-            self.db.execute('''CREATE TABLE IF NOT EXISTS module_records(
-                module TEXT NOT NULL, id TEXT NOT NULL, revision INTEGER NOT NULL,
-                payload TEXT NOT NULL, status TEXT NOT NULL, expires_at TEXT NOT NULL,
-                PRIMARY KEY(module,id))''')
-            self.db.execute('''CREATE TABLE IF NOT EXISTS module_notices(
-                id TEXT PRIMARY KEY, module TEXT NOT NULL, record_id TEXT NOT NULL,
-                revision INTEGER NOT NULL, policy_hash TEXT NOT NULL,
-                due TEXT NOT NULL, status TEXT NOT NULL, message TEXT NOT NULL,
-                receipt TEXT)''')
-
     def configure_module(self, module, policy, authority, now=None):
         text(authority, 'owner instruction reference')
         if module not in MODULES:
@@ -116,6 +101,8 @@ class ModuleCoordinator(SetupCoordinator):
             raise ValueError('The authoritative workflow source changed; reconcile the record.')
         if actor is not None and actor not in record['viewers']:
             raise ValueError('This record is outside the verified person\'s access.')
+        if actor is not None and actor == record.get('owner') and actor != record.get('subject') and actor not in policy['owners']:
+            raise ValueError('The assigned owner no longer has workflow access.')
         return dict(row) | {'payload': record}
 
     def _event_binding(self, event_id):
@@ -127,11 +114,13 @@ class ModuleCoordinator(SetupCoordinator):
             raise ValueError('Use a current event in the authorized calendar scope.')
         return {'event_id': event_id, 'event_revision': event['revision']}
 
-    def _event_valid(self, record):
+    def _event_valid(self, record, now=None):
         if not record.get('event_id'):
             return True
         try:
-            return self._event_binding(record['event_id'])['event_revision'] == record['event_revision']
+            binding = self._event_binding(record['event_id'])
+            checked = self.db.execute('SELECT checked_at FROM events WHERE id=?', (record['event_id'],)).fetchone()[0]
+            return binding['event_revision'] == record['event_revision'] and timedelta(0) <= stamp(now) - stamp(checked) <= timedelta(minutes=15)
         except ValueError:
             return False
 
@@ -150,7 +139,7 @@ class ModuleCoordinator(SetupCoordinator):
 
     def module_status(self, module, record_id, actor, now=None):
         row = self._record(module, record_id, actor, now)
-        return {'id': record_id, 'status': row['status'] if self._event_valid(row['payload']) else 'needs_review',
+        return {'id': record_id, 'status': row['status'] if self._event_valid(row['payload'], now=now) else 'needs_review',
                 'revision': row['revision'], 'expires_at': row['expires_at'], 'record': row['payload']}
 
     def module_summary(self):
@@ -166,8 +155,8 @@ class ModuleCoordinator(SetupCoordinator):
             rows = self.db.execute("SELECT module,id FROM module_records WHERE expires_at<=? AND status<>'expired'", (iso(now),)).fetchall()
             for row in rows:
                 self.db.execute("UPDATE module_records SET payload='{}',status='expired',revision=revision+1 WHERE module=? AND id=?", tuple(row))
-                self.db.execute("UPDATE module_notices SET status=CASE WHEN status='pending' THEN 'superseded' ELSE status END,message=? WHERE module=? AND record_id=? AND status NOT IN ('sending','uncertain')",
-                                (json.dumps({'subject': '[expired]', 'body': '[expired]'}), *tuple(row)))
+                self.db.execute("UPDATE module_notices SET status='superseded' WHERE module=? AND record_id=? AND status='pending'", tuple(row))
+            self._redact_expired_notices()
             if rows:
                 self.log('module_retention', 'optional-workflows', {'count': len(rows), 'authority_hash': digest(authority)}, now)
         return {'expired': len(rows), 'scope': 'Logical deletion. Unknown delivery evidence and ID tombstones remain; backups are not erased.'}
@@ -182,7 +171,7 @@ class ModuleCoordinator(SetupCoordinator):
             if actor not in p['owners'] and actor != record['payload'].get('subject'):
                 raise ValueError('Only the subject or workflow owner can queue a notice.')
             self._notice_recipient(p, record, recipient)
-            if not now <= due < stamp(record['expires_at']) or not self._event_valid(record['payload']):
+            if not now <= due < stamp(record['expires_at']) or not self._event_valid(record['payload'], now=now):
                 raise ValueError('Notice timing or event evidence is no longer current.')
             self._notice_current(module, record, now)
             message = {'sender': (self.autonomy() or {}).get('sender'), 'to': [recipient.casefold()], 'bcc': [],
@@ -215,6 +204,14 @@ class ModuleCoordinator(SetupCoordinator):
             raise ValueError('This record no longer authorizes notices.')
         if module == 'checklists' and record['status'] == 'acknowledged':
             raise ValueError('The authoritative source acknowledged this item; no further reminder is due.')
+        if record['payload'].get('owner') not in self._module_policy(module)['owners']:
+            raise ValueError('The responsible workflow owner changed; reconcile before correspondence.')
+
+    def _redact_expired_notices(self):
+        self.db.execute('''UPDATE module_notices SET message=? WHERE status NOT IN ('sending','uncertain')
+            AND EXISTS (SELECT 1 FROM module_records r WHERE r.module=module_notices.module
+              AND r.id=module_notices.record_id AND r.status='expired')''',
+            (json.dumps({'subject': '[expired]', 'body': '[expired]'}),))
 
     def module_queue(self):
         return [dict(r) | {'message': json.loads(r['message'])} for r in self.db.execute('SELECT * FROM module_notices ORDER BY due,id')]
@@ -231,7 +228,7 @@ class ModuleCoordinator(SetupCoordinator):
             policy = self.autonomy()
             if not policy or not policy['enabled'] or row['policy_hash'] != digest([p, policy]):
                 raise ValueError('The standing notice authority changed or is paused.')
-            if record['revision'] != row['revision'] or not self._event_valid(record['payload']):
+            if record['revision'] != row['revision'] or not self._event_valid(record['payload'], now=now):
                 raise ValueError('The record or event changed; prepare a current notice.')
             self._notice_current(row['module'], record, now)
             message = json.loads(row['message'])
@@ -261,6 +258,7 @@ class ModuleCoordinator(SetupCoordinator):
             if row['status'] not in ('sending', 'uncertain'):
                 raise ValueError('Only an attempted or unknown notice can receive an outcome.')
             self.db.execute('UPDATE module_notices SET status=?,receipt=? WHERE id=?', (outcome, provider_id, notice_id))
+            self._redact_expired_notices()
         return {'id': notice_id, 'status': outcome}
 
     def add_resource(self, *args, **request):
@@ -302,3 +300,33 @@ class ModuleCoordinator(SetupCoordinator):
         except ValueError:
             return {'queued': [], 'exceptions': 0}
         return plan_checklists(self, now=now)
+
+    def add_relationship(self, *args, **request):
+        from .relationships import add_relationship
+        return add_relationship(self, *args, **request)
+
+    def sync_relationship(self, *args, **request):
+        from .relationships import sync_relationship
+        return sync_relationship(self, *args, **request)
+
+    def import_relationship_register(self, *args, **request):
+        from .relationships import import_relationship_register
+        return import_relationship_register(self, *args, **request)
+
+    def withdraw_module_record(self, module, record_id, actor, authority, now=None):
+        if module not in ('accessibility', 'checklists', 'relationships'):
+            raise ValueError('Use the resource cancellation workflow to release a reservation.')
+        with self.db:
+            self.db.execute('BEGIN IMMEDIATE')
+            row = self.db.execute('SELECT * FROM module_records WHERE module=? AND id=?', (module, record_id)).fetchone()
+            if not row or row['status'] == 'expired' or stamp(row['expires_at']) <= stamp(now):
+                raise ValueError('No current record is available.')
+            r = json.loads(row['payload'])
+            if actor != r['subject']:
+                raise ValueError('Only the verified subject can withdraw this record\'s consent.')
+            if row['status'] == 'withdrawn':
+                return {'id': record_id, 'status': 'withdrawn', 'revision': row['revision'], 'replayed': True}
+            minimal = {key: r[key] for key in ('id', 'subject', 'owner', 'source')}
+            minimal['viewers'] = list(dict.fromkeys([r['subject'], r['owner']]))
+            return self._save_record(module, record_id, minimal, 'withdrawn', row['expires_at'], authority,
+                                      stamp(now), row['revision'] + 1)

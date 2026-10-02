@@ -1,6 +1,11 @@
 # Donor and beneficiary integration: Bethel 337 assessment
 
-Refs #49. Decision: **no-go for donor CRM or beneficiary case integration**.
+Refs #49. The owner subsequently requested all optional workflows. The selected
+[implemented pilot](../OPTIONAL-WORKFLOWS.md#donor-and-beneficiary-follow-up) uses a
+private owner-held JSON register for read-only source observations and separately
+consented follow-up. This is a go for that bounded local workflow. The earlier
+assessment below remains the boundary for actual Bethel CRM/case data; no such
+system, donor roster, beneficiary record, payment or case authority is inferred.
 
 The existing fundraising dashboard describes product sales, vendor expenses, stock
 and campaign revenue. Retail purchasers are not automatically donors, and a campaign

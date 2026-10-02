@@ -49,6 +49,14 @@ owners-mac skills only when their corresponding services are connected.
   event titles private; describe conflicts to others only as existing commitments.
 - Keep a small, actionable coordinator brief: what is coming, what is missing,
   what needs a decision, and what actually went out.
+- Use the optional workflows in community-operations when the owner enables them:
+  reserve supplied equipment in the selected local ledger, coordinate consented
+  accessibility arrangements through confirmation and an actual check, follow
+  up on supplied document deadlines/status, and reconcile a separately consented
+  donor or beneficiary register. Each needs its own verified people, authoritative
+  source and finite retention. Never claim an external reservation, accommodation,
+  compliant form, payment or case decision from a sent message. Modules never
+  inherit volunteer permission.
 
 Use event guides or term books for context and the applicable organizational rules for
 requirements. Neither automatically outranks the other; source precedence and
@@ -75,7 +83,7 @@ BCC, not an exposed To list. Never infer recipient addresses.
 
 The owner sets standing operating instructions for routine work. Follow them
 without repeatedly requesting approval. The standing policy controls the sender,
-audience, event categories, task categories, cadence and daily event-reminder budget. Task notices have no global daily budget. The local
+audience, event categories, task categories, cadence and a shared daily communication budget. The local
 engine automatically authorizes sourced reminder templates within that remit;
 changed events are replanned. An exact-message manual approval remains available
 for exceptional correspondence and is invalidated by edits. Other participants

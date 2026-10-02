@@ -115,6 +115,57 @@ Reported-submitted, acknowledged and withdrawn items receive no automatic missin
 reminder. Manual status correspondence also uses the bounded module notice path.
 There is no inferred deadline, form submission, attachment upload or verification.
 
+## Donor and beneficiary follow-up
+
+Configure `relationships` with the exact owner-selected authoritative register,
+separate people/owners, explicit notice recipients and finite retention. The built
+integration reads an owner-held private JSON register. It has no network discovery,
+source writes, payment execution, tax receipt, grant approval, eligibility decision,
+case notes or medical/income data. A real CRM connector is separately selected;
+the register import is not a live CRM subscription or inferred Bethel integration.
+
+`add-relationship` takes `record`, `actor`, `authority`. Fields: `id`, `kind`
+(`donor` or `beneficiary`), `subject`, `owner`, `external_id`, `source`, `purpose`,
+`consent`. Only the assigned owner registers an independently consented person.
+An active external record cannot be bound twice. A roster entry or retail sale
+is insufficient. Only the person and assigned owner can retrieve its status.
+
+`sync-relationship` takes `record_id`, `snapshot`, `actor`, `authority`. Snapshot
+fields: `source`, `external_id`, `kind`, `state`, `version`, `checked_at`, `evidence`.
+Donor states are `pledged` and `recorded`; beneficiary states are `requested` and
+`confirmed`. These produce source-observed local statuses, never an assertion that
+Good Company processed money or delivered a service. Donor observations optionally
+include `amount_minor` and a supplied uppercase three-letter `currency` together;
+amounts are integers, not inferred totals. A fresh observation must match the exact
+source/person/kind binding. Same-version replay preserves the original revision;
+conflicting or superseded versions are rejected. Evidence is a verified-host
+attestation to the actual register observation, not a new authentication mechanism.
+
+`import-relationship-register` takes `path`, `actor`, `authority`. Supply an
+owner-held regular file with permissions 0600, at most 2 MB and 1000 entries:
+
+```json
+{
+  "source": "owner-selected-register",
+  "complete": true,
+  "records": [{"record_id": "bound-local-id", "snapshot": {
+    "source": "owner-selected-register", "external_id": "opaque-source-id",
+    "kind": "donor", "state": "recorded", "version": "source-version",
+    "checked_at": "2026-10-01T17:00:00Z", "evidence": "private-observation-reference"
+  }}]
+}
+```
+
+All rows apply atomically or none do. Observations are at most 15 minutes old;
+use the actual clock, not the illustrative date above. Missing rows never remove
+consent or establish an absent outcome. The input file is never modified.
+
+`withdraw-module-record` takes `module`, `record_id`, `actor`, `authority` for
+accessibility, checklists or relationships. Verified subjects can withdraw even
+while the workflow is paused. Private content is removed and queued follow-up
+invalidated; source imports cannot restore old consent. Resource reservations use
+`cancel-booking` instead so ledger capacity and release receipts remain coherent.
+
 ## Status, notices and retention
 
 `module-status` takes `module`, `record_id`, `actor`. Individual records are visible

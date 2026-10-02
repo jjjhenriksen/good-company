@@ -4,7 +4,7 @@ import sqlite3
 import uuid
 from pathlib import Path
 
-VERSION = 1
+VERSION = 2
 SCHEMA = """
 
         CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -55,6 +55,16 @@ SCHEMA = """
           revision TEXT NOT NULL, policy_hash TEXT NOT NULL, message TEXT NOT NULL,
           status TEXT NOT NULL, created_at TEXT NOT NULL, receipt TEXT, authority TEXT NOT NULL,
           UNIQUE(kind,original_id,revision));
+        CREATE TABLE IF NOT EXISTS module_policies(
+          module TEXT PRIMARY KEY, payload TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS module_records(
+          module TEXT NOT NULL, id TEXT NOT NULL, revision INTEGER NOT NULL,
+          payload TEXT NOT NULL, status TEXT NOT NULL, expires_at TEXT NOT NULL,
+          PRIMARY KEY(module,id));
+        CREATE TABLE IF NOT EXISTS module_notices(
+          id TEXT PRIMARY KEY, module TEXT NOT NULL, record_id TEXT NOT NULL,
+          revision INTEGER NOT NULL, policy_hash TEXT NOT NULL,
+          due TEXT NOT NULL, status TEXT NOT NULL, message TEXT NOT NULL, receipt TEXT);
 """
 
 
@@ -69,7 +79,7 @@ def migrate(db, path, schema=SCHEMA):
     if existing:
         # Keep a consistent private copy before any DDL. The full offline runtime
         # backup remains necessary for external install identity and credentials.
-        backup = Path(str(path) + '.pre-v1.' + uuid.uuid4().hex + '.sqlite')
+        backup = Path(str(path) + f'.pre-v{VERSION}.' + uuid.uuid4().hex + '.sqlite')
         fd = backup.open('xb'); fd.close(); backup.chmod(0o600)
         with closing(sqlite3.connect(backup)) as copy:
             db.backup(copy)
@@ -91,7 +101,7 @@ def migrate(db, path, schema=SCHEMA):
                 db.execute(pending); pending = ''
         if pending.strip():
             raise ValueError('Incomplete migration statement.')
-        db.execute('PRAGMA user_version=1')
+        db.execute(f'PRAGMA user_version={VERSION}')
         db.commit()
     except Exception:
         db.rollback()

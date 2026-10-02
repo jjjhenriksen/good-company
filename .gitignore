@@ -8,6 +8,7 @@ plow-credentials
 private/
 dist/
 build/
+optional-workflows-report.json
 .env.*
 !.env.example
 *.pem

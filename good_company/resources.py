@@ -46,10 +46,12 @@ def add_resource(c, resource, actor, authority, now=None):
 
 
 def _resource(c, resource_id, actor, now):
-    c._module_policy('resources', actor)
+    p = c._module_policy('resources', actor)
     r = c._record('resources', resource_id, now=now)['payload']
     if r.get('record_type') != 'resource':
         raise ValueError('Use a registered resource ID.')
+    if r['owner'] not in p['owners']:
+        raise ValueError('The registered custodian is no longer authorized; reconcile existing reservations.')
     return r
 
 

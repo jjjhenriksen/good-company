@@ -25,6 +25,13 @@ outstanding; an October 1 account-enumeration attempt was denied by Latch review
 
 ## Optional module discovery
 
+The owner subsequently requested implementation of **all four** optional workflows.
+The [implemented modules and combined command acceptance](optional-workflows.md)
+supersede the earlier no-go/proposal-only software decisions below. Resource PR
+#226, accessibility PR #228 and checklist PR #230 have merged; #231 tracks the
+donor/beneficiary register and combined harness. Real Bethel inventory, sources,
+people and actual fulfillment are not inferred from the fictional local pilot.
+
 Existing Bethel 337 fundraising work provides a concrete candidate context, not
 permission to infer resource ownership, medical needs or a donor system.
 

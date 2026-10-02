@@ -37,6 +37,11 @@ reminders, and finds a replacement after a verified decline.
   completion/cancellation handling and reassignment after verified declines.
 - **Delivery state:** atomic claims and real provider receipts; uncertain outcomes
   are reconciled rather than blindly retried. Queued does not mean sent.
+- **Optional workflows:** owner-configured local equipment reservations, consented
+  accessibility arrangements with separate confirmation/checks, supplied document
+  checklists/deadlines and donor/beneficiary follow-up from a private read-only
+  register. Each has separate access, consent, retention and notice authority.
+  See [supported workflows](docs/OPTIONAL-WORKFLOWS.md).
 - **Deployment package:** digest-pinned Plow base, agent persona, four skills,
   MIT license, install guide and optional remote image build workflow.
 
@@ -80,6 +85,17 @@ It exercises verified intake, delivery claims, local receipt reconciliation and
 calendar availability without using personal apps or sending external mail. Reports
 distinguish local acceptance from live provider evidence. Select one scenario with
 `--issue 58`, `59`, `60` or `61`. See the [work and evidence index](docs/acceptance/pilot-worklist.md).
+
+Exercise all four optional workflows through their real commands with isolated
+fictional records and the real clock:
+
+```sh
+python3 scripts/optional_workflows_lab.py --report /new/private/optional-workflows-report.json
+```
+
+This checks reservations/release, accessibility consent and actual-check states,
+document status authority, and atomic read-only register import. It sends no email
+and does not establish a real nonprofit's inventory, accommodation or CRM access.
 
 The existing Google/Latch connection also supports owner-issued, one-use mailbox
 confirmations for participant replies. See the [Gmail intake command and evidence
