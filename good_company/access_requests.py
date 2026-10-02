@@ -34,6 +34,8 @@ def request_accessibility(c, request, actor, authority, now=None):
 
 def update_accessibility(c, request_id, action, actor, evidence, authority, now=None):
     text(evidence, 'actual operation evidence reference')
+    if action == 'withdraw':
+        return c.withdraw_module_record('accessibility', request_id, actor, authority, now=now)
     now = stamp(now)
     with c.db:
         c.db.execute('BEGIN IMMEDIATE')
@@ -58,7 +60,7 @@ def update_accessibility(c, request_id, action, actor, evidence, authority, now=
                 r.pop('confirmation', None); r.pop('verification', None)
                 status = 'acknowledged'
             else:
-                if not c._event_valid(r):
+                if not c._event_valid(r, now=now):
                     raise ValueError('The event changed; recheck arrangements against its current revision.')
                 if action == 'acknowledge' and current == 'requested' and actor == r['owner']:
                     status = 'acknowledged'

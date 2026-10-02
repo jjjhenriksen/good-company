@@ -58,3 +58,14 @@ def checklist():
             'form_url': 'https://example.invalid/consent', 'form_version': 'v1',
             'due': '2026-10-02T16:00:00Z', 'source': 'fictional-document-register',
             'consent': 'fictional status-only consent and reminder remit'}
+
+
+def relationship(kind='donor'):
+    return {'id': kind + '-one', 'kind': kind, 'subject': 'alex', 'owner': 'owner',
+            'source': 'fictional-relationship-register', 'external_id': 'external-' + kind,
+            'purpose': 'Fictional consented follow-up', 'consent': 'fictional separate relationship consent'}
+
+
+def observation(kind='donor', state='recorded'):
+    return {'source': 'fictional-relationship-register', 'external_id': 'external-' + kind, 'kind': kind,
+            'state': state, 'version': 'v1', 'checked_at': NOW.isoformat(), 'evidence': 'fictional register observation'}

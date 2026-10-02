@@ -20,3 +20,11 @@ and restart sending: it can replay accepted messages. Reconcile all subsequent
 provider receipts/unknown attempts before any exceptional recovery; do not erase
 claims to make a retry possible. Pre-version releases do not have the newer-schema
 guard and must never be pointed at an upgraded database.
+
+Schema version 2 adds optional workflow policy, record and notice tables in the
+same backed-up transaction. Existing v1 authority, receipts, replay tombstones
+and optional tables from the initial module release are preserved. The version
+advance prevents v1 code from opening a ledger whose optional notice attempts
+must count toward the shared budget. All coordinator entrypoints migrate through
+the same guard. New optional notices appear in aggregate readiness, health,
+weekly delivery exceptions and export counts.

@@ -114,7 +114,7 @@ class SetupCoordinator(CorrectionCoordinator):
         if source_state['status'] == 'needs_review':
             reasons.append('Review document applicability, review dates and missing review metadata.')
         counts = {}
-        for table in ('reminders', 'task_notices', 'corrections'):
+        for table in ('reminders', 'task_notices', 'corrections', 'module_notices'):
             for row in self.db.execute(f'SELECT status,count(*) FROM {table} GROUP BY status'):
                 counts[row[0]] = counts.get(row[0], 0) + row[1]
         exceptions = counts.get('draft', 0) + counts.get('failed', 0) + counts.get('uncertain', 0) + counts.get('sending', 0)

@@ -39,6 +39,7 @@
 !good_company/migrations.py
 !good_company/modules.py
 !good_company/resources.py
+!good_company/relationships.py
 !good_company/onboarding.py
 !good_company/participant.py
 !good_company/participation.py

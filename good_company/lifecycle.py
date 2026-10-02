@@ -7,7 +7,7 @@ def export_summary(c, authority):
     required(authority, 'owner export authority')
     tables = {r[0] for r in c.db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
     counts = {}
-    for table in ('events', 'volunteers', 'tasks', 'reminders', 'task_notices', 'corrections'):
+    for table in ('events', 'volunteers', 'tasks', 'reminders', 'task_notices', 'corrections', 'module_records', 'module_notices'):
         if table in tables:
             counts[table] = c.db.execute(f'SELECT count(*) FROM {table}').fetchone()[0]
     return {'format': 1, 'counts': counts, 'scope': 'Aggregate counts only; no recipients, message text, credentials or skill assessments.'}

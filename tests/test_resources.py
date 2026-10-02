@@ -155,3 +155,27 @@ class ResourceTests(unittest.TestCase):
         self.assertEqual(delivery.send('module', notice, now=NOW)['status'], 'uncertain')
         self.assertEqual(delivery.reconcile('module', notice, now=NOW)['status'], 'sent')
         self.assertEqual(p.calls, 1)
+
+    def test_expired_unknown_notice_retains_reconciliation_then_removes_content(self):
+        self.book()
+        notice = self.notice()
+        self.c.module_claim(notice, now=NOW)
+        self.c.module_receipt(notice, 'uncertain', 'unknown-outcome', now=NOW)
+        self.assertEqual(self.c.readiness(now=NOW)['delivery']['unknown'], 1)
+        self.assertEqual(self.c.weekly_brief('2026-10-01')['unresolved_delivery']['unknown'], 1)
+        self.assertNotIn('alex', json.dumps(self.c.health(now=NOW)))
+        self.c.expire_module_records('retention', now=NOW + timedelta(days=31))
+        self.assertEqual(self.c.module_queue()[0]['message']['to'], ['alex@example.invalid'])
+        self.c.module_receipt(notice, 'sent', 'actual-later-receipt', now=NOW + timedelta(days=31))
+        self.assertEqual(self.c.module_queue()[0]['message']['body'], '[expired]')
+
+    def test_former_owner_cannot_view_or_receive_private_record(self):
+        self.book()
+        p = policy(); p['owners'] = ['sam']
+        self.c.configure_module('resources', p, 'owner rotation', now=NOW)
+        with self.assertRaises(ValueError):
+            self.c.module_status('resources', 'booking-one', 'owner', now=NOW)
+        with self.assertRaises(ValueError):
+            self.c.module_notice('resources', 'booking-one', 'owner@example.invalid', NOW.isoformat(), 'alex', 'old role', now=NOW)
+        with self.assertRaisesRegex(ValueError, 'custodian'):
+            self.c.resource_availability('projector', '2026-10-02T12:00:00Z', '2026-10-02T13:00:00Z', 'alex', now=NOW)

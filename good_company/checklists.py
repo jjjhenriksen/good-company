@@ -38,6 +38,8 @@ def add_checklist(c, item, actor, authority, now=None):
 
 def update_checklist(c, item_id, action, actor, evidence, authority, due=None, form_version=None, now=None):
     text(evidence, 'verified submission or source observation')
+    if action == 'withdraw':
+        return c.withdraw_module_record('checklists', item_id, actor, authority, now=now)
     now = stamp(now)
     with c.db:
         c.db.execute('BEGIN IMMEDIATE')
@@ -65,7 +67,7 @@ def update_checklist(c, item_id, action, actor, evidence, authority, due=None, f
                 r.pop('acknowledgment', None); r.pop('reported_submission', None)
                 r['last_operation'] = operation
                 return c._save_record('checklists', item_id, r, 'missing', row['expires_at'], authority, now, row['revision'] + 1)
-            if not c._event_valid(r):
+            if not c._event_valid(r, now=now):
                 raise ValueError('The event or assigned custodian changed; reconcile the requirement.')
             if action == 'report-submitted' and actor == r['subject'] and row['status'] == 'missing':
                 r['reported_submission'] = {'evidence_hash': digest(evidence), 'at': iso(now)}
