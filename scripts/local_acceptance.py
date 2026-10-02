@@ -59,7 +59,6 @@ CASES = {
 
 # Local checks prepare evidence; they cannot supply a real identity, receipt or pilot.
 REMAINING = {
-    16: ('installation', 'Fresh account/phone and Index flow; independent hosted state across restart.'),
     29: ('integration', 'Mailbox-bound genuine and spoofed replies through the same verified provider bridge.'),
     31: ('integration', 'Complete recurring calendar identity, permissions and mail receipt/reconciliation contract.'),
     41: ('integration', 'Live verified signup/decline/acceptance through the #29 provider bridge.'),
@@ -71,6 +70,11 @@ REMAINING = {
     59: ('live_scenario', 'Controlled event changes, team-specific receipts and no leakage or duplicates.'),
     60: ('live_scenario', 'Verified live STOP across pending workflows while unaffected work continues.'),
     61: ('live_scenario', 'Scoped board reminder with private conflict and real receipt/deduplication.'),
+}
+
+COMPLETED = {
+    '16': {'accepted': True, 'evidence_kind': 'owner_confirmation', 'date': '2026-10-01',
+           'basis': 'Owner confirmed fresh-user installation is proven with one-click installation allowed.'},
 }
 
 
@@ -92,6 +96,7 @@ def run():
                                        'test_ids': names}
     report['passed'] = all(s['passed'] for s in report['scenarios'].values())
     report['issues'] = issue_status(report['scenarios'])
+    report['completed_issues'] = COMPLETED
     report['remaining_issue_acceptance'] = False
     report['remaining'] = 'Authorized test calendar/mailbox, provider identity proofs, genuine receipts and same-path live runs.'
     return report

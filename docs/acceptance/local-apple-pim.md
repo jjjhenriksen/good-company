@@ -1,7 +1,8 @@
 # Local Apple PIM sandbox and remaining acceptance
 
-This is a local preparation path for #16, #29, #31, #41 and #58–61. It is not a
-replacement for the Plow deployment or completed live nonprofit acceptance.
+This is a local preparation path for #29, #31, #41 and #58–61, with additional
+local installation evidence for the accepted #16. It is not a replacement for
+the Plow deployment or completed live nonprofit acceptance.
 
 ## Create a separate macOS workspace
 
@@ -74,7 +75,9 @@ The installed Apple PIM source and native binaries were reused without modificat
 This establishes isolated native startup, helper/tool access, containment and
 local ledger persistence. It does not establish a fresh phone/account activation,
 Index installation flow, hosted restart persistence, a real provider receipt or
-an authenticated participant reply. See [#16 evidence](16-fresh-install.md).
+an authenticated participant reply. The owner has separately accepted fresh-user
+installation (#16) based on supported one-click installation. See the
+[installation acceptance record](16-fresh-install.md).
 
 ## Repeatable fictional scenario checks
 
@@ -94,8 +97,9 @@ and board reminders without dress rules/private conflict labels/deduplication (4
 These checks prepare #58–61; genuine receipt and identity requirements stay open.
 
 The expanded runner adds six verified-reply checks (#29) and six signup-intake
-checks (#41), for 31 grouped checks. Its `issues` map lists all twelve remaining
-issues, their local coverage and exact missing evidence. A passing run still sets
+checks (#41), for 31 grouped checks. Its `issues` map lists all eleven remaining
+issues, their local coverage and exact missing evidence. Its `completed_issues`
+map records #16 as accepted by owner confirmation on October 1. A passing run still sets
 `remaining_issue_acceptance: false`; it does not declare a simulated sender or
 receipt genuine. Report files are created exclusively with mode 0600.
 

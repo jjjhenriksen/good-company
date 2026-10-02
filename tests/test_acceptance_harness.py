@@ -138,7 +138,9 @@ class AcceptanceHarnessTests(unittest.TestCase):
     def test_passing_local_checks_never_accept_live_or_pilot_issues(self):
         scenarios = {name: {'passed': True} for name in local.CASES}
         issues = local.issue_status(scenarios)
-        self.assertEqual(set(issues), {'16', '29', '31', '41', '46', '47', '48', '49', '58', '59', '60', '61'})
+        self.assertEqual(set(issues), {'29', '31', '41', '46', '47', '48', '49', '58', '59', '60', '61'})
+        self.assertTrue(local.COMPLETED['16']['accepted'])
+        self.assertEqual(local.COMPLETED['16']['evidence_kind'], 'owner_confirmation')
         self.assertTrue(all(value['accepted'] is False for value in issues.values()))
         self.assertTrue(issues['29']['local_checks_passed'])
         self.assertTrue(issues['41']['local_checks_passed'])

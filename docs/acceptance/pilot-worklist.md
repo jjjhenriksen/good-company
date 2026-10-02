@@ -17,13 +17,14 @@ local/hosted installation evidence remains valid within its recorded limits.
 
 PRs #204–209 merged after their Python 3.11–3.13 checks passed. The resulting main
 tree matches the combined branch that passed 504 tests and the original 19 grouped
-checks. Issues #199–203 are closed; the twelve issues below remain open.
+checks. Issues #199–203 are closed. The owner confirmed on October 1 that fresh-user
+installation is already proven with one-click installation allowed, accepting #16.
+See the [installation acceptance record](16-fresh-install.md). Eleven issues below remain open.
 
 ## Installation and live workflow work
 
 | Issue | Prepared or observed | Required completion evidence |
 | --- | --- | --- |
-| #16 | [Isolated Apple PIM startup and restart](local-apple-pim.md), paused ledger, independent private token. Existing Plow fresh/hosted evidence remains in [16-fresh-install.md](16-fresh-install.md). | Independent hosted saved-state/restart proof, fresh phone/account activation and actual Index texting installation flow. A Mac gateway does not satisfy these. |
 | #29 | Existing roster/remit/ownership/replay checks pass. Apple PIM's pinned authserv/DKIM boundary is a concrete candidate. | Implement the mailbox-bound VerifiedReply bridge; genuine and spoofed messages must traverse that exact integration. Preserve opaque evidence, reject domain-only identity and unauthenticated commands. |
 | #31 | Apple PIM loads and its native helper reads the explicitly scoped calendar tool. Contract gaps are [documented](local-apple-pim.md#provider-work-that-the-probe-exposed). | Stable recurring occurrence identity, demonstrably complete bounded reads, exact mailbox/account permissions and truthful receipt/reconciliation behavior. |
 | #41 | Signup/capacity/waitlist/acceptance/replacement regressions pass, including simultaneous responses and opt-out. | Bind the same proven #29 identity path to signup/RSVP commands and retain same-path live evidence. Offers must remain separate from confirmed participation. |
@@ -38,7 +39,8 @@ disabled until an exact test sender/audience is authorized.
 
 The runner now covers six groups and 31 checks, including verified reply identity,
 mailbox changes, replay rejection and signup/capacity/acceptance. Its machine-readable
-report accounts for every issue below and never converts fixture success into live
+report accounts for every issue below and records #16 separately as accepted by
+owner confirmation. It never converts fixture success into live
 acceptance. The [native Apple PIM harness](local-apple-pim.md#repeat-the-native-startup-and-containment-checks)
 automates isolated startup, tool reads, mutation/scope denials and restart persistence
 using the installed plugin. Both runners stop short of generating genuine participant
