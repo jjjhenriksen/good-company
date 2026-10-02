@@ -21,7 +21,11 @@ def validate_metadata(metadata):
 
 def _select_versions(coordinator, audience, on, now):
     """Select evidence once for retrieval and aggregate readiness reporting."""
-    today = stamp(now).astimezone(ZoneInfo(coordinator.profile()['timezone'])).date()
+    profile = coordinator.db.execute("SELECT value FROM settings WHERE key='profile'").fetchone()
+    # Empty/pre-setup readers have no organization timezone yet. Keep their
+    # existing UTC behavior until an organization profile is supplied.
+    zone = ZoneInfo(json.loads(profile[0])['timezone']) if profile else ZoneInfo('UTC')
+    today = stamp(now).astimezone(zone).date()
     day = date.fromisoformat(on) if on else today
     current = {}
     for row in coordinator.db.execute('SELECT source,audience FROM knowledge'):
