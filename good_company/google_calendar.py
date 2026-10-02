@@ -93,15 +93,18 @@ class GoogleCalendar:
         token = data['nextPageToken']
         if token is not None and not isinstance(token, str):
             raise ProviderError('invalid_google_page_cursor')
-        events = []
+        events, cancellations = [], []
         for raw in data['events']:
             event = self._event(raw, self.scopes[scope])
+            if event['status'] == 'cancelled':
+                cancellations.append(event)
+                continue
             # Google timeMin filters event END; the domain snapshot filters START.
             event_start = (datetime.combine(date.fromisoformat(event['start']), time.min, ZoneInfo(self.timezone))
                            if event.get('all_day') else stamp(event['start']))
             if stamp(start) <= event_start < stamp(end):
                 events.append(event)
-        return CalendarPage(scope, events, observed, True, True, token or None)
+        return CalendarPage(scope, events, observed, True, True, token or None, cancellations)
 
     def check_availability(self, scope, start, end, now=None):
         """Owner-only free/busy check; never imports or returns event details.
@@ -168,6 +171,11 @@ class GoogleCalendar:
             raise ProviderError('google_missing_instance_id')
         if raw.get('recurringEventId') and not raw.get('originalStartTime'):
             raise ProviderError('google_missing_occurrence_origin')
+        source = 'google-calendar://' + quote(calendar_id, safe='') + '/' + quote(uid, safe='')
+        if raw.get('status') == 'cancelled':
+            # Deleted events and recurrence exceptions can be identity-only.
+            return {'id': uid, 'status': 'cancelled', 'source': source,
+                    **{key: raw[key] for key in ('recurringEventId', 'originalStartTime') if key in raw}}
         first, last = raw.get('start', {}), raw.get('end', {})
         if not isinstance(first, dict) or not isinstance(last, dict):
             raise ProviderError('google_invalid_event_time')
@@ -191,7 +199,7 @@ class GoogleCalendar:
             raise ProviderError('google_invalid_event_status')
         return {'id': uid, 'title': title, 'start': start, 'end': end,
                 'all_day': all_day, 'status': status,
-                'source': 'google-calendar://' + quote(calendar_id, safe='') + '/' + quote(uid, safe=''),
+                'source': source,
                 'location': GoogleCalendar._display_text(raw.get('location', ''))}
 
     @staticmethod

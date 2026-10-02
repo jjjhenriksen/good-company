@@ -188,3 +188,44 @@ class GoogleCalendarTests(unittest.TestCase):
             self.assertEqual(c.events(), stable)
         finally:
             c.db.close()
+
+    def test_sparse_cancelled_instances_and_unknown_tombstones(self):
+        c = Coordinator(Path(self.tmp.name) / 'cancel.sqlite')
+        try:
+            c.configure(json.loads(Path('examples/profile.json').read_text())['profile'])
+            c.configure_autonomy(json.loads(Path('examples/autonomy.json').read_text())['policy'], 'fixture owner')
+            import_complete_calendar(c, self.provider, 'demo-events-only', START, END)
+            before = c.events()[0]
+            self.data = {'events': [
+                {'id': 'instance-1', 'status': 'cancelled', 'recurringEventId': 'series',
+                 'originalStartTime': {'dateTime': '2026-09-27T10:00:00-07:00'}},
+                {'id': 'unknown-deleted', 'status': 'cancelled'}], 'nextPageToken': ''}
+            self.provider.cycle_id = 'cancelled'
+            # An explicit identity can cancel a known event outside this window.
+            result = import_complete_calendar(c, self.provider, 'demo-events-only',
+                                             '2026-10-01T00:00:00Z', END)
+            after = c.events()[0]
+            self.assertEqual(after['cancelled'], 1)
+            self.assertEqual(after['payload']['title'], before['payload']['title'])
+            self.assertEqual(after['start'], before['start'])
+            self.assertEqual(after['payload']['status'], 'cancelled')
+            self.assertEqual(result['cancellations'], 2)
+            self.assertEqual(result['unresolved_cancellations'][0]['id'], 'unknown-deleted')
+            unknown = json.loads(c.db.execute("SELECT value FROM settings WHERE key LIKE 'calendar-cancellation:%' AND value LIKE '%unknown-deleted%'").fetchone()[0])
+            self.assertFalse(unknown['resolved'])
+            self.assertNotIn('title', unknown)
+            self.assertNotIn('start', unknown)
+            self.assertEqual(len(c.events()), 1)
+            # A later incomplete refresh cannot apply its cancellation evidence.
+            self.data['truncated'] = True
+            self.provider.cycle_id = 'partial'
+            stable = c.events()
+            with self.assertRaises(ProviderError):
+                import_complete_calendar(c, self.provider, 'demo-events-only', START, END)
+            self.assertEqual(c.events(), stable)
+        finally:
+            c.db.close()
+
+    def test_cancelled_recurring_instance_still_requires_origin(self):
+        with self.assertRaisesRegex(ProviderError, 'occurrence_origin'):
+            GoogleCalendar._event({'id': 'instance', 'status': 'cancelled', 'recurringEventId': 'series'}, 'cal')
