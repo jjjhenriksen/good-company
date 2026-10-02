@@ -133,6 +133,10 @@ class GoogleReplyProvider(GoogleProvider):
         data, _ = self._fresh_reader()._read(['plow-gog', 'gmail', 'get', message_id,
             '--account', self.email, '--format', 'raw', '--json'])
         msg = data.get('message')
+        return self._confirmation(msg, message_id)
+
+    @staticmethod
+    def _confirmation(msg, message_id):
         if (not isinstance(msg, dict) or msg.get('id') != message_id
                 or not isinstance(msg.get('labelIds'), list) or 'INBOX' not in msg['labelIds']):
             raise ProviderError('gmail_reply_outside_inbox')
@@ -159,7 +163,10 @@ class GoogleReplyProvider(GoogleProvider):
             body = plain[0].get_content()
             if not isinstance(body, str) or len(body) > 4096:
                 raise ValueError()
-            match = re.fullmatch(r'GCVERIFY ([0-9a-f]{64})', body.strip())
+            # Mail.app can serialize a freshly composed confirmation as one
+            # quoted line. A sole code is still explicit mailbox possession;
+            # quoted history, multiple lines and extra instructions remain invalid.
+            match = re.fullmatch(r'(?:> )?GCVERIFY ([0-9a-f]{64})', body.strip())
             if not match:
                 raise ValueError()
         except (ValueError, TypeError, AttributeError, LookupError):

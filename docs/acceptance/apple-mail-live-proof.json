@@ -1,0 +1,88 @@
+{
+  "status": "identity-and-signup-live-checks-passed",
+  "at": "2026-10-02T04:00:09.913276+00:00",
+  "checks": [
+    {
+      "name": "unverified Apple Mail command rejected",
+      "passed": true,
+      "message_id_sha256": "9d9f39d2fb3eee19f5906c39b0f4983fd3c90ecf54643a17b27460c1468ad931"
+    },
+    {
+      "name": "unverified STOP left consent unchanged",
+      "passed": true
+    },
+    {
+      "name": "signup:challenge accepted",
+      "passed": true,
+      "receipt_sha256": "99875f8f25955f6cc66b19d8b59f527a27d16d6566fec449d758d7eec5a7f0b0"
+    },
+    {
+      "name": "different mailbox cannot confirm another participants command",
+      "passed": true,
+      "message_id_sha256": "0b6ae03c0cb3dae62bdf61c2d73816d9ddded4b5a72b3ae92e4159d350ccb15e"
+    },
+    {
+      "name": "negative command left capacity unchanged",
+      "passed": true
+    },
+    {
+      "name": "genuine Apple Mail signup reserved an offer",
+      "passed": true,
+      "message_id_sha256": "24ca99d9ec4aaa0b7c10adeaae2dbc34094e2e25ac18579a44e1325a4bfb64af"
+    },
+    {
+      "name": "offer did not assert attendance",
+      "passed": true
+    },
+    {
+      "name": "code replay under another Gmail ID rejected",
+      "passed": true,
+      "message_id_sha256": "82e7a33d8ac5e644e6004f71b9f1956f51922b917608bbdd1545fc9a9aba7359"
+    },
+    {
+      "name": "accept:challenge accepted",
+      "passed": true,
+      "receipt_sha256": "ebd6c285914502df4f59b8a72f6e9d7f5a1b94ef458d5d3af2f8608eca40820c"
+    },
+    {
+      "name": "genuine Apple Mail acceptance confirmed only owned slot",
+      "passed": true,
+      "message_id_sha256": "9685a372459baea1c584579f71cfb80530ce890b0862375c49feb9c5ff693814"
+    },
+    {
+      "name": "one slot confirmed",
+      "passed": true
+    },
+    {
+      "name": "decline:challenge accepted",
+      "passed": true,
+      "receipt_sha256": "1af212b3e5431eb560c26045f14c0e35e28ebe1d5a1e3d7b1f1fb9b218291006"
+    },
+    {
+      "name": "decline:challenge accepted",
+      "passed": true,
+      "receipt_sha256": "1af212b3e5431eb560c26045f14c0e35e28ebe1d5a1e3d7b1f1fb9b218291006"
+    },
+    {
+      "name": "genuine Apple Mail decline released owned slot",
+      "passed": true,
+      "message_id_sha256": "8ede807011985533102b2af1149524be324fb1d7ad8c72aeb148471e24996548"
+    },
+    {
+      "name": "decline reopened correct capacity",
+      "passed": true
+    }
+  ],
+  "provider": "GmailConnectorReplies with actual connected Gmail tools",
+  "mail_source": "Apple Mail app via mail-cli, owner-controlled personal mailboxes",
+  "organization_state": "isolated synthetic test state",
+  "raw_rfc2822_used": true,
+  "live_bethel_latch_tested": false,
+  "literal_dkim_header_forgery_tested": false,
+  "supplemental_checks_deferred": [
+    "genuine completion",
+    "genuine STOP while paused"
+  ],
+  "deferral_reason": "verification_quiet_hours",
+  "private_original_report_sha256": "6410d428eca9d5e7b54cca12f4ece60f701e638fddfc62c7adb059c0b54a1bd5"
+}

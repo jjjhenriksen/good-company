@@ -25,6 +25,7 @@
 !good_company/google_calendar.py
 !good_company/google_mail.py
 !good_company/google_intake.py
+!good_company/gmail_connector.py
 !good_company/health.py
 !good_company/intake.py
 !good_company/intake_cli.py
