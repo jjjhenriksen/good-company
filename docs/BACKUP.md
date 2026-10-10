@@ -9,10 +9,26 @@ install identity, operating remit and provider histories travel together.
 From a trusted Python operator session:
 
 ```python
-from good_company.state_backup import backup_state, restore_state
+from good_company.state_backup import backup_state, restore_state, verify_backup
 backup_state('/private/stopped-state', '/private/backups/snapshot-001', offline=True)
+verify_backup('/private/backups/snapshot-001')
 restore_state('/private/backups/snapshot-001', '/private/recovered-state', offline=True)
 ```
+
+Check a retained snapshot without a restore destination:
+
+```sh
+python -m good_company.state_backup /private/backups/snapshot-001
+```
+
+Verification reads the manifest and its recorded files and directories, checking
+the same paths, file modes and checksums as restore. It creates no directories,
+opens no live database, and returns JSON containing only verification status,
+format and counts. Format 1 snapshots have no explicit directory records, so
+their directory count is zero. Invalid snapshots produce a nonzero exit status.
+Keep the snapshot unchanged while verifying it. A checksum match verifies
+consistency with the manifest; it does not authenticate who created the backup
+or prove that the restored runtime and provider connections work.
 
 Use actual private absolute paths outside Git repositories and public outputs.
 The destination must not exist. Snapshots use SQLite's backup API and integrity
