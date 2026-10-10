@@ -1,10 +1,12 @@
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 import test_tasks as base
 from test_core import NOW
-from good_company.state_backup import backup_state, restore_state
+from good_company.state_backup import backup_state, restore_state, verify_backup
 from good_company.tasks import WorkCoordinator
 
 
@@ -42,6 +44,8 @@ class BackupTests(unittest.TestCase):
             backup_state(self.tmp.name, backup, offline=True)
             (backup / 'tasks.sqlite').write_bytes(b'corrupted')
             with self.assertRaisesRegex(ValueError, 'checksum'):
+                verify_backup(backup)
+            with self.assertRaisesRegex(ValueError, 'checksum'):
                 restore_state(backup, restored, offline=True)
             self.assertFalse(restored.exists())
 
@@ -74,6 +78,9 @@ class BackupTests(unittest.TestCase):
             manifest['format'] = 1
             manifest.pop('directories', None)
             record.write_text(json.dumps(manifest))
+            self.assertEqual(verify_backup(backup), {
+                'verified': True, 'format': 1, 'files': len(manifest['files']), 'directories': 0,
+            })
             restore_state(backup, restored, offline=True)
             self.assertTrue((restored / 'tasks.sqlite').is_file())
 
@@ -87,5 +94,45 @@ class BackupTests(unittest.TestCase):
                 manifest.update(format=2, directories=[name])
                 record.write_text(json.dumps(manifest))
                 with self.assertRaises(ValueError):
+                    verify_backup(backup)
+                with self.assertRaises(ValueError):
                     restore_state(backup, restored, offline=True)
                 self.assertFalse(restored.exists())
+
+    def test_verification_cli_is_read_only_and_reports_counts_without_private_names(self):
+        (Path(self.tmp.name) / 'empty' / 'nested').mkdir(parents=True)
+        with tempfile.TemporaryDirectory() as area:
+            backup = Path(area) / 'backup'
+            backup_state(self.tmp.name, backup, offline=True)
+            before = {str(p.relative_to(area)): p.read_bytes() if p.is_file() else None
+                      for p in Path(area).rglob('*')}
+            result = subprocess.run([sys.executable, '-m', 'good_company.state_backup', str(backup)],
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            manifest = json.loads((backup / 'backup-manifest.json').read_text())
+            self.assertEqual(json.loads(result.stdout), {
+                'verified': True, 'format': 2, 'files': len(manifest['files']), 'directories': 2,
+            })
+            self.assertEqual(result.stderr, '')
+            self.assertEqual(before, {str(p.relative_to(area)): p.read_bytes() if p.is_file() else None
+                                     for p in Path(area).rglob('*')})
+
+    def test_failed_verification_does_not_create_restore_parent(self):
+        with tempfile.TemporaryDirectory() as area:
+            backup = Path(area) / 'backup'
+            backup_state(self.tmp.name, backup, offline=True)
+            (backup / 'tasks.sqlite').write_bytes(b'corrupted')
+            parent = Path(area) / 'not-created'
+            with self.assertRaisesRegex(ValueError, 'checksum'):
+                restore_state(backup, parent / 'state', offline=True)
+            self.assertFalse(parent.exists())
+
+    def test_invalid_manifest_cli_has_actionable_error_and_no_success_report(self):
+        for value in ([], {'format': 2, 'files': {}, 'directories': [], 'modes': []}):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as area:
+                (Path(area) / 'backup-manifest.json').write_text(json.dumps(value))
+                result = subprocess.run([sys.executable, '-m', 'good_company.state_backup', area],
+                                        capture_output=True, text=True)
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.stdout, '')
+                self.assertIn('Unsupported backup manifest', result.stderr)

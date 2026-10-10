@@ -1,4 +1,5 @@
 """Private offline state snapshots. Includes install identity and delivery history."""
+import argparse
 import hashlib
 import json
 import os
@@ -82,13 +83,13 @@ def backup_state(source, destination, offline=False):
     return {'files': len(manifest['files']), 'scope': 'Private offline state including credentials/identity when present; never publish this directory.'}
 
 
-def restore_state(backup, destination, offline=False):
-    if offline is not True:
-        raise ValueError('Stop the runtime and scheduler before restoring.')
+def _validated_backup(backup):
+    """Read and validate the restore manifest without creating any destination."""
     root = Path(backup).resolve(strict=True)
-    destination = private_destination(destination)
     manifest = json.loads((root / 'backup-manifest.json').read_text())
-    if manifest.get('format') not in (1, 2) or not isinstance(manifest.get('files'), dict):
+    if (not isinstance(manifest, dict) or manifest.get('format') not in (1, 2)
+            or not isinstance(manifest.get('files'), dict)
+            or not isinstance(manifest.get('modes', {}), dict)):
         raise ValueError('Unsupported backup manifest.')
     directories = manifest.get('directories') if manifest['format'] == 2 else []
     if not isinstance(directories, list) or any(not isinstance(name, str) for name in directories):
@@ -111,6 +112,26 @@ def restore_state(backup, destination, offline=False):
             raise ValueError('Unsafe backup file mode.')
         if checksum(source) != expected:
             raise ValueError('Backup checksum mismatch; prior state was preserved.')
+    return root, manifest
+
+
+def verify_backup(backup):
+    """Verify recorded snapshot contents read-only; never open or restore live state."""
+    _, manifest = _validated_backup(backup)
+    return {
+        'verified': True,
+        'format': manifest['format'],
+        'files': len(manifest['files']),
+        'directories': len(manifest.get('directories', [])) if manifest['format'] == 2 else 0,
+    }
+
+
+def restore_state(backup, destination, offline=False):
+    if offline is not True:
+        raise ValueError('Stop the runtime and scheduler before restoring.')
+    root, manifest = _validated_backup(backup)
+    destination = private_destination(destination)
+    directories = manifest.get('directories', []) if manifest['format'] == 2 else []
     with tempfile.TemporaryDirectory(prefix='.state-restore-', dir=destination.parent) as temporary:
         restored = Path(temporary) / 'state'
         restored.mkdir(mode=0o700)
@@ -126,3 +147,18 @@ def restore_state(backup, destination, offline=False):
                 directory.chmod(0o700)
         os.rename(restored, destination)
     return {'restored': True, 'files': len(manifest['files']), 'next': 'Verify identity, policy and receipts before starting one scheduler.'}
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Verify a retained private backup without restoring state.')
+    parser.add_argument('backup', type=Path, help='snapshot directory containing backup-manifest.json')
+    args = parser.parse_args()
+    try:
+        report = verify_backup(args.backup)
+    except (OSError, ValueError) as error:
+        parser.error(str(error))
+    print(json.dumps(report, sort_keys=True))
+
+
+if __name__ == '__main__':
+    main()
